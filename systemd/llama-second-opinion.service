@@ -7,7 +7,7 @@ PartOf=codium-second-opinion.service
 
 [Service]
 Type=exec
-ExecStart=%h/Documents/Repos/Workstation/second-opinion/scripts/primary-llama.sh
+ExecStart=%h/Documents/Repos/Workstation/second-opinion/scripts/primary-llama-vulkan.sh
 KillSignal=SIGTERM
 TimeoutStopSec=10
 Restart=no
