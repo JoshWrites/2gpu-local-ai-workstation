@@ -1,0 +1,12 @@
+[Unit]
+Description=llama-server for second-opinion (Qwen3-Coder-30B on 7900 XTX)
+BindsTo=codium-second-opinion.service
+
+[Service]
+Type=simple
+ExecStart=%h/Documents/Repos/Workstation/second-opinion/scripts/primary-llama.sh
+KillSignal=SIGTERM
+TimeoutStopSec=10
+Restart=no
+StandardOutput=journal
+StandardError=journal
