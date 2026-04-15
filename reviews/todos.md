@@ -50,43 +50,22 @@ env instead of a hardcoded absolute path.
 
 **Source:** code-and-deps review §primary-llama.sh + bench-startup drift.
 
+### P0.2 — Vulkan vs ROCm benchmark ✅
+
+**Done 2026-04-16 (548406d, db11f16).** Ran warm-only bench, 1 warmup
+plus 3 recorded runs per backend. Vulkan wins generation by ~84%
+(151 vs 82 tok/s). No feature loss (-cram, slot-save, flash-attn,
+draft-model all present). Switched systemd unit to Vulkan launcher.
+Branch `rocm-phase-1` preserves pre-switch state for fallback.
+
+Full writeup: `reviews/04-vulkan-vs-rocm-benchmark.md`.
+Bench script: `scripts/bench-rocm-vs-vulkan.sh`.
+
+**Source:** community review §2 "AMD/ROCm peculiarities."
+
 ---
 
 ## P0 — Phase 2 preflight (do before standing up the 5700 XT work)
-
-### P0.2 — Vulkan vs ROCm benchmark for the primary model
-
-**Why.** Community review finds Vulkan matches or beats ROCm on gfx1100
-for llama.cpp MoE inference in early 2026, with an open 7900 XTX
-pipeline bug on the ROCm path. We may be paying a performance tax on
-our primary model and not realizing it.
-
-**Concrete work:**
-1. Download Vulkan-enabled llama.cpp prebuilt from `ggml-org/llama.cpp`
-   releases (~200 MB). Extract alongside `llama-b8799` under
-   `~/src/llama.cpp/`.
-2. Write `scripts/primary-llama-vulkan.sh` — same flags as ROCm version
-   but with Vulkan env (`GGML_VULKAN_DEVICE=<id>`, not
-   `ROCR_VISIBLE_DEVICES`). Lookup: confirm exact env name against the
-   prebuilt's README.
-3. Baseline on ROCm: record cold + warm startup using
-   `bench-llama-startup.sh` (already have this data, re-run 3 cold + 3
-   warm for freshness).
-4. Baseline on Vulkan: modify the bench script to accept a launcher path,
-   re-run 3 cold + 3 warm.
-5. Tokens/sec on a fixed 2K-token prompt on both backends. Use
-   `/v1/chat/completions` with `"stream": false`; read `usage` +
-   `timings` from the response.
-6. Write `reviews/04-vulkan-vs-rocm-benchmark.md` with numbers and a
-   recommendation.
-
-**Blocker.** This requires stopping the live llama-server. Do it at
-session boundary, not mid-work.
-
-**Time estimate:** 45–60 min active, most of it is watching runs
-complete.
-
-**Source:** community review §2 "AMD/ROCm peculiarities."
 
 ### P0.3 — 5700 XT embedding-server feasibility
 
