@@ -40,6 +40,16 @@ body. llama-server returns 503 until ready and 200 when healthy, so
 
 **Source:** code-and-deps review §launch script correctness.
 
+### P1.4 — Model and binary paths unified ✅
+
+**Done 2026-04-16.** New `scripts/common.sh` exports `LLAMA_BIN`,
+`MODEL_DIR`, and `MODEL_GGUF` with sane defaults overridable via env.
+`primary-llama.sh` and `bench-llama-startup.sh` now source it instead
+of hardcoding paths. Bench's `evict_cache` heredoc reads `$GGUF` from
+env instead of a hardcoded absolute path.
+
+**Source:** code-and-deps review §primary-llama.sh + bench-startup drift.
+
 ---
 
 ## P0 — Phase 2 preflight (do before standing up the 5700 XT work)
@@ -153,27 +163,6 @@ Qwen3-0.6B as fallback. Note the tokenizer compatibility check still
 applies.
 
 **Source:** community review §7.
-
-### P1.4 — GGUF path drift between scripts
-
-**Why.** `primary-llama.sh` globs
-`~/models/qwen3-coder-30b-a3b/*Q4_K_M*.gguf`.
-`bench-llama-startup.sh` hardcodes the exact filename. If we ever
-swap the quant or model, one script breaks silently while the other
-keeps working.
-
-**Fix options:**
-- Define `MODEL_PATH` in one place (e.g. a sourced
-  `scripts/common.sh`), use in both.
-- Add a `~/src/llama.cpp/current` symlink and a `MODEL_GGUF` env var
-  so paths are declared once.
-
-**Recommendation.** The symlink + env var pattern from the code-and-
-deps review. Small `scripts/common.sh` with `LLAMA_BIN` and
-`MODEL_GGUF` exports, sourced by both launchers and the bench script.
-
-**Source:** code-and-deps review §primary-llama.sh + bench-startup
-drift finding.
 
 ---
 

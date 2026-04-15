@@ -19,8 +19,10 @@
 set -euo pipefail
 
 REPO="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
+# shellcheck source=./common.sh
+source "${REPO}/scripts/common.sh"
 LAUNCH="${REPO}/scripts/primary-llama.sh"
-GGUF="${HOME}/models/qwen3-coder-30b-a3b/Qwen3-Coder-30B-A3B-Instruct-Q4_K_M.gguf"
+GGUF="$MODEL_GGUF"
 OUT="${REPO}/bench-results.csv"
 LOG_DIR="$(mktemp -d)"
 
@@ -39,10 +41,10 @@ sleep 2
 echo "run,state,rocm_init,tensor_load_done,kv_alloc_done,warmup_done,ready,total_wall,vram_peak_mb,error" > "${OUT}"
 
 evict_cache() {
-  python3 - <<'PY'
+  GGUF="$GGUF" python3 - <<'PY'
 import os, ctypes
 libc = ctypes.CDLL("libc.so.6")
-path = "/home/levine/models/qwen3-coder-30b-a3b/Qwen3-Coder-30B-A3B-Instruct-Q4_K_M.gguf"
+path = os.environ["GGUF"]
 fd = os.open(path, os.O_RDONLY)
 libc.posix_fadvise(fd, ctypes.c_longlong(0), ctypes.c_longlong(0), 4)
 os.close(fd)

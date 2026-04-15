@@ -1,6 +1,9 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
+# shellcheck source=./common.sh
+source "$(dirname "${BASH_SOURCE[0]}")/common.sh"
+
 # Defensive: stop any ollama unit that might be running this session.
 # All three are disabled at boot per 2026-04-15 cleanup; this only matters
 # if one was manually started earlier. NEVER `systemctl enable` these.
@@ -22,8 +25,8 @@ ROCR_VISIBLE_DEVICES=1 \
 HSA_OVERRIDE_GFX_VERSION=11.0.0 \
 GPU_MAX_HEAP_SIZE=100 \
 GPU_MAX_ALLOC_PERCENT=100 \
-exec ~/src/llama.cpp/llama-b8799/llama-server \
-  -m ~/models/qwen3-coder-30b-a3b/*Q4_K_M*.gguf \
+exec "$LLAMA_BIN" \
+  -m "$MODEL_GGUF" \
   -ngl 99 \
   -c 65536 \
   --flash-attn on \
