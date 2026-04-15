@@ -1,0 +1,14 @@
+.venv/
+node_modules/
+__pycache__/
+.git/
+*.gguf
+models/
+aspects/
+.observer/
+dist/
+build/
+*.egg-info/
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/

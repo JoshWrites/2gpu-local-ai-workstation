@@ -194,90 +194,103 @@ Estimated: 4–6 hours. Hard cap: **10 hours**. If not done by cap, stop and re-
 
 ---
 
-## Phase 2 — 5700 XT online + manual observer + dual-scope indexes
+## Phase 2 — 5700 XT as embedding server for Roo Codebase Indexing
 
 ### 1. Goal
-A session started after Phase 2 begins with prior-session context automatically loaded from observer indexes — the agent references past learnings without being told.
+Roo answers questions about the repo from a semantic index instead of reading whole files. Token cost per question drops; prompt-injection surface from full-file reads shrinks; the 5700 XT does meaningful work during every session.
+
+**Design change from earlier draft (2026-04-15):** the original Phase 2 was a manual post-session observer running Phi-4 Mini on the 5700 XT to extract observations into `~/.observer/`. This was demoted after a Phase 1 smoke-test showed the real pain point is not "forgetting" — it's *reading*. Roo Code in Code mode burned ~19% of a 32K context on ten file reads and still couldn't answer "what files are in this project?" because reads were truncated at 100 lines. Roo already has built-in **Codebase Indexing** (Qdrant + an embedding model) that solves this directly. Using the 5700 XT to host the embedding model is strictly more useful per Roo session than a post-session extractor.
+
+The dual-scope observer pattern is not dead — it may return in a later phase if the memory-bank + indexing workflow proves insufficient. It is out of Phase 2 scope.
 
 ### 2. Prerequisites
-- Phase 1 complete and stable for at least one real session.
-- `ollama` binary installed (from pre-phase backup — it already is).
-- 5700 XT physically present and visible in `lspci | grep -i vga` (confirm before starting).
+- Phase 1 complete and stable for at least one real session, including confirmation that `-cram` prefix caching is working.
+- 5700 XT physically present and visible in `lspci | grep -i vga`.
+- Docker installed and working (Qdrant runs in a container).
 
 ### 3. Concrete steps
 
-**Step 2.1 — Make 5700 XT inferenceable. Time-boxed: 3 hours.**
-Note: 5700 XT is at `ROCR_VISIBLE_DEVICES=0` on this box (not =1 as the reference guide assumes). Try in order, stop at first that works:
-1. **ROCm with override = 10.1.0:** `HSA_OVERRIDE_GFX_VERSION=10.1.0 ROCR_VISIBLE_DEVICES=0 rocminfo` → confirm only gfx1010 visible. Then test with a small model via Ollama (see 2.2).
+**Step 2.1 — Make 5700 XT inferenceable for an embedding model. Time-boxed: 3 hours.**
+5700 XT is at `ROCR_VISIBLE_DEVICES=0` on this box. Embedding models are small (~300 MB–2 GB) and well within 8 GB VRAM. Try in order, stop at first that works:
+1. **ROCm with override = 10.1.0:** `HSA_OVERRIDE_GFX_VERSION=10.1.0 ROCR_VISIBLE_DEVICES=0 rocminfo` → confirm only gfx1010 visible.
 2. **Override = 10.3.0** if 10.1.0 produces runtime errors but not detection errors.
-3. **Vulkan fallback:** install `mesa-vulkan-drivers` + `vulkan-tools`; confirm `vulkaninfo | grep "deviceName"` lists the 5700 XT. Then run Ollama with `OLLAMA_VULKAN=1` (lookup: confirm this env var name — it may instead require a Vulkan-enabled Ollama build; flag as lookup step).
+3. **Vulkan fallback:** install `mesa-vulkan-drivers` + `vulkan-tools`; confirm `vulkaninfo | grep "deviceName"` lists the 5700 XT. Vulkan path for llama-server uses a different prebuilt; lookup step: confirm current ggml-org Vulkan build name.
 
-**Step 2.2 — Configure secondary Ollama systemd unit on port 11435.**
-Create `/etc/systemd/system/ollama-secondary.service` (needs sudo — user-approved):
+**Step 2.2 — Stand up an embedding server on 5700 XT via llama-server.**
+Use a second llama-server instance on port 11435, pinned to device 0, serving an embedding model.
+
+Candidate models (pick one during execution):
+- `nomic-embed-text-v1.5` (768 dim, general text + code, strong baseline)
+- `bge-m3` (1024 dim, multilingual + long context)
+- `Qwen3-Embedding-0.6B` (matches Qwen3 tokenizer family, strong on code)
+
+Launch script `scripts/embedding-llama.sh`:
 ```
-[Service]
-Environment="ROCR_VISIBLE_DEVICES=0"
-Environment="HSA_OVERRIDE_GFX_VERSION=10.1.0"   # or Vulkan equivalent
-Environment="OLLAMA_HOST=127.0.0.1:11435"
-Environment="OLLAMA_FLASH_ATTENTION=0"
-Environment="OLLAMA_MAX_LOADED_MODELS=2"
-ExecStart=/usr/local/bin/ollama serve
+#!/usr/bin/env bash
+set -euo pipefail
+ROCR_VISIBLE_DEVICES=0 \
+HSA_OVERRIDE_GFX_VERSION=10.1.0 \
+exec ~/src/llama.cpp/llama-b8799/llama-server \
+  -m ~/models/embedding/<chosen-model>.gguf \
+  --embedding -ngl 99 -c 8192 \
+  --host 127.0.0.1 --port 11435
 ```
-The primary Ollama service (still installed, used as fallback when llama-server is down) keeps its default config on port 11434; it is only run when llama-server is stopped, so there's no port conflict.
+`--embedding` puts the server in embedding-only mode; `-ngl 99` pushes the (tiny) model fully to the 5700 XT.
 
-Pull Phi-4 Mini: `OLLAMA_HOST=127.0.0.1:11435 ollama pull phi4-mini` (lookup: exact Ollama tag for Phi-4 Mini 3.8B Q5_K_M, may be `phi4-mini:3.8b-q5_K_M` or similar — confirm via `ollama search`).
-
-**Step 2.3 — Write observer extraction script `scripts/observer-extract.py`.**
-Inputs: path to a Roo Code conversation export (JSON). Process: chunk to fit Phi-4 Mini's 128K window (comfortably the whole session), call `POST http://127.0.0.1:11435/v1/chat/completions` with the extraction prompt from reference-guide Part 2, parse returned JSON array, emit new observation files.
-Output: one markdown file per observation in `~/.observer/refs/g####.md` or `<project>/.observer/refs/p####.md`; append index line to respective `index.md`.
-ID assignment: read current max ID from `~/.observer/refs/` and `<project>/.observer/refs/`, increment.
-The script is a manual post-session tool — user runs it explicitly or the agent runs it via a Roo Code command at session end.
-
-**Step 2.4 — Scaffold the dual-scope stores.**
-- Create `~/.observer/index.md` with section headers (`## Patterns`, `## Mistakes to avoid`, `## User preferences`) and empty body.
-- Create `~/.observer/refs/` directory.
-- Create per-project stubs `second-opinion/.observer/index.md` and `.observer/refs/`.
-- Add `.observer/` to projects' `.gitignore` patterns for global scope only (`~/.observer/` is never in any repo); per-project `.observer/` IS git-tracked (per reference-guide).
-
-**Step 2.5 — Add the session-start global rule.**
-Append to `~/.roo/rules/personal.md`:
+**Step 2.3 — Deploy Qdrant in Docker.**
 ```
-At session start, read ~/.observer/index.md and .observer/index.md (if it exists in the project root).
-Before architectural decisions, tool choices, or when encountering errors, consult both indexes for relevant entries.
-For relevant entries, read the full content at:
-  - ~/.observer/refs/{id}.md for g-prefixed IDs
-  - .observer/refs/{id}.md for p-prefixed IDs
+docker run -d --name qdrant --restart=unless-stopped \
+  -p 6333:6333 -p 6334:6334 \
+  -v ~/qdrant-data:/qdrant/storage \
+  qdrant/qdrant:latest
 ```
+Vector DB runs on CPU — Qdrant is not GPU-bound. Persistent storage in `~/qdrant-data/`.
 
-**Step 2.6 — Conversation export workflow.**
-Lookup step: determine current Roo Code conversation export format (JSON file location in VSCodium extension storage, likely `~/.config/VSCodium/User/globalStorage/rooveterinaryinc.roo-cline/tasks/<task-id>/`). Document the export path in `scripts/README.md` so future agents can find it.
+**Step 2.4 — Wire Roo's Codebase Indexing to the embedding server + Qdrant.**
+In the repo's `configs/roo-code-settings.json`, set under `globalSettings`:
+```
+"codebaseIndexEnabled": true,
+"codebaseIndexEmbedderProvider": "openai-compatible",
+"codebaseIndexEmbedderBaseUrl": "http://127.0.0.1:11435/v1",
+"codebaseIndexEmbedderModelId": "<chosen-model>",
+"codebaseIndexQdrantUrl": "http://127.0.0.1:6333"
+```
+The API key for the embedder is an extension-level secret (same mechanism as the chat provider); bootstrap via the Roo UI once, then export and the autoImport path keeps it synced. Lookup step: confirm exact setting key names against Roo source or a fresh export after UI config.
 
-**Step 2.7 — Between-session debrief prompt.**
-Add canned prompt to `prompts/debrief.md`:
-> Review what we accomplished this session. Then: (1) update `memory-bank/activeContext.md`, `progress.md`, `decisionLog.md` as appropriate; (2) list observations worth extracting (decisions, mistakes, user corrections, patterns) in a summary at the end. Do not write to `.observer/` directly — the observer script handles that.
+**Step 2.5 — Build the initial index.**
+Open the repo in the isolated VSCodium; Roo's Codebase Indexing panel should show "indexing" on detect. First index of a small repo is seconds to minutes. Verify via Qdrant: `curl -s http://127.0.0.1:6333/collections` returns a collection for the repo.
+
+**Step 2.6 — Add an agent rule to prefer semantic search over full reads.**
+Append to `~/.roo/rules/personal.md` (or the isolated instance's equivalent):
+```
+When exploring an unfamiliar project or file, prefer the codebase_search tool
+over read_file. Only read full files after a semantic search identifies
+specific relevant sections. This preserves context budget and reduces the
+attack surface for prompt-injection from documentation files.
+```
 
 ### 4. Success checkpoints
-- `curl -s http://127.0.0.1:11435/v1/models` returns `phi4-mini`.
-- `rocm-smi` shows both GPUs; running Phi-4 Mini on 11435 does not affect 7900 XTX VRAM usage.
-- Phi-4 Mini generates at ≥ 12 t/s (Vulkan acceptable) or ≥ 20 t/s (ROCm) on a 300-token completion.
-- Running `scripts/observer-extract.py` on a captured session JSON produces ≥ 1 observation with valid schema (category, scope, summary, context, tags), written to correct refs directory, indexed.
-- Starting a fresh Roo Code session in a project with non-empty `.observer/index.md`: the agent's first response references at least one observation id OR explicitly acknowledges having read both indexes.
-- The two Ollama / llama-server endpoints are on different ports and don't conflict (`ss -ltnp | grep -E "11434|11435"` shows both).
+- `curl -s http://127.0.0.1:11435/v1/models` returns the embedding model.
+- `curl -s -X POST http://127.0.0.1:11435/v1/embeddings -H 'Content-Type: application/json' -d '{"model":"<m>","input":"hello"}'` returns a vector of the expected dimension.
+- `rocm-smi` shows both GPUs active: 7900 XTX holding Qwen3-Coder, 5700 XT holding embedding model.
+- Qdrant container healthy; collection exists for second-opinion repo.
+- In Roo Code, an Ask-mode question like "what's in the scripts directory?" is answered from the index with ≤ 2 tool calls and ≤ 5% context burn (vs. Phase 1 baseline of ~19% on the same question).
+- Repeated edits to a tracked file trigger incremental re-indexing (verify by editing, then searching for the new content).
 
 ### 5. Failure modes and recovery
-- **5700 XT not detected by rocminfo even with override.** → Try the second override value; then Vulkan. Do not reboot to "fix" — the card is either PCIe-visible or it isn't.
-- **Ollama starts on secondary but Phi-4 Mini crashes on load (ROCm kernel fault).** → Fallback to Vulkan. Log the exact error to `~/second-opinion-backups/phase2/rocm-5700xt-fail.log` for future reference.
-- **Vulkan works but generation is < 5 t/s.** → Acceptable for post-session batch observer (not latency-critical). Document and move on.
-- **Phi-4 Mini extraction returns malformed JSON.** → Tighten the extraction prompt with a worked example; add a schema-validation pass in the script that retries on malformed output up to 2 times; fall back to logging the raw output for manual review.
-- **Agent ignores observer index at session start.** → Rule file path wrong; rule too long and truncated; rule conflicting with mode-specific rules. Verify by asking the agent "what files did you read at session start?" at the start of a test session.
-- **`.observer/` accidentally committed with sensitive info.** → Per-project `.observer/` is intentionally committed; if the user later wants privacy, flip it to `.gitignore`. Global `~/.observer/` is never in a repo.
+- **5700 XT not detected even with override.** → Try the second override; then Vulkan. Do not reboot to "fix."
+- **llama-server embedding mode crashes on load.** → Try a different model family (nomic → bge → qwen). Fallback: run the embedding model on CPU — embeddings are batch-friendly and CPU speed is workable for repo-scale indexing.
+- **Qdrant container won't start.** → Check port 6333/6334 conflicts (`ss -ltnp | grep -E "6333|6334"`). Rarely a real issue on this box given Phase 1's cleanup.
+- **Roo indexes but searches return noise.** → Embedding model is underpowered for code — swap to Qwen3-Embedding or a code-specific model. Re-index.
+- **Index balloons past reasonable size.** → Roo respects `.rooignore`; tighten it to exclude `.venv/`, `node_modules/`, `models/`, etc.
+- **Prompt-injection via indexed document chunks.** → Keep read-only modes (Ask, Review) for untrusted content; the `.roo/rules/` guardrail treating `docs/` as reference is still required — indexing is not a security boundary.
 
 ### 6. Abort criteria
-- Neither ROCm override nor Vulkan gets the 5700 XT to generate tokens within the 3-hour time-box → abort 5700 XT portion, continue with observer running on CPU via llama-server (Phi-4 Mini on CPU is ~3 t/s; still workable for post-session batch).
-- Observer extraction quality is so poor that observations are actively misleading after 3 sessions → pause extraction, revise the prompt, do not feed garbage into the index.
+- Embedding server + Qdrant are up but Roo integration is broken across two Roo releases → revert to no-indexing, revisit in Phase 4.
+- 5700 XT cannot host any embedding model on any path within 3 hours → fall back to CPU embeddings; the card stays dark until a use case that needs GPU inference specifically appears.
 
 ### 7. Time budget
-Estimated: 6–10 hours (driven by 5700 XT surprise risk). Hard cap: **16 hours**. If capped out, abort the 5700 XT piece and fall back to CPU Phi-4 Mini.
+Estimated: 4–8 hours (smaller than the original observer phase; no extraction pipeline to write). Hard cap: **12 hours**. If capped, fall back to CPU embeddings and ship the indexing integration anyway — GPU placement of the embedding model is an optimization, not a blocker.
 
 ---
 
