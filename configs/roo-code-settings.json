@@ -205,7 +205,7 @@
     "alwaysAllowReadOnlyOutsideWorkspace": false,
     "alwaysAllowWrite": true,
     "alwaysAllowWriteOutsideWorkspace": false,
-    "alwaysAllowExecute": true,
+    "alwaysAllowExecute": false,
     "alwaysAllowBrowser": false,
     "alwaysAllowMcp": false,
     "alwaysAllowModeSwitch": true,
