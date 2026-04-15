@@ -3,9 +3,9 @@
 Copy to `<project-root>/.roo/rules-code/implementation.md`. Applies only
 when Roo is in **Code** mode.
 
-- Read the spec (`docs/spec.md`) and the plan (`docs/plan.md`) if either
-  exists before writing code. Note their absence and proceed — do not
-  fabricate one.
+- Read the project's plan or spec (typically `docs/implementation-plan.md`,
+  `docs/plan.md`, or `docs/spec.md`) if one exists before writing code.
+  Note its absence and proceed — do not fabricate one.
 - Do not modify spec or plan files from Code mode. If you spot an issue,
   add a brief `TODO(spec):` comment where you hit it and keep going.
 - After each file is written or meaningfully edited, run the project's

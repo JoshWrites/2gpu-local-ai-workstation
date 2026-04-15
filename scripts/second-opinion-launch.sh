@@ -83,7 +83,7 @@ if have_yad; then
   # Watchdog: emit a warning toast if we pass the warn threshold without ready.
   (
     sleep "$WARN_READY"
-    if ! curl -s --max-time 0.5 http://127.0.0.1:11434/health 2>/dev/null | grep -q '"ok"'; then
+    if ! curl -fs --max-time 0.5 http://127.0.0.1:11434/health >/dev/null 2>&1; then
       notify "Second Opinion — slow start" "Past ${WARN_READY}s on a ${STATE} launch. Check the splash log for the hung phase."
     fi
   ) &
@@ -98,7 +98,7 @@ fi
 # ---------- poll for health ----------
 READY=0
 for i in $(seq 1 180); do
-  if curl -s --max-time 0.5 http://127.0.0.1:11434/health 2>/dev/null | grep -q '"ok"'; then
+  if curl -fs --max-time 0.5 http://127.0.0.1:11434/health >/dev/null 2>&1; then
     READY=1; break
   fi
   # If user clicked Cancel on yad, stop and abort.
