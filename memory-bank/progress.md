@@ -53,3 +53,35 @@
 **Post-Phase-1 enhancements captured** in `docs/post-phase1-enhancements.md`:
 SearxNG MCP for web access (top priority), prompt-injection guardrail,
 auto-approve audit cadence, llama-server desktop entry.
+
+## 2026-04-15 — Lifecycle management added (late Phase 1)
+
+**Problem:** earlier flow left llama-server resident (~23 GB on 7900 XTX)
+whenever the editor wasn't explicitly killed. Wanted: click desktop entry
+→ agent ready; close editor → VRAM released.
+
+**Built:**
+- `~/.config/systemd/user/llama-second-opinion.service` (wraps
+  `primary-llama.sh`; never enabled, started on demand).
+- `~/.config/systemd/user/codium-second-opinion.service`
+  (`Requires`+`BindsTo` llama; runs `codium --wait` so systemd blocks
+  until window close).
+- `scripts/second-opinion-launch.sh` — orchestrator with yad splash
+  that tails the llama journal, shows live phase progress, warns on
+  threshold breach, then launches the editor and waits.
+- Desktop entry updated to point at the launcher; added an
+  "Editor only" action for times you don't need the model hot.
+
+**Startup benchmarks captured** (3 cold + 7 warm via
+`scripts/bench-llama-startup.sh`). Results committed as
+`bench-results.csv`:
+- Cold (GGUF evicted from page cache): **~36s**, ±0.65s across 3 runs.
+- Warm: **~3.3s**, ±0.02s across 7 runs.
+- Tensor load dominates (>95% of total in both states). Post-tensor
+  phases are sub-second and deterministic.
+- Thresholds in the launcher: cold 55s warn, warm 10s warn — ~50% slack
+  above observed max.
+
+**Context bump:** llama-server now runs at `-c 65536` (was 32768). VRAM
+at 24.3 / 25.7 GB; ~1.4 GB headroom. Roo's
+`providerCustomModelInfo.contextWindow` updated to match.

@@ -2,6 +2,23 @@
 
 Decisions with lasting implications. Recency first.
 
+## 2026-04-15 — Lifecycle via systemd user units + BindsTo
+
+Two `systemd --user` units (`llama-second-opinion.service`,
+`codium-second-opinion.service`) with `Requires`+`BindsTo`. Editor exit
+triggers llama stop automatically. No custom PID tracking, no wrapper-with-
+trap fragility. Launcher shows a yad splash streaming the llama journal
+with phase-aware thresholds from benchmarking. Tradeoff: no warm pool —
+every editor open pays the cold/warm startup cost. Acceptable given warm
+restart is ~3s.
+
+## 2026-04-15 — Context window bumped to 64K
+
+Default was 32K. Benchmarked memory at q8_0 KV: 64K fits in 24.3 / 25.7 GB
+on the 7900 XTX with ~1.4 GB headroom. 128K would require q4_0 KV
+(quality risk on code) or CPU spill. 64K is the hardware-respecting sweet
+spot.
+
 ## 2026-04-15 — Phase 2 redirected to embedding server + Qdrant indexing
 
 Original Phase 2 was a post-session observer (Phi-4 Mini on the 5700 XT extracting learnings into `~/.observer/`). Demoted after Phase 1 smoke test showed the real pain was not "forgetting across sessions" — it was Roo burning ~19% of a 32K context on exploratory full-file reads that were silently truncated at 100 lines. Phase 2 now stands up an embedding server on the 5700 XT and wires Roo's built-in Codebase Indexing (Qdrant backend) so the model retrieves relevant chunks instead of reading whole files. Observer pattern is not dead — may return if memory-bank + indexing prove insufficient. Plan rewritten in place; the "why" is in the Phase 2 intro paragraph.

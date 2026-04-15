@@ -2,9 +2,9 @@
 
 **Phase 1 complete as of 2026-04-15.** Stack is live and proven (see `progress.md`).
 
-**Current focus:** Phase 1 wrap-up tasks before moving to Phase 2.
-- Populate memory-bank files with real project content (this file, productContext, systemPatterns).
-- Import custom Review and Spec modes from `.roo/modes/*.yaml` into the isolated VSCodium's `custom_modes.yaml`.
+**Current focus:** Phase 1 fully closed. Next: real use, then Phase 2 (embedding server + Qdrant).
+
+**Last added (2026-04-15):** lifecycle management via systemd user units + yad splash. Editor close now stops llama-server automatically; launcher shows live phase progress during startup with thresholds based on benchmark data.
 
 **Not in scope right now:** Phase 2 (embedding server + Qdrant). Plan written, direction set, but work begins after wrap-up.
 
@@ -14,5 +14,6 @@
 - Qdrant: not yet stood up.
 
 **Launch:**
-- llama-server: `scripts/primary-llama.sh` (foreground; Ctrl+C to stop).
-- Editor: "VSCodium (Second Opinion)" desktop entry.
+- Normal: "VSCodium (Second Opinion)" desktop entry → splash → editor. Close editor → VRAM freed.
+- Editor only (no llama): right-click desktop entry → "Editor only".
+- Llama only: `systemctl --user start llama-second-opinion.service` from a terminal.
