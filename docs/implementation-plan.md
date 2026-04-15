@@ -16,20 +16,21 @@
    - `rocm-smi --showproductname --showmeminfo vram` — confirm 24 GB visible.
    - `python3 -c "import torch; print(torch.cuda.is_available(), torch.cuda.get_device_name(0))"` — PyTorch sees it.
    - `ollama list` and `ollama ps` — note currently loaded model(s) and which GPU is targeted.
-2. **Existing Ollama config inventory** — record for rollback:
-   - `systemctl cat ollama` (service file + drop-ins)
-   - `cat /etc/systemd/system/ollama.service.d/*.conf` if present
-   - `echo $OLLAMA_HOST`, `env | grep -i ollama`
-   - `ls -la ~/.ollama/` and note disk usage (`du -sh ~/.ollama/models`)
+2. **Ollama baseline verification** — the 2026-04-15 boot cleanup disabled all three `ollama*.service` units. Verify the cleanup still holds before building on top of it:
+   - `systemctl is-enabled ollama.service ollama-gpu0.service ollama-gpu1.service` — all three must report `disabled`. Any `enabled` result means something re-enabled autostart and the cleanup regressed.
+   - `systemctl is-active ollama.service ollama-gpu0.service ollama-gpu1.service` — all three must report `inactive`. If active, nothing to worry about functionally, but note it so the launch script's stop loop runs instead of starting cold.
+   - `ls -la ~/.ollama/ && du -sh ~/.ollama/models` — record model cache contents; these are reusable on the 5700 XT in Phase 2.
 3. **Disk space**
    - `df -h /` — need ≥ 60 GB free after model downloads (Qwen3.5-27B Q4_K_M ≈ 17 GB, draft 0.5B ≈ 0.5 GB, Phi-4 Mini ≈ 3 GB, build artifacts ≈ 2 GB, headroom for KV save paths and observer store). User reports ~1.1 TB free → pass.
 4. **Kernel / amdgpu boot-hang risk assessment**
    - `uname -r` (expect 6.17.x), `dmesg | grep -iE "amdgpu|drm" | tail -50` — look for prior hang/timeout/ring-reset entries.
    - `cat /etc/default/grub | grep GRUB_CMDLINE` — record current cmdline.
    - Confirm at least one prior-working kernel entry exists: `ls /boot/vmlinuz-*`.
-5. **Backup working Ollama state** (no changes, just capture):
-   - Copy current service files to `~/second-opinion-backups/pre-phase1/` via `cp` (read from /etc, write to home — allowed, not a system mod).
-   - `ollama list > ~/second-opinion-backups/pre-phase1/ollama-models.txt`.
+5. **Snapshot the clean baseline** (no changes, just capture) to `~/second-opinion-backups/pre-phase1/`:
+   - `systemctl list-unit-files 'ollama*' 'llama*' 'vllm*' > enabled-ai-units.txt` — should show all disabled.
+   - `systemctl list-units --type=service --state=running > running-services.txt` — baseline for drift detection.
+   - `ollama list > ollama-models.txt` (works whether or not the daemon is running, reads the on-disk manifest).
+   - Copy `/home/levine/Documents/Repos/Workstation/boot-cleanup-2026-04-15.md` into the backup dir for provenance.
 6. **Reboot policy** — default posture for Phases 1–3: **no reboots**. If a reboot becomes necessary (kernel module reload for `render`/`video` group membership on a fresh user, etc.), the gate requires:
    - A tested GRUB fallback entry selected and verified bootable via `grub-reboot` (one-shot) rather than editing default.
    - `amdgpu.dc=1 amdgpu.gpu_recovery=1` already present or explicitly added as rescue options ready to paste at grub menu.
@@ -53,8 +54,12 @@ User can say "write and test a trivial Python project" to Roo Code in VSCodium a
 ### 3. Concrete steps
 
 **Decision 1.a — Ollama cohabitation on 7900 XTX.**
-Chosen: **Keep Ollama installed and configured, but stop the service during llama-server sessions.** Do NOT uninstall.
-Rationale: (a) Phase 2 moves Ollama to the secondary GPU anyway, and the existing systemd unit is a useful template; (b) leaving Ollama available gives a known-good fallback if llama-server build fails; (c) Ollama and llama-server both want VRAM on gfx1100 — simultaneous operation will OOM or thrash, so they must not run concurrently on the primary GPU. Implementation: `systemctl --user stop ollama` (or system unit, matching whichever is currently installed) before starting llama-server. Formalize as `scripts/primary-llama.sh` which stops Ollama, launches llama-server, and traps SIGINT to restart Ollama on exit.
+Chosen: **Keep Ollama binaries installed. All Ollama system units stay disabled (as they already are per 2026-04-15 boot cleanup). Start Ollama only on demand, never at boot.** Do NOT uninstall.
+Rationale: (a) Phase 2 repurposes Ollama for the 5700 XT on port 11435; the binaries and model cache are reusable; (b) a manually-startable Ollama on 11434 is a useful fallback if llama-server build breaks; (c) Ollama and llama-server both want VRAM on gfx1100 — they cannot run concurrently on the primary GPU.
+
+**Current reality (as of boot-cleanup-2026-04-15):** three Ollama system units exist and are all disabled — `ollama.service`, `ollama-gpu0.service`, `ollama-gpu1.service`. None autostart. The launch script below is defensive: it stops any that happen to be running (e.g. manually started earlier in the session) without enabling or re-enabling anything on exit. The "restart Ollama on exit" behavior from the original plan is dropped — we do not resurrect a service the boot cleanup intentionally disabled.
+
+Operational rule: **never `systemctl enable` any ollama*.service on this workstation.** If Ollama is needed, start it for the session only (`systemctl start ollama`) and stop it when done.
 
 **Step 1.1 — Build llama.cpp with ROCm.**
 ```bash
@@ -72,16 +77,27 @@ Lookup: exact HF repo path for Qwen3.5-27B text-only Q4_K_M GGUF is not known at
 Also download draft model (for Phase 3, but convenient to get now): `Qwen2.5-Coder-0.5B-Instruct-Q8_0.gguf` → `~/models/`.
 
 **Step 1.3 — Write launch script `scripts/primary-llama.sh`.**
+Stops any running Ollama unit (defensive — none should be running after boot cleanup), launches llama-server in the foreground, and does NOT restart Ollama on exit (the boot cleanup intentionally disabled all three ollama*.service units; we honor that).
+
 ```bash
 #!/usr/bin/env bash
 set -euo pipefail
-systemctl stop ollama 2>/dev/null || systemctl --user stop ollama 2>/dev/null || true
+
+# Defensive: stop any ollama unit that might be running this session.
+# All three are disabled at boot per 2026-04-15 cleanup; this only matters
+# if one was manually started earlier.
+for unit in ollama.service ollama-gpu0.service ollama-gpu1.service; do
+  if systemctl is-active --quiet "$unit"; then
+    sudo systemctl stop "$unit"
+  fi
+done
+
 mkdir -p /tmp/aspects
-trap 'systemctl start ollama 2>/dev/null || systemctl --user start ollama 2>/dev/null || true' EXIT
+
 HSA_OVERRIDE_GFX_VERSION=11.0.0 \
 GPU_MAX_HEAP_SIZE=100 \
 GPU_MAX_ALLOC_PERCENT=100 \
-~/src/llama.cpp/build/bin/llama-server \
+exec ~/src/llama.cpp/build/bin/llama-server \
   -m ~/models/qwen3.5-27b-text-q4_k_m.gguf \
   -ngl 99 \
   -c 32768 \
@@ -93,6 +109,8 @@ GPU_MAX_ALLOC_PERCENT=100 \
   --host 127.0.0.1 --port 11434
 ```
 Phase 1 intentionally omits `-md` / `-devd none` / `--draft-max` — those are Phase 3.
+
+`exec` replaces the shell with llama-server so Ctrl+C goes straight to the server and there's no lingering bash wrapper. No `trap` needed since we deliberately don't resurrect Ollama on exit.
 
 **Step 1.4 — Install VSCodium + Roo Code.**
 - VSCodium: Ubuntu has it via `apt` (after adding their repo) or Flatpak. Lookup: confirm current install method preference.
