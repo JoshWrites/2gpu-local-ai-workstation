@@ -1,9 +1,12 @@
 [Unit]
 Description=llama-server for second-opinion (Qwen3-Coder-30B on 7900 XTX)
-BindsTo=codium-second-opinion.service
+# PartOf (not BindsTo) so llama can start before codium without being
+# stopped for having an inactive bound unit. Stop still propagates from
+# codium to llama.
+PartOf=codium-second-opinion.service
 
 [Service]
-Type=simple
+Type=exec
 ExecStart=%h/Documents/Repos/Workstation/second-opinion/scripts/primary-llama.sh
 KillSignal=SIGTERM
 TimeoutStopSec=10
