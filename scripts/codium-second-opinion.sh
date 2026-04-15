@@ -10,16 +10,9 @@ EXT_DIR="${HOME}/.vscodium-second-opinion/extensions"
 
 mkdir -p "$DATA_DIR" "$EXT_DIR"
 
-# Default to opening the second-opinion repo so --wait has something to hold on.
-DEFAULT_OPEN="${HOME}/Documents/Repos/Workstation/second-opinion"
-ARGS=("$@")
-if [[ ${#ARGS[@]} -eq 0 ]]; then
-  ARGS=("$DEFAULT_OPEN")
-elif [[ "${ARGS[0]}" == "--wait" && ${#ARGS[@]} -eq 1 ]]; then
-  ARGS=("--wait" "$DEFAULT_OPEN")
-fi
-
+# No default folder: let VSCodium restore the previous window(s) so the
+# launcher reopens whatever the user was last working in.
 exec /usr/bin/codium \
   --user-data-dir "$DATA_DIR" \
   --extensions-dir "$EXT_DIR" \
-  "${ARGS[@]}"
+  "$@"
