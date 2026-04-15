@@ -12,10 +12,13 @@
 ### Gate checks (all read-only)
 
 1. **ROCm sanity on 7900 XTX**
-   - `rocminfo | grep -E "Name:|gfx"` — confirm gfx1100 present, device index noted.
-   - `rocm-smi --showproductname --showmeminfo vram` — confirm 24 GB visible.
-   - `python3 -c "import torch; print(torch.cuda.is_available(), torch.cuda.get_device_name(0))"` — PyTorch sees it.
-   - `ollama list` and `ollama ps` — note currently loaded model(s) and which GPU is targeted.
+   - `rocminfo | grep -E "Name:|gfx"` — confirm gfx1100 and gfx1010 present.
+   - `rocm-smi --showproductname --showmeminfo vram` — confirm both cards visible.
+   - **Confirmed device indices on this box (2026-04-15):** GPU 0 = 5700 XT (gfx1010), GPU 1 = 7900 XTX (gfx1100). This is the **opposite** of what the reference guide assumes. All `ROCR_VISIBLE_DEVICES` and `cuda:N` references in this plan use the confirmed ordering.
+   - **Baseline VRAM on 7900 XTX is ~2 GB** — KDE Plasma X11 rendering the desktop. This is expected, not a leak. Leaves ~22 GB for inference, which fits Qwen3.5-27B Q4_K_M + 32K context comfortably.
+   - PyTorch verification uses the existing vLLM venv, not system Python:
+     `/home/levine/.local/share/vllm-env/bin/python -c "import torch; print(torch.version.hip, torch.cuda.device_count(), [torch.cuda.get_device_name(i) for i in range(torch.cuda.device_count())])"`
+     This venv has torch 2.9.1+hip7.0 and is the "when I need torch" environment going forward — no system-wide torch install.
 2. **Ollama baseline verification** — the 2026-04-15 boot cleanup disabled all three `ollama*.service` units. Verify the cleanup still holds before building on top of it:
    - `systemctl is-enabled ollama.service ollama-gpu0.service ollama-gpu1.service` — all three must report `disabled`. Any `enabled` result means something re-enabled autostart and the cleanup regressed.
    - `systemctl is-active ollama.service ollama-gpu0.service ollama-gpu1.service` — all three must report `inactive`. If active, nothing to worry about functionally, but note it so the launch script's stop loop runs instead of starting cold.
@@ -168,8 +171,8 @@ A session started after Phase 2 begins with prior-session context automatically 
 ### 3. Concrete steps
 
 **Step 2.1 — Make 5700 XT inferenceable. Time-boxed: 3 hours.**
-Try in order, stop at first that works:
-1. **ROCm with override = 10.1.0:** `HSA_OVERRIDE_GFX_VERSION=10.1.0 ROCR_VISIBLE_DEVICES=1 rocminfo` → confirm gfx1010 device. Then test with a small model via Ollama (see 2.2).
+Note: 5700 XT is at `ROCR_VISIBLE_DEVICES=0` on this box (not =1 as the reference guide assumes). Try in order, stop at first that works:
+1. **ROCm with override = 10.1.0:** `HSA_OVERRIDE_GFX_VERSION=10.1.0 ROCR_VISIBLE_DEVICES=0 rocminfo` → confirm only gfx1010 visible. Then test with a small model via Ollama (see 2.2).
 2. **Override = 10.3.0** if 10.1.0 produces runtime errors but not detection errors.
 3. **Vulkan fallback:** install `mesa-vulkan-drivers` + `vulkan-tools`; confirm `vulkaninfo | grep "deviceName"` lists the 5700 XT. Then run Ollama with `OLLAMA_VULKAN=1` (lookup: confirm this env var name — it may instead require a Vulkan-enabled Ollama build; flag as lookup step).
 
@@ -177,7 +180,7 @@ Try in order, stop at first that works:
 Create `/etc/systemd/system/ollama-secondary.service` (needs sudo — user-approved):
 ```
 [Service]
-Environment="ROCR_VISIBLE_DEVICES=1"
+Environment="ROCR_VISIBLE_DEVICES=0"
 Environment="HSA_OVERRIDE_GFX_VERSION=10.1.0"   # or Vulkan equivalent
 Environment="OLLAMA_HOST=127.0.0.1:11435"
 Environment="OLLAMA_FLASH_ATTENTION=0"
