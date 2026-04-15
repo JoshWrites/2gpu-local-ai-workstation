@@ -138,7 +138,7 @@ while systemctl --user is-active --quiet "$CODIUM_UNIT"; do
   sleep 2
 done
 
-# codium stopped → BindsTo causes llama to stop too, but be explicit.
+# codium stopped → stop llama (no systemd reverse-dep; see the unit file).
 systemctl --user stop "$LLAMA_UNIT" 2>/dev/null || true
 
 notify "Second Opinion — stopped" "llama-server stopped, VRAM released."
