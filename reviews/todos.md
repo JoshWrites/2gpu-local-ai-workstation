@@ -10,7 +10,7 @@ it's been addressed in this session.
 
 ---
 
-## Completed in this session
+## Completed
 
 ### P0.1 — Command execution now prompts per-call ✅
 
@@ -21,6 +21,24 @@ auto-approve-execute was on. Roo now prompts for every command
 execution, which matches the intent of the allowlist.
 
 **Source:** code-and-deps review, `alwaysAllowExecute: true` finding.
+
+### P1.2 — Spec filename refs generalized ✅
+
+**Done 2026-04-16 (e52a5ce).** `rules-templates/rules-architect-planning.md`
+and `rules-templates/rules-code-implementation.md` no longer hardcode
+`docs/spec.md` / `docs/plan.md`; they point at the project's plan/spec
+generically (listing `docs/implementation-plan.md` as the typical name).
+
+**Source:** rules review §4 "filename mismatches."
+
+### P1.5 — /health endpoint check hardened ✅
+
+**Done 2026-04-16 (e52a5ce).** `scripts/second-opinion-launch.sh` now
+uses `curl -f` + exit code instead of grepping `'"ok"'` out of the
+body. llama-server returns 503 until ready and 200 when healthy, so
+`-f` gives a robust signal without parsing JSON.
+
+**Source:** code-and-deps review §launch script correctness.
 
 ---
 
@@ -121,19 +139,6 @@ on this repo — I plan by talking to Josh.
 
 **Source:** rules review §2 "templates are inert."
 
-### P1.2 — Spec filename mismatch
-
-**Why.** `rules-templates/rules-architect-planning.md` L6 and
-`.roo/modes/review.yaml` L3 both reference `docs/spec.md`. Our
-authoritative plan is `docs/implementation-plan.md`. Review mode reads
-a spec that doesn't exist.
-
-**Fix.** Update both files to refer to `docs/implementation-plan.md`
-(or a generic phrasing like "the project's plan or spec, typically
-`docs/implementation-plan.md` or `docs/spec.md`").
-
-**Source:** rules review §4 "filename mismatches."
-
 ### P1.3 — Draft model upgrade for Phase 3
 
 **Why.** Community review found
@@ -169,22 +174,6 @@ deps review. Small `scripts/common.sh` with `LLAMA_BIN` and
 
 **Source:** code-and-deps review §primary-llama.sh + bench-startup
 drift finding.
-
-### P1.5 — `/health` endpoint parsing is brittle
-
-**Why.** `second-opinion-launch.sh` checks readiness via
-`grep -q '"ok"'` on the raw HTTP body. Any upstream JSON key change
-breaks it, and it matches any `ok` substring (unlikely in practice but
-ugly).
-
-**Fix.** Pipe through Python:
-`python3 -c 'import sys,json; sys.exit(0 if json.load(sys.stdin).get("status")=="ok" else 1)'`.
-Or use `curl --fail -s` and check exit code — llama-server returns 503
-until ready, 200 when ok.
-
-**Recommendation.** The 503-vs-200 check is simpler and more robust.
-
-**Source:** code-and-deps review §launch script correctness.
 
 ---
 
