@@ -15,7 +15,7 @@
    - `rocminfo | grep -E "Name:|gfx"` — confirm gfx1100 and gfx1010 present.
    - `rocm-smi --showproductname --showmeminfo vram` — confirm both cards visible.
    - **Confirmed device indices on this box (2026-04-15):** GPU 0 = 5700 XT (gfx1010), GPU 1 = 7900 XTX (gfx1100). This is the **opposite** of what the reference guide assumes. All `ROCR_VISIBLE_DEVICES` and `cuda:N` references in this plan use the confirmed ordering.
-   - **Baseline VRAM on 7900 XTX is ~2 GB** — KDE Plasma X11 rendering the desktop. This is expected, not a leak. Leaves ~22 GB for inference, which fits Qwen3.5-27B Q4_K_M + 32K context comfortably.
+   - **Baseline VRAM on 7900 XTX is ~2 GB** — KDE Plasma X11 rendering the desktop. This is expected, not a leak. Leaves ~22 GB for inference, which fits Qwen3-Coder-30B-A3B Q4_K_M + 32K context comfortably.
    - PyTorch verification uses the existing vLLM venv, not system Python:
      `/home/levine/.local/share/vllm-env/bin/python -c "import torch; print(torch.version.hip, torch.cuda.device_count(), [torch.cuda.get_device_name(i) for i in range(torch.cuda.device_count())])"`
      This venv has torch 2.9.1+hip7.0 and is the "when I need torch" environment going forward — no system-wide torch install.
@@ -24,7 +24,7 @@
    - `systemctl is-active ollama.service ollama-gpu0.service ollama-gpu1.service` — all three must report `inactive`. If active, nothing to worry about functionally, but note it so the launch script's stop loop runs instead of starting cold.
    - `ls -la ~/.ollama/ && du -sh ~/.ollama/models` — record model cache contents; these are reusable on the 5700 XT in Phase 2.
 3. **Disk space**
-   - `df -h /` — need ≥ 60 GB free after model downloads (Qwen3.5-27B Q4_K_M ≈ 17 GB, draft 0.5B ≈ 0.5 GB, Phi-4 Mini ≈ 3 GB, build artifacts ≈ 2 GB, headroom for KV save paths and observer store). User reports ~1.1 TB free → pass.
+   - `df -h /` — need ≥ 60 GB free after model downloads (Qwen3-Coder-30B-A3B Q4_K_M ≈ 17 GB, draft 0.5B ≈ 0.5 GB, Phi-4 Mini ≈ 3 GB, build artifacts ≈ 2 GB, headroom for KV save paths and observer store). User reports ~1.1 TB free → pass.
 4. **Kernel / amdgpu boot-hang risk assessment**
    - `uname -r` (expect 6.17.x), `dmesg | grep -iE "amdgpu|drm" | tail -50` — look for prior hang/timeout/ring-reset entries.
    - `cat /etc/default/grub | grep GRUB_CMDLINE` — record current cmdline.
@@ -47,7 +47,7 @@ All six checks pass and outputs captured in `~/second-opinion-backups/pre-phase1
 ## Phase 1 — Core stack on 7900 XTX
 
 ### 1. Goal
-User can say "write and test a trivial Python project" to Roo Code in VSCodium and the agent completes it end-to-end against a local Qwen3.5-27B served by llama-server.
+User can say "write and test a trivial Python project" to Roo Code in VSCodium and the agent completes it end-to-end against a local Qwen3-Coder-30B-A3B served by llama-server.
 
 ### 2. Prerequisites
 - Pre-Phase-1 gate passed.
@@ -64,20 +64,44 @@ Rationale: (a) Phase 2 repurposes Ollama for the 5700 XT on port 11435; the bina
 
 Operational rule: **never `systemctl enable` any ollama*.service on this workstation.** If Ollama is needed, start it for the session only (`systemctl start ollama`) and stop it when done.
 
-**Step 1.1 — Build llama.cpp with ROCm.**
+**Step 1.1 — Install llama.cpp prebuilt.**
+The original plan said "build from source" — the best-practices check found that upstream `ggml-org/llama.cpp` ships daily-tagged Linux ROCm 7.2 prebuilts covering gfx1100 with all required features (`--flash-attn`, `-ctk/-ctv q8_0`, `--jinja`, `--slot-save-path`, `-md`, `--cache-ram`). Building from source would be reinventing a wheel that ships daily. Done 2026-04-15; build `b8799` extracted to `~/src/llama.cpp/llama-b8799/`.
+
 ```bash
-mkdir -p ~/src && cd ~/src
-git clone https://github.com/ggml-org/llama.cpp
-cd llama.cpp
-cmake -B build -DGGML_HIP=ON -DAMDGPU_TARGETS=gfx1100 -DCMAKE_BUILD_TYPE=Release
-cmake --build build --config Release -j$(nproc)
+mkdir -p ~/src/llama.cpp && cd ~/src/llama.cpp
+LATEST=$(curl -s https://api.github.com/repos/ggml-org/llama.cpp/releases/latest | grep -oP '"tag_name":\s*"\K[^"]+')
+ASSET="llama-${LATEST}-bin-ubuntu-rocm-7.2-x64.tar.gz"
+curl -fL -o "$ASSET" "https://github.com/ggml-org/llama.cpp/releases/download/${LATEST}/${ASSET}"
+tar xzf "$ASSET"
+# Binaries are in ./<tag>/ (flat layout, not build/bin/).
+./${LATEST}/llama-server --version   # verify
 ```
-Flag as lookup: exact CMake flag for `--cram`/host-memory prefix cache is recent — inspect `build/bin/llama-server --help | grep -iE "cram|cache-ram"` after build to confirm flag name in the installed version.
 
-**Step 1.2 — Download Qwen3.5-27B text-only GGUF.**
-Lookup: exact HF repo path for Qwen3.5-27B text-only Q4_K_M GGUF is not known at plan time. Use `huggingface-cli` to search: `huggingface-cli search Qwen3.5-27B gguf`. Pick the repo explicitly marked text-only (no `mmproj` file) to sidestep the multimodal slot-save bug. Download to `~/models/qwen3.5-27b-text-q4_k_m.gguf`.
+**`-cram` / `--cache-ram` is default-on at 8192 MiB.** This confirms the Phase 4 aspect-server concept is largely unnecessary: llama-server automatically keeps recent prefixes in host RAM and hot-swaps them on cache hit. Manual slot save/restore is only needed for cross-session disk persistence, not for "aspect switching" within a session.
 
-Also download draft model (for Phase 3, but convenient to get now): `Qwen2.5-Coder-0.5B-Instruct-Q8_0.gguf` → `~/models/`.
+**Step 1.2 — Download Qwen3-Coder-30B-A3B-Instruct Q4_K_M GGUF.**
+
+Model choice was re-researched after catching that the reference guide's original pick (Qwen3.5-27B Dense) has two open llama.cpp bugs hitting our exact workload: #21383 (ROCm illegal-memory-access crash on agentic tool calls with quantized KV) and #20225 (full reprocess every turn on multi-turn, turning 15K-token conversations into 8-minute waits). Qwen3-Coder-30B-A3B wins on: fits cleanly at Q4_K_M (~18 GB), 3B active params → 40+ t/s on 7900 XTX, mature tool-calling template with Unsloth fixes landed Aug 2025, dominant real-world use in r/LocalLLaMA 7900 XTX + ROCm threads.
+
+Rejected alternatives with evidence:
+- **Qwen3-Coder-Next 80B-A3B (Feb 2026)** — only IQ2/IQ3 fits 24 GB; quality degrades sharply at those quants. Active bugs #19430, #19908 (tool-call crashes, cache stall).
+- **GLM-4.7-Flash (Dec 2025)** — #19068 (grammar loop + gibberish with `--jinja`), #19307 (breaks with flash-attention), unsloth #3913 (`--jinja` fails on ROCm). Same failure-mode class as the Qwen3.5-27B bugs.
+- **Gemma 4 26B-A4B (Apr 2026)** — 13 days old at plan time. #21726 `-nkvo` regression on b8799. Revisit in ~30 days.
+- **Codestral 25.08** — non-production license, not viable for sustained agent work.
+- **DeepSeek V3.2 / Llama 4 Maverick** — don't fit 24 GB.
+
+Source: **`unsloth/Qwen3-Coder-30B-A3B-Instruct-GGUF`** (has the post-Aug-2025 chat-template fixes baked in). `bartowski` mirror is the alternate.
+
+```bash
+mkdir -p ~/models
+huggingface-cli download unsloth/Qwen3-Coder-30B-A3B-Instruct-GGUF \
+  --include "*Q4_K_M*" \
+  --local-dir ~/models/qwen3-coder-30b-a3b
+```
+
+Verify on completion: `ls -lh ~/models/qwen3-coder-30b-a3b/` should show one `*Q4_K_M*.gguf` around 18 GB.
+
+Draft model for Phase 3 speculative decoding: must share tokenizer with Qwen3-Coder-30B-A3B. The reference guide's suggestion (Qwen2.5-Coder-0.5B) is wrong tokenizer family — defer the draft-model pick to Phase 3 with a dedicated lookup for a Qwen3-family small model with matching tokenizer.
 
 **Step 1.3 — Write launch script `scripts/primary-llama.sh`.**
 Stops any running Ollama unit (defensive — none should be running after boot cleanup), launches llama-server in the foreground, and does NOT restart Ollama on exit (the boot cleanup intentionally disabled all three ollama*.service units; we honor that).
@@ -100,8 +124,8 @@ mkdir -p /tmp/aspects
 HSA_OVERRIDE_GFX_VERSION=11.0.0 \
 GPU_MAX_HEAP_SIZE=100 \
 GPU_MAX_ALLOC_PERCENT=100 \
-exec ~/src/llama.cpp/build/bin/llama-server \
-  -m ~/models/qwen3.5-27b-text-q4_k_m.gguf \
+exec ~/src/llama.cpp/llama-b8799/llama-server \
+  -m ~/models/qwen3-coder-30b-a3b/*Q4_K_M*.gguf \
   -ngl 99 \
   -c 32768 \
   --flash-attn \
@@ -116,9 +140,19 @@ Phase 1 intentionally omits `-md` / `-devd none` / `--draft-max` — those are P
 `exec` replaces the shell with llama-server so Ctrl+C goes straight to the server and there's no lingering bash wrapper. No `trap` needed since we deliberately don't resurrect Ollama on exit.
 
 **Step 1.4 — Install VSCodium + Roo Code.**
-- VSCodium: Ubuntu has it via `apt` (after adding their repo) or Flatpak. Lookup: confirm current install method preference.
-- Roo Code: install from Open VSX inside VSCodium (search "Roo Code") or sideload VSIX.
+
+IDE + extension choice was re-verified across three research passes (Apr 2026): Roo Code in VSCodium still wins over VS Code-extension alternatives (Cline, Kilo Code, Continue.dev), all-in-one editors (Cursor, Windsurf, Void, Zed), other IDE hosts (JetBrains + Roo Code (CE) via bridge, JetBrains ProxyAI, Neovim agentic plugins, Emacs gptel-agent, Theia, Helix, Sublime), and standalone agent CLIs (Aider, Qwen Code, OpenHands, goose). No alternative matches the mode-system + rules + memory-bank + allowlist/denylist + MCP combination for a non-coder directing agents. **Rollback path if Roo regresses:** Kilo Code is ~80% config-compatible, drop-in replacement in the same VSCodium host (~10 min swap).
+
+Known Roo open issues affecting our stack and the mitigations baked in here:
+- **#10780** — Qwen3-Coder-30B-A3B tool call failures on llama.cpp. Mitigation: use Unsloth's GGUF (fixed template) + `--jinja`.
+- **#11482** — tool calls applied only at end-of-generation, timing out on long responses. Mitigation: raise Roo's API timeout generously; fall back to XML tool mode if native fails.
+- **#10541** — LM Studio regression in Roo 3.37+. Not us (we're on llama.cpp), but a signal the native tool-call path is fragile. Mitigation: pin Roo version after verifying it works; hold auto-updates past minor bumps.
+
+Steps:
+- VSCodium: install via the vscodium.com APT repo (Flatpak is fine but the APT path is simpler to maintain with `unattended-upgrades`). Lookup: confirm current vscodium.com install recipe for noble.
+- Roo Code: install from Open VSX inside VSCodium (search "Roo Code"). Record the installed version in `docs/phase-notes/phase1-software-versions.md` after install.
 - Configure provider: "OpenAI Compatible", Base URL `http://localhost:11434/v1`, Model name = GGUF filename stem.
+- **Set a generous API timeout** (≥ 5 minutes) to sidestep #11482 symptoms on long tool-call responses.
 - Apply auto-approve settings per reference-guide Part 5 (reads on, writes on with 2000 ms delay, mode switch on, subtasks on, terminal allowlist/denylist as specified, request limit 70).
 
 **Step 1.5 — Scaffold rules and memory bank in `second-opinion` repo.**
@@ -132,25 +166,27 @@ Create (agent writes, not this plan):
 **Step 1.7 — End-to-end smoke test.** In a scratch directory, ask Roo Code (Code mode) to: "Create a Python project with a function that reverses a string, add pytest tests, run them, and commit." Observe entire flow unattended save for terminal-command approvals (or pre-approved via allowlist).
 
 ### 4. Success checkpoints
-- `curl -s http://127.0.0.1:11434/v1/models | jq '.data[].id'` returns the Qwen3.5-27B model id.
+- `curl -s http://127.0.0.1:11434/v1/models | jq '.data[].id'` returns the Qwen3-Coder-30B-A3B model id.
 - `curl -s http://127.0.0.1:11434/v1/chat/completions -d '{"model":"<id>","messages":[{"role":"user","content":"say hi"}]}' -H 'Content-Type: application/json'` returns a completion.
 - `rocm-smi` during generation shows 7900 XTX VRAM at ~17–18 GB and GPU utilization spike.
 - Smoke test completes: tests pass, git commit made, total wall time < 3 minutes after model is loaded.
-- Generation benchmarks at ≥ 18 t/s on a 500-token completion (native, no spec decode yet). Measure via llama-server logs or the `--verbose` timing output.
-- `POST /slots/0/save?filename=test.bin` succeeds and `/tmp/aspects/test.bin` exists and is > 0 bytes (text-only GGUF mitigates the multimodal slot bug).
+- Generation benchmarks at ≥ 30 t/s on a 500-token completion (Qwen3-Coder-30B-A3B is 3B-active MoE, should easily clear 30 t/s; community reports 40+ on 7900 XTX). Measure via llama-server logs or the `--verbose` timing output.
+- `POST /slots/0/save?filename=test.bin` succeeds and `/tmp/aspects/test.bin` exists and is > 0 bytes. **Note:** `-cram` already provides automatic in-memory prefix caching at 8192 MiB by default, so slot-save here is only validating the disk-persistence path for future cross-session resume — not load-bearing for Phase 1's core functionality.
+- Roo Code completes at least one 3-file agentic task end-to-end without hitting tool-call timeout (#11482) or tool-call failure (#10780).
 
 ### 5. Failure modes and recovery
-- **llama.cpp ROCm build fails (hipcc missing / header mismatch).** → Install `rocm-hip-sdk` (lookup exact package), rerun. If still failing, try building with `-DGGML_HIPBLAS=ON` fallback flag (lookup: currently supported flag name varies by version).
+- **Prebuilt tarball fails to launch (ROCm symbol mismatch).** → Verify host ROCm is 7.x with `dpkg -l | grep hip-runtime`. If it's 6.x, either upgrade ROCm (reboot risk, weigh carefully) or fall back to the build-from-source path against the installed version. Already confirmed 7.2 on this host 2026-04-15.
 - **llama-server starts but crashes on first completion.** → Check `HSA_OVERRIDE_GFX_VERSION=11.0.0` is set; check dmesg for ring timeouts; drop `--flash-attn` as first mitigation.
-- **Slot-save returns error even with text-only GGUF.** → Confirm no `mmproj` in the GGUF (`llama-server --help` + inspect model metadata via `llama-gguf`); if bug persists, disable slot save for Phase 1 (drop `--slot-save-path`), defer to Phase 4 `--cram` approach.
+- **Slot-save returns error.** → Not blocking — `-cram` handles the in-session case automatically. Drop `--slot-save-path` and continue. Revisit when we want cross-session disk persistence.
 - **Roo Code cannot see the server.** → Verify base URL includes `/v1`; test with `curl` first; check Roo Code's "API Provider" is exactly "OpenAI Compatible" not "Ollama".
-- **VRAM OOM at model load.** → Drop `-c 32768` to `-c 16384`; if still OOM, confirm Ollama is actually stopped (`rocm-smi` shows 0 MB used before launch).
-- **Generation < 10 t/s.** → Check for layer spillover in log ("offloaded X/Y layers"); verify `-ngl 99` was honored; inspect `--numa` effect.
-- **Agent loops or produces garbage.** → Rules file not loaded — check `~/.roo/rules/personal.md` path; check `--jinja` flag present; drop temperature to 0.3.
+- **Roo tool calls fail / time out (issues #10780, #11482).** → First: confirm Unsloth GGUF (not bartowski or custom quant) and `--jinja` is active. Second: raise Roo API timeout to 10+ minutes. Third: switch Roo to XML tool mode. Fourth: hot-swap to Kilo Code.
+- **VRAM OOM at model load.** → Drop `-c 32768` to `-c 16384`; if still OOM, confirm Ollama is actually stopped (`rocm-smi` shows baseline ~2 GB KDE desktop usage only on GPU 1 before launch).
+- **Generation < 20 t/s on a 3B-active MoE.** → Check for layer spillover in log ("offloaded X/Y layers"); verify `-ngl 99` was honored; inspect `--numa` effect. 3B-active MoE should not drop below 20 t/s on 7900 XTX.
+- **Agent loops or produces garbage.** → Rules file not loaded — check `~/.roo/rules/personal.md` path; check `--jinja` flag present; drop temperature to 0.3. Also check the Qwen3-Coder chat template is current (Unsloth fixed template, Aug 2025).
 
 ### 6. Abort criteria
-- llama.cpp ROCm build fails twice after two remediation attempts within 2 hours → abort Phase 1, reassess (consider prebuilt binary from llama.cpp releases).
-- Slot-save fundamentally broken on text-only GGUF and blocks Roo Code flow → abort the slot-save portion only, continue the rest of Phase 1.
+- Prebuilt llama.cpp tarball fails to launch after ROCm version confirmed compatible, and source build also fails twice within 2 hours → abort Phase 1, reassess.
+- Roo Code cannot complete a basic 3-file agentic task even with Unsloth template + `--jinja` + extended timeout + Kilo Code fallback → abort, revisit model choice (the research flagged Gemma 4 26B-A4B as revisit-in-30-days; may be the fallback).
 - 7900 XTX exhibits ring timeouts / driver hangs during inference → stop, do not reboot without explicit user decision; capture dmesg and stop.
 
 ### 7. Time budget
@@ -252,7 +288,7 @@ The agent generates noticeably faster on code tasks AND the GPU never waits for 
 
 ### 2. Prerequisites
 - Phases 1 and 2 stable.
-- Draft model `Qwen2.5-Coder-0.5B-Instruct-Q8_0.gguf` already downloaded in Phase 1.
+- A Qwen3-family draft model with matching tokenizer identified and downloaded (deferred from Phase 1 — reference guide's suggestion Qwen2.5-Coder-0.5B is wrong tokenizer family for Qwen3-Coder-30B-A3B).
 - `pytest`, `ruff`, `mypy`, `watchdog` (Python) available system-wide or in a venv.
 
 ### 3. Concrete steps
@@ -300,7 +336,7 @@ Run a fixed 5-file refactor task twice: once with validation runner off (agent r
 - End-to-end: asking the agent to build a 5-file Python project with tests completes without the agent ever saying "waiting for tests" or running pytest sequentially in terminal.
 
 ### 5. Failure modes and recovery
-- **Draft model fails to load ("architecture mismatch" or similar).** → Qwen2.5-Coder-0.5B and Qwen3.5-27B must share tokenizer/vocab for spec decode. If they don't, switch to Qwen3-family 0.5B draft (lookup: confirm available draft model matching Qwen3.5-27B's tokenizer — possibly the guide's advice is now stale and a Qwen3 draft is required).
+- **Draft model fails to load ("architecture mismatch" or similar).** → Draft and primary must share tokenizer/vocab. Qwen2.5-Coder-0.5B from the original reference guide is the wrong tokenizer family. Use the Qwen3-family draft identified in Phase 3 prerequisites.
 - **Spec-decode throughput is neutral or negative.** → Acceptance rate < 30% means the draft isn't predicting well. Check log for acceptance stats; lower `--draft-max` to 8; if still bad, disable and accept native rate.
 - **Validation runner fires too often / thrashes CPU.** → Increase debounce to 1500 ms; ignore `__pycache__/` and `.venv/` via watchdog patterns.
 - **`.validation/results.json` write races.** → Write to `.validation/results.json.tmp` then `os.replace()` — atomic on POSIX.
@@ -372,7 +408,7 @@ systemd/
 Not added to the repo but created on the system (outside repo):
 - `~/.roo/rules/personal.md`
 - `~/.observer/index.md` and `~/.observer/refs/`
-- `~/models/qwen3.5-27b-text-q4_k_m.gguf`, `~/models/qwen2.5-coder-0.5b-q8_0.gguf`
+- `~/models/qwen3-coder-30b-a3b/` (Qwen3-Coder-30B-A3B-Instruct Q4_K_M via Unsloth) and a Qwen3-family draft model TBD in Phase 3
 - `/etc/systemd/system/ollama-secondary.service` (copied from repo)
 - `~/second-opinion-backups/pre-phase1/` (backup of pre-existing Ollama state)
 
@@ -383,9 +419,9 @@ Not added to the repo but created on the system (outside repo):
 These are items the plan could not resolve without web/package introspection and must be confirmed at execution time, not assumed:
 
 1. Exact Ubuntu 24.04 package names providing `hipcc` and HIP dev headers under current ROCm release.
-2. `llama-server`'s `--cram` / `--cache-ram` flag name and default in the built version (relevant for Phase 4 foreshadowing; not blocking for Phases 1–3).
-3. HuggingFace repo path for Qwen3.5-27B text-only Q4_K_M GGUF.
-4. HuggingFace / Ollama tag for Qwen2.5-Coder-0.5B-Instruct Q8_0 GGUF and confirmation its tokenizer matches Qwen3.5-27B (required for spec decode to work at all).
+2. ~~`llama-server`'s `--cram` / `--cache-ram` flag name and default~~ **Resolved 2026-04-15:** `--cache-ram` / `-cram`, default 8192 MiB, process-lifetime automatic prefix caching. Complements `--slot-save-path` (disk persistence), does not replace. Text-only models only; incompatible with mtmd.
+3. HuggingFace repo path for Qwen3-Coder-30B-A3B text-only Q4_K_M GGUF.
+4. Qwen3-family small draft model with tokenizer matching Qwen3-Coder-30B-A3B (required for speculative decoding to work). The reference guide's Qwen2.5-Coder-0.5B suggestion is incompatible; lookup a Qwen3-family alternative in Phase 3.
 5. Ollama tag string for Phi-4 Mini 3.8B Q5_K_M on the Ollama registry.
 6. Ollama Vulkan activation mechanism on current version — env var vs. separate build.
 7. Roo Code conversation export / storage location in the installed VSCodium extension.
