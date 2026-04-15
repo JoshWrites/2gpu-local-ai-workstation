@@ -1,0 +1,42 @@
+# Model weights — never commit
+*.gguf
+*.bin
+*.safetensors
+models/
+
+# KV cache dumps
+*.kv
+aspects/
+.slots/
+
+# Python
+__pycache__/
+*.py[cod]
+*.egg-info/
+.venv/
+venv/
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+
+# Node / VSCodium extension build artifacts
+node_modules/
+dist/
+*.vsix
+
+# Editor / OS
+.vscode/
+.idea/
+.DS_Store
+*.swp
+
+# Logs and local state
+*.log
+logs/
+.observer/refs/    # deep store — large, regenerable
+!.observer/index.md
+
+# Secrets
+.env
+.env.*
+!.env.example
