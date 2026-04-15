@@ -161,7 +161,7 @@ Create (agent writes, not this plan):
 - `rules-templates/project.md`, `rules-templates/rules-code-implementation.md`, `rules-templates/rules-architect-planning.md`, `rules-templates/rules-code-memory.md` — template copies for new projects.
 - `memory-bank-template/` directory with empty `productContext.md`, `activeContext.md`, `progress.md`, `decisionLog.md`, `systemPatterns.md`.
 
-**Step 1.6 — Custom modes.** Add Review and Spec modes per reference-guide Part 5 via Roo Code's mode UI (exported to `~/.roo/custom_modes.yaml` — lookup: confirm exact filename/location in installed Roo Code version).
+**Step 1.6 — Custom modes.** Inventory of Roo 3.52.1 built-ins (Code, Architect, Ask, Debug, Orchestrator) showed the reference guide's "Spec" mode is functionally identical to Architect (ask-clarify + markdown-only edits). Spec mode dropped; Architect used in its place. Review has no built-in equivalent — kept as the one custom mode, read-only, at `.roo/modes/review.yaml`. Install via `scripts/install-roo-modes.sh`, which idempotently merges the repo's `.roo/modes/*.yaml` into the isolated VSCodium's `custom_modes.yaml`.
 
 **Step 1.7 — End-to-end smoke test.** In a scratch directory, ask Roo Code (Code mode) to: "Create a Python project with a function that reverses a string, add pytest tests, run them, and commit." Observe entire flow unattended save for terminal-command approvals (or pre-approved via allowlist).
 

@@ -25,7 +25,7 @@ GPU_MAX_ALLOC_PERCENT=100 \
 exec ~/src/llama.cpp/llama-b8799/llama-server \
   -m ~/models/qwen3-coder-30b-a3b/*Q4_K_M*.gguf \
   -ngl 99 \
-  -c 32768 \
+  -c 65536 \
   --flash-attn on \
   -ctk q8_0 -ctv q8_0 \
   --jinja \

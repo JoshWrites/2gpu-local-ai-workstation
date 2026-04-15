@@ -1,7 +1,21 @@
-# Code mode — implementation rules (template)
+# Code mode rules template
 
-Rules that apply when Roo Code's Code mode is writing or modifying code.
+Copy to `<project-root>/.roo/rules-code/implementation.md`. Applies only
+when Roo is in **Code** mode.
 
-TODO: Populate with implementation conventions — error-handling posture,
-dependency-add policy, test-alongside-change requirement, formatting tool,
-when to stop and ask vs proceed.
+- Read the spec (`docs/spec.md`) and the plan (`docs/plan.md`) if either
+  exists before writing code. Note their absence and proceed — do not
+  fabricate one.
+- Do not modify spec or plan files from Code mode. If you spot an issue,
+  add a brief `TODO(spec):` comment where you hit it and keep going.
+- After each file is written or meaningfully edited, run the project's
+  test command (e.g. `pytest`, `go test ./...`). Fix failures before
+  moving on unless the user has explicitly told you to defer.
+- Commit after each logical unit of work. Use the project's convention
+  (default: `feat: …` / `fix: …` / `chore: …`).
+- Prefer the standard library. If a dependency is necessary, prefer a
+  well-maintained package and record the choice in
+  `memory-bank/decisionLog.md`.
+- Python: type hints on public signatures; docstrings on public functions.
+- No comments that merely restate the code. Comments are for non-obvious
+  *why*, not *what*.
