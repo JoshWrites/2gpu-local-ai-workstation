@@ -24,9 +24,9 @@ exec "$VULKAN_BIN" \
   -m "$MODEL_GGUF" \
   --device Vulkan0 \
   -ngl 99 \
-  -c 65536 \
+  -c 131072 \
   --flash-attn on \
-  -ctk q8_0 -ctv q8_0 \
+  -ctk q4_0 -ctv q4_0 \
   --jinja \
   --slot-save-path /tmp/aspects/ \
   --numa distribute \
