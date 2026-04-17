@@ -70,7 +70,7 @@ TBD this commit. Stack rank for discussion:
 ## Bookkeeping
 
 - Homelab-backups repo init commit: `a1e8c38`
-- This baseline commit: `(commit hash of this doc's commit)`
+- This baseline commit: `d1e73ae` (tagged `experiment-set-2-baseline`)
 - Snapshot label: `pre-test2-setup-2026-04-17`
 - SearxNG service: `searxng.service` (user), verified responsive
   2026-04-17 ~23:05 IDT
