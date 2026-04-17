@@ -1,0 +1,24 @@
+[Unit]
+Description=SearxNG metasearch (workstation-local, for agentic tooling)
+Documentation=https://docs.searxng.org/
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=simple
+Environment="SEARXNG_SETTINGS_PATH=%h/Documents/services/searxng/etc/settings.yml"
+# Run the dev server (granian/werkzeug). For loopback-only personal use this is
+# fine; no uWSGI required. If load ever matters, swap to granian with workers.
+ExecStart=%h/Documents/services/searxng/venv/bin/python -m searx.webapp
+WorkingDirectory=%h/Documents/services/searxng/src
+Restart=on-failure
+RestartSec=5
+# Lightweight sandboxing (user-service scope)
+PrivateTmp=yes
+NoNewPrivileges=yes
+ProtectSystem=strict
+ProtectHome=read-only
+ReadWritePaths=%h/Documents/services/searxng
+
+[Install]
+WantedBy=default.target

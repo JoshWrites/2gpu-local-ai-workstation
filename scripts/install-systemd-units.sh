@@ -15,6 +15,7 @@ SYSCTL_DST="/etc/sysctl.d/60-apparmor-namespace.conf"
 mkdir -p "$UNIT_DST"
 install -m 0644 "$UNIT_SRC/codium-second-opinion.service" "$UNIT_DST/"
 install -m 0644 "$UNIT_SRC/llama-second-opinion.service" "$UNIT_DST/"
+install -m 0644 "$UNIT_SRC/searxng.service" "$UNIT_DST/"
 systemctl --user daemon-reload
 
 # sysctl: Ubuntu 24.04 restricts unprivileged user namespaces by default,
@@ -28,4 +29,5 @@ fi
 echo "Installed:"
 echo "  $UNIT_DST/codium-second-opinion.service"
 echo "  $UNIT_DST/llama-second-opinion.service"
+echo "  $UNIT_DST/searxng.service"
 echo "  $SYSCTL_DST"
