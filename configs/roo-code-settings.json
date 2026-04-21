@@ -10,7 +10,7 @@
         "apiProvider": "openai",
         "id": "pz1bp6bx2ij",
         "openAiCustomModelInfo": {
-          "contextWindow": 32768,
+          "contextWindow": 65536,
           "maxTokens": 8192,
           "supportsImages": false,
           "supportsPromptCache": false,
