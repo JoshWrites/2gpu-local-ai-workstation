@@ -1,0 +1,2651 @@
+{
+  "schema_source": "STAC linguistic-only JSON format",
+  "schema_doc": "STAC json format.pdf (bundled with corpus)",
+  "dialogue_id": "331_s1_league1_game4_1",
+  "dialogue": {
+    "dialogue_id": "331_s1_league1_game4_1",
+    "edus": [
+      {
+        "seg_id": "s1_league1_game4_01_stac_1369334134",
+        "turn_id": 3743.0,
+        "turn_no": 0,
+        "speaker": "gotwood4sheep",
+        "text": "Hey LJ!",
+        "addressee": "ljaybrad123",
+        "span_end": 28.0
+      },
+      {
+        "seg_id": "s1_league1_game4_01_stac_1369334137",
+        "turn_id": 3744.0,
+        "turn_no": 1,
+        "speaker": "ljaybrad123",
+        "text": "hi :D",
+        "addressee": "gotwood4sheep",
+        "span_end": 52.0
+      },
+      {
+        "seg_id": "s1_league1_game4_01_stac_1369334140",
+        "turn_id": 3745.0,
+        "turn_no": 2,
+        "speaker": "ljaybrad123",
+        "text": "how are you?",
+        "addressee": "gotwood4sheep",
+        "span_end": 83.0
+      },
+      {
+        "seg_id": "s1_league1_game4_01_stac_1369334143",
+        "turn_id": 3746.0,
+        "turn_no": 3,
+        "speaker": "gotwood4sheep",
+        "text": "having the best midsummer evar",
+        "addressee": "ljaybrad123",
+        "span_end": 134.0
+      },
+      {
+        "seg_id": "s1_league1_game4_01_stac_1369334146",
+        "turn_id": 3747.0,
+        "turn_no": 4,
+        "speaker": "gotwood4sheep",
+        "text": "the longest day of rain of the year",
+        "addressee": "ljaybrad123",
+        "span_end": 190.0
+      },
+      {
+        "seg_id": "s1_league1_game4_01_stac_1369334149",
+        "turn_id": 3748.0,
+        "turn_no": 5,
+        "speaker": "ljaybrad123",
+        "text": "nice",
+        "addressee": "gotwood4sheep",
+        "span_end": 213.0
+      },
+      {
+        "seg_id": "s1_league1_game4_01_stac_1369334152",
+        "turn_id": 3749.0,
+        "turn_no": 6,
+        "speaker": "ljaybrad123",
+        "text": "though technically it was yesterday",
+        "addressee": "gotwood4sheep",
+        "span_end": 267.0
+      },
+      {
+        "seg_id": "s1_league1_game4_01_stac_1369334155",
+        "turn_id": 3750.0,
+        "turn_no": 7,
+        "speaker": "ljaybrad123",
+        "text": "it fell on the 20th this year which was odd",
+        "addressee": "gotwood4sheep",
+        "span_end": 329.0
+      },
+      {
+        "seg_id": "s1_league1_game4_01_stac_1369334158",
+        "turn_id": 3751.0,
+        "turn_no": 8,
+        "speaker": "gotwood4sheep",
+        "text": "indeed, at least it was mostly sunny",
+        "addressee": "ljaybrad123",
+        "span_end": 386.0
+      },
+      {
+        "seg_id": "s1_league1_game4_01_stac_1369334161",
+        "turn_id": 3752.0,
+        "turn_no": 9,
+        "speaker": "gotwood4sheep",
+        "text": "today has been driech",
+        "addressee": "ljaybrad123",
+        "span_end": 429.0
+      },
+      {
+        "seg_id": "s1_league1_game4_01_stac_1369334164",
+        "turn_id": 3753.0,
+        "turn_no": 10,
+        "speaker": "gotwood4sheep",
+        "text": "waiting on tomas now and william about 8.15, right?",
+        "addressee": "ljaybrad123",
+        "span_end": 502.0
+      },
+      {
+        "seg_id": "s1_league1_game4_01_stac_1369334167",
+        "turn_id": 3754.0,
+        "turn_no": 11,
+        "speaker": "ljaybrad123",
+        "text": "yesh",
+        "addressee": "gotwood4sheep",
+        "span_end": 526.0
+      },
+      {
+        "seg_id": "s1_league1_game4_01_stac_1369334170",
+        "turn_id": 3755.0,
+        "turn_no": 12,
+        "speaker": "ljaybrad123",
+        "text": "how did tuesdays game go?",
+        "addressee": "gotwood4sheep",
+        "span_end": 571.0
+      },
+      {
+        "seg_id": "s1_league1_game4_01_stac_1369334173",
+        "turn_id": 3756.0,
+        "turn_no": 13,
+        "speaker": "gotwood4sheep",
+        "text": "fine, pretty quick",
+        "addressee": "ljaybrad123",
+        "span_end": 611.0
+      },
+      {
+        "seg_id": "s1_league1_game4_01_stac_1369334176",
+        "turn_id": 3757.0,
+        "turn_no": 14,
+        "speaker": "ljaybrad123",
+        "text": "gdgd",
+        "addressee": "gotwood4sheep",
+        "span_end": 635.0
+      },
+      {
+        "seg_id": "s1_league1_game4_01_stac_1369334179",
+        "turn_id": 3758.0,
+        "turn_no": 15,
+        "speaker": "ljaybrad123",
+        "text": "who won?",
+        "addressee": "gotwood4sheep",
+        "span_end": 663.0
+      },
+      {
+        "seg_id": "s1_league1_game4_01_stac_1369334182",
+        "turn_id": 3759.0,
+        "turn_no": 16,
+        "speaker": "gotwood4sheep",
+        "text": "i deed",
+        "addressee": "ljaybrad123",
+        "span_end": 691.0
+      },
+      {
+        "seg_id": "s1_league1_game4_01_stac_1369334185",
+        "turn_id": 3760.0,
+        "turn_no": 17,
+        "speaker": "ljaybrad123",
+        "text": "nice",
+        "addressee": "gotwood4sheep",
+        "span_end": 715.0
+      },
+      {
+        "seg_id": "s1_league1_game4_01_stac_1369334188",
+        "turn_id": 3761.0,
+        "turn_no": 18,
+        "speaker": "ljaybrad123",
+        "text": "well done",
+        "addressee": "gotwood4sheep",
+        "span_end": 744.0
+      },
+      {
+        "seg_id": "s1_league1_game4_01_stac_1369334191",
+        "turn_id": 3762.0,
+        "turn_no": 19,
+        "speaker": "gotwood4sheep",
+        "text": "lucky",
+        "addressee": "ljaybrad123",
+        "span_end": 771.0
+      },
+      {
+        "seg_id": "s1_league1_game4_01_stac_1369334194",
+        "turn_id": 3763.0,
+        "turn_no": 20,
+        "speaker": "gotwood4sheep",
+        "text": "william kept rolling 7s",
+        "addressee": "ljaybrad123",
+        "span_end": 816.0
+      },
+      {
+        "seg_id": "s1_league1_game4_01_stac_1369334195",
+        "turn_id": 3763.0,
+        "turn_no": 20,
+        "speaker": "gotwood4sheep",
+        "text": "whenever he was >7 resources",
+        "addressee": "ljaybrad123",
+        "span_end": 845.0
+      },
+      {
+        "seg_id": "s1_league1_game4_01_stac_1369334198",
+        "turn_id": 3764.0,
+        "turn_no": 21,
+        "speaker": "ljaybrad123",
+        "text": ":(",
+        "addressee": "gotwood4sheep",
+        "span_end": 867.0
+      },
+      {
+        "seg_id": "s1_league1_game4_01_stac_1369334201",
+        "turn_id": 3765.0,
+        "turn_no": 22,
+        "speaker": "gotwood4sheep",
+        "text": "and more 8s came up than 6s when i only had 8s",
+        "addressee": "ljaybrad123",
+        "span_end": 935.0
+      },
+      {
+        "seg_id": "s1_league1_game4_01_stac_1369334204",
+        "turn_id": 3766.0,
+        "turn_no": 23,
+        "speaker": "ljaybrad123",
+        "text": "we had soooo many 7s last game",
+        "addressee": "gotwood4sheep",
+        "span_end": 985.0
+      },
+      {
+        "seg_id": "s1_league1_game4_01_stac_1369334207",
+        "turn_id": 3767.0,
+        "turn_no": 24,
+        "speaker": "gotwood4sheep",
+        "text": "lol annoyyying",
+        "addressee": "ljaybrad123",
+        "span_end": 1021.0
+      },
+      {
+        "seg_id": "s1_league1_game4_01_stac_1369334210",
+        "turn_id": 3768.0,
+        "turn_no": 25,
+        "speaker": "ljaybrad123",
+        "text": "i think 7 7s in a row",
+        "addressee": "gotwood4sheep",
+        "span_end": 1062.0
+      },
+      {
+        "seg_id": "s1_league1_game4_01_stac_1369334213",
+        "turn_id": 3769.0,
+        "turn_no": 26,
+        "speaker": "gotwood4sheep",
+        "text": "wow crazy",
+        "addressee": "ljaybrad123",
+        "span_end": 1093.0
+      },
+      {
+        "seg_id": "s1_league1_game4_01_stac_1369334216",
+        "turn_id": 3770.0,
+        "turn_no": 27,
+        "speaker": "gotwood4sheep",
+        "text": "come on tom",
+        "addressee": "ljaybrad123, tomas.kostan",
+        "span_end": 1126.0
+      },
+      {
+        "seg_id": "s1_league1_game4_01_stac_1369334219",
+        "turn_id": 3771.0,
+        "turn_no": 28,
+        "speaker": "gotwood4sheep",
+        "text": "where's he at",
+        "addressee": "ljaybrad123",
+        "span_end": 1161.0
+      },
+      {
+        "seg_id": "s1_league1_game4_01_stac_1369334222",
+        "turn_id": 3772.0,
+        "turn_no": 29,
+        "speaker": "ljaybrad123",
+        "text": "no idea...",
+        "addressee": "gotwood4sheep",
+        "span_end": 1191.0
+      },
+      {
+        "seg_id": "s1_league1_game4_01_stac_1369334225",
+        "turn_id": 3773.0,
+        "turn_no": 30,
+        "speaker": "gotwood4sheep",
+        "text": "how long shall we give him?",
+        "addressee": "ljaybrad123",
+        "span_end": 1240.0
+      },
+      {
+        "seg_id": "s1_league1_game4_01_stac_1369334228",
+        "turn_id": 3774.0,
+        "turn_no": 31,
+        "speaker": "gotwood4sheep",
+        "text": "or shall we camp on the server till 8.15!",
+        "addressee": "ljaybrad123",
+        "span_end": 1303.0
+      },
+      {
+        "seg_id": "s1_league1_game4_01_stac_1369334231",
+        "turn_id": 3775.0,
+        "turn_no": 32,
+        "speaker": "ljaybrad123",
+        "text": "erm...",
+        "addressee": "gotwood4sheep",
+        "span_end": 1329.0
+      },
+      {
+        "seg_id": "s1_league1_game4_01_stac_1369334234",
+        "turn_id": 3776.0,
+        "turn_no": 33,
+        "speaker": "ljaybrad123",
+        "text": "unless the second game happens early it doesnt bother me...",
+        "addressee": "gotwood4sheep",
+        "span_end": 1408.0
+      },
+      {
+        "seg_id": "s1_league1_game4_01_stac_1369334237",
+        "turn_id": 3777.0,
+        "turn_no": 34,
+        "speaker": "ljaybrad123",
+        "text": "i might return to minecraft though...",
+        "addressee": "gotwood4sheep",
+        "span_end": 1465.0
+      },
+      {
+        "seg_id": "s1_league1_game4_01_stac_1369334238",
+        "turn_id": 3777.0,
+        "turn_no": 34,
+        "speaker": "ljaybrad123",
+        "text": "I kinda just caught the bug",
+        "addressee": "gotwood4sheep",
+        "span_end": 1493.0
+      },
+      {
+        "seg_id": "s1_league1_game4_01_stac_1369334241",
+        "turn_id": 3778.0,
+        "turn_no": 35,
+        "speaker": "gotwood4sheep",
+        "text": "cool!",
+        "addressee": "ljaybrad123",
+        "span_end": 1520.0
+      },
+      {
+        "seg_id": "s1_league1_game4_01_stac_1369334244",
+        "turn_id": 3779.0,
+        "turn_no": 36,
+        "speaker": "gotwood4sheep",
+        "text": "I haven't played",
+        "addressee": "ljaybrad123",
+        "span_end": 1558.0
+      },
+      {
+        "seg_id": "s1_league1_game4_01_stac_1369334245",
+        "turn_id": 3779.0,
+        "turn_no": 36,
+        "speaker": "gotwood4sheep",
+        "text": "but know its addictive nature from my friends",
+        "addressee": "ljaybrad123",
+        "span_end": 1604.0
+      },
+      {
+        "seg_id": "s1_league1_game4_01_stac_1369334248",
+        "turn_id": 3780.0,
+        "turn_no": 37,
+        "speaker": "ljaybrad123",
+        "text": "if he doesn't turn up",
+        "addressee": "gotwood4sheep",
+        "span_end": 1645.0
+      },
+      {
+        "seg_id": "s1_league1_game4_01_stac_1369334249",
+        "turn_id": 3780.0,
+        "turn_no": 37,
+        "speaker": "ljaybrad123",
+        "text": "then the final game is the decider.;;;",
+        "addressee": "gotwood4sheep",
+        "span_end": 1684.0
+      },
+      {
+        "seg_id": "s1_league1_game4_01_stac_1369334252",
+        "turn_id": 3781.0,
+        "turn_no": 38,
+        "speaker": "gotwood4sheep",
+        "text": "i guess,",
+        "addressee": "ljaybrad123",
+        "span_end": 1714.0
+      },
+      {
+        "seg_id": "s1_league1_game4_01_stac_1369334253",
+        "turn_id": 3781.0,
+        "turn_no": 38,
+        "speaker": "gotwood4sheep",
+        "text": "unless we have time to reschedule the tomas game before 27th?",
+        "addressee": "ljaybrad123",
+        "span_end": 1776.0
+      },
+      {
+        "seg_id": "s1_league1_game4_01_stac_1369334256",
+        "turn_id": 3782.0,
+        "turn_no": 39,
+        "speaker": "gotwood4sheep",
+        "text": "don't want to deprive his fun and games :D",
+        "addressee": "ljaybrad123",
+        "span_end": 1840.0
+      },
+      {
+        "seg_id": "s1_league1_game4_01_stac_1369334259",
+        "turn_id": 3783.0,
+        "turn_no": 40,
+        "speaker": "ljaybrad123",
+        "text": "he goes away tomorrow...",
+        "addressee": "gotwood4sheep",
+        "span_end": 1884.0
+      },
+      {
+        "seg_id": "s1_league1_game4_01_stac_1369334262",
+        "turn_id": 3784.0,
+        "turn_no": 41,
+        "speaker": "gotwood4sheep",
+        "text": "ahhhhh",
+        "addressee": "ljaybrad123",
+        "span_end": 1912.0
+      },
+      {
+        "seg_id": "s1_league1_game4_01_stac_1369334265",
+        "turn_id": 3785.0,
+        "turn_no": 42,
+        "speaker": "ljaybrad123",
+        "text": "thats why we were going to do 2 tonight",
+        "addressee": "gotwood4sheep",
+        "span_end": 1971.0
+      },
+      {
+        "seg_id": "s1_league1_game4_01_stac_1369334268",
+        "turn_id": 3786.0,
+        "turn_no": 43,
+        "speaker": "gotwood4sheep",
+        "text": "hmm no emails.",
+        "addressee": "ljaybrad123",
+        "span_end": 2007.0
+      },
+      {
+        "seg_id": "s1_league1_game4_01_stac_1369334269",
+        "turn_id": 3786.0,
+        "turn_no": 43,
+        "speaker": "gotwood4sheep",
+        "text": "ah well, i'm in no rush,",
+        "addressee": "ljaybrad123",
+        "span_end": 2032.0
+      },
+      {
+        "seg_id": "s1_league1_game4_01_stac_1369334270",
+        "turn_id": 3786.0,
+        "turn_no": 43,
+        "speaker": "gotwood4sheep",
+        "text": "not going outside :D",
+        "addressee": "ljaybrad123",
+        "span_end": 2053.0
+      },
+      {
+        "seg_id": "s1_league1_game4_01_stac_1369334273",
+        "turn_id": 3787.0,
+        "turn_no": 44,
+        "speaker": "ljaybrad123",
+        "text": "I was going to...",
+        "addressee": "gotwood4sheep",
+        "span_end": 2090.0
+      },
+      {
+        "seg_id": "s1_league1_game4_01_stac_1369334274",
+        "turn_id": 3787.0,
+        "turn_no": 44,
+        "speaker": "ljaybrad123",
+        "text": "but woud need to be done by 8.15 ...",
+        "addressee": "gotwood4sheep",
+        "span_end": 2127.0
+      },
+      {
+        "seg_id": "s1_league1_game4_01_stac_1369334275",
+        "turn_id": 3787.0,
+        "turn_no": 44,
+        "speaker": "ljaybrad123",
+        "text": "so not going to happen",
+        "addressee": "gotwood4sheep",
+        "span_end": 2150.0
+      },
+      {
+        "seg_id": "s1_league1_game4_01_stac_1369334278",
+        "turn_id": 3788.0,
+        "turn_no": 45,
+        "speaker": "ljaybrad123",
+        "text": "could have played earlier",
+        "addressee": "gotwood4sheep",
+        "span_end": 2195.0
+      },
+      {
+        "seg_id": "s1_league1_game4_01_stac_1369334279",
+        "turn_id": 3788.0,
+        "turn_no": 45,
+        "speaker": "ljaybrad123",
+        "text": "because Im off work :(",
+        "addressee": "gotwood4sheep",
+        "span_end": 2218.0
+      },
+      {
+        "seg_id": "s1_league1_game4_01_stac_1369334282",
+        "turn_id": 3789.0,
+        "turn_no": 46,
+        "speaker": "gotwood4sheep",
+        "text": "d'oh :(",
+        "addressee": "ljaybrad123",
+        "span_end": 2247.0
+      },
+      {
+        "seg_id": "s1_league1_game4_01_stac_1369334285",
+        "turn_id": 3790.0,
+        "turn_no": 47,
+        "speaker": "ljaybrad123",
+        "text": "I fell at work yesterday",
+        "addressee": "gotwood4sheep",
+        "span_end": 2291.0
+      },
+      {
+        "seg_id": "s1_league1_game4_01_stac_1369334288",
+        "turn_id": 3791.0,
+        "turn_no": 48,
+        "speaker": "ljaybrad123",
+        "text": "so off for the rest of the week",
+        "addressee": "gotwood4sheep",
+        "span_end": 2342.0
+      },
+      {
+        "seg_id": "s1_league1_game4_01_stac_1369334291",
+        "turn_id": 3792.0,
+        "turn_no": 49,
+        "speaker": "ljaybrad123",
+        "text": "sadly unpaid :(",
+        "addressee": "gotwood4sheep",
+        "span_end": 2377.0
+      },
+      {
+        "seg_id": "s1_league1_game4_01_stac_1369334294",
+        "turn_id": 3793.0,
+        "turn_no": 50,
+        "speaker": "gotwood4sheep",
+        "text": "um...sorry to hear it...",
+        "addressee": "ljaybrad123",
+        "span_end": 2423.0
+      },
+      {
+        "seg_id": "s1_league1_game4_01_stacutil_1455716798",
+        "turn_id": 3793.0,
+        "turn_no": 50,
+        "speaker": "gotwood4sheep",
+        "text": "but if you fell at work",
+        "addressee": "ljaybrad123",
+        "span_end": 2446.0
+      },
+      {
+        "seg_id": "s1_league1_game4_01_stacutil_1455716799",
+        "turn_id": 3793.0,
+        "turn_no": 50,
+        "speaker": "gotwood4sheep",
+        "text": "shouldn't they be paying,",
+        "addressee": "ljaybrad123",
+        "span_end": 2472.0
+      },
+      {
+        "seg_id": "s1_league1_game4_01_stac_1369334296",
+        "turn_id": 3793.0,
+        "turn_no": 50,
+        "speaker": "gotwood4sheep",
+        "text": "or at least bracing themse",
+        "addressee": "ljaybrad123",
+        "span_end": 2499.0
+      },
+      {
+        "seg_id": "s1_league1_game4_01_stac_1369334299",
+        "turn_id": 3794.0,
+        "turn_no": 51,
+        "speaker": "gotwood4sheep",
+        "text": "lves for a claim?",
+        "addressee": "ljaybrad123",
+        "span_end": 2538.0
+      },
+      {
+        "seg_id": "s1_league1_game4_01_stac_1369334300",
+        "turn_id": 3794.0,
+        "turn_no": 51,
+        "speaker": "gotwood4sheep",
+        "text": " what kind of fall?",
+        "addressee": "ljaybrad123",
+        "span_end": 2558.0
+      },
+      {
+        "seg_id": "s1_league1_game4_01_stac_1369334303",
+        "turn_id": 3795.0,
+        "turn_no": 52,
+        "speaker": "gotwood4sheep",
+        "text": "you shouldn't lose pay",
+        "addressee": "ljaybrad123",
+        "span_end": 2602.0
+      },
+      {
+        "seg_id": "s1_league1_game4_01_stac_1369334304",
+        "turn_id": 3795.0,
+        "turn_no": 52,
+        "speaker": "gotwood4sheep",
+        "text": "if it was work-related :/",
+        "addressee": "ljaybrad123",
+        "span_end": 2628.0
+      },
+      {
+        "seg_id": "s1_league1_game4_01_stac_1369334307",
+        "turn_id": 3796.0,
+        "turn_no": 53,
+        "speaker": "ljaybrad123",
+        "text": "erm... im technically self employed...",
+        "addressee": "gotwood4sheep",
+        "span_end": 2686.0
+      },
+      {
+        "seg_id": "s1_league1_game4_01_stac_1369334310",
+        "turn_id": 3797.0,
+        "turn_no": 54,
+        "speaker": "gotwood4sheep",
+        "text": "oh ouch",
+        "addressee": "ljaybrad123",
+        "span_end": 2715.0
+      },
+      {
+        "seg_id": "s1_league1_game4_01_stac_1369334313",
+        "turn_id": 3798.0,
+        "turn_no": 55,
+        "speaker": "gotwood4sheep",
+        "text": ":(",
+        "addressee": "ljaybrad123",
+        "span_end": 2739.0
+      },
+      {
+        "seg_id": "s1_league1_game4_01_stac_1369334316",
+        "turn_id": 3799.0,
+        "turn_no": 56,
+        "speaker": "ljaybrad123",
+        "text": "and they should be...",
+        "addressee": "gotwood4sheep",
+        "span_end": 2780.0
+      },
+      {
+        "seg_id": "s1_league1_game4_01_stac_1369334317",
+        "turn_id": 3799.0,
+        "turn_no": 56,
+        "speaker": "ljaybrad123",
+        "text": "they made me wear slippy overshoes.",
+        "addressee": "gotwood4sheep",
+        "span_end": 2816.0
+      },
+      {
+        "seg_id": "s1_league1_game4_01_stac_1369334320",
+        "turn_id": 3800.0,
+        "turn_no": 57,
+        "speaker": "ljaybrad123",
+        "text": "we'll see what happens",
+        "addressee": "gotwood4sheep",
+        "span_end": 2858.0
+      },
+      {
+        "seg_id": "s1_league1_game4_01_stac_1369334323",
+        "turn_id": 3801.0,
+        "turn_no": 58,
+        "speaker": "gotwood4sheep",
+        "text": "sounds like a liability case to be contested.",
+        "addressee": "ljaybrad123",
+        "span_end": 2925.0
+      },
+      {
+        "seg_id": "s1_league1_game4_01_stac_1369334324",
+        "turn_id": 3801.0,
+        "turn_no": 58,
+        "speaker": "gotwood4sheep",
+        "text": " good luck",
+        "addressee": "ljaybrad123",
+        "span_end": 2936.0
+      },
+      {
+        "seg_id": "s1_league1_game4_01_stac_1369334327",
+        "turn_id": 3802.0,
+        "turn_no": 59,
+        "speaker": "gotwood4sheep",
+        "text": "are you ok?",
+        "addressee": "ljaybrad123",
+        "span_end": 2969.0
+      },
+      {
+        "seg_id": "s1_league1_game4_01_stac_1369334328",
+        "turn_id": 3802.0,
+        "turn_no": 59,
+        "speaker": "gotwood4sheep",
+        "text": "just sore?",
+        "addressee": "ljaybrad123",
+        "span_end": 2980.0
+      },
+      {
+        "seg_id": "s1_league1_game4_01_stac_1369334331",
+        "turn_id": 3803.0,
+        "turn_no": 60,
+        "speaker": "gotwood4sheep",
+        "text": "or is it possibly worse?",
+        "addressee": "ljaybrad123",
+        "span_end": 3026.0
+      },
+      {
+        "seg_id": "s1_league1_game4_01_stac_1369334334",
+        "turn_id": 3804.0,
+        "turn_no": 61,
+        "speaker": "gotwood4sheep",
+        "text": "sorry, don't want to sound prying :P",
+        "addressee": "ljaybrad123",
+        "span_end": 3084.0
+      },
+      {
+        "seg_id": "s1_league1_game4_01_stac_1369334337",
+        "turn_id": 3805.0,
+        "turn_no": 62,
+        "speaker": "ljaybrad123",
+        "text": "it does -",
+        "addressee": "gotwood4sheep",
+        "span_end": 3113.0
+      },
+      {
+        "seg_id": "s1_league1_game4_01_stac_1369334338",
+        "turn_id": 3805.0,
+        "turn_no": 62,
+        "speaker": "ljaybrad123",
+        "text": "but I don't really know what to do...",
+        "addressee": "gotwood4sheep",
+        "span_end": 3151.0
+      },
+      {
+        "seg_id": "s1_league1_game4_01_stac_1369334341",
+        "turn_id": 3806.0,
+        "turn_no": 63,
+        "speaker": "gotwood4sheep",
+        "text": "there's always no win no fee people",
+        "addressee": "ljaybrad123",
+        "span_end": 3208.0
+      },
+      {
+        "seg_id": "s1_league1_game4_01_stac_1369334344",
+        "turn_id": 3807.0,
+        "turn_no": 64,
+        "speaker": "gotwood4sheep",
+        "text": "did they file an accident report?",
+        "addressee": "ljaybrad123",
+        "span_end": 3263.0
+      },
+      {
+        "seg_id": "s1_league1_game4_01_stac_1369334347",
+        "turn_id": 3808.0,
+        "turn_no": 65,
+        "speaker": "ljaybrad123",
+        "text": "erm bad bruising - muscle damge -",
+        "addressee": "gotwood4sheep",
+        "span_end": 3316.0
+      },
+      {
+        "seg_id": "s1_league1_game4_01_stac_1369334350",
+        "turn_id": 3809.0,
+        "turn_no": 66,
+        "speaker": "gotwood4sheep",
+        "text": "ouch :(",
+        "addressee": "ljaybrad123",
+        "span_end": 3345.0
+      },
+      {
+        "seg_id": "s1_league1_game4_01_stac_1369334353",
+        "turn_id": 3810.0,
+        "turn_no": 67,
+        "speaker": "gotwood4sheep",
+        "text": "sorry, guess whose dad worked in insurance :P",
+        "addressee": "ljaybrad123",
+        "span_end": 3412.0
+      },
+      {
+        "seg_id": "s1_league1_game4_01_stac_1369334356",
+        "turn_id": 3811.0,
+        "turn_no": 68,
+        "speaker": "ljaybrad123",
+        "text": "yeah im tempted",
+        "addressee": "gotwood4sheep",
+        "span_end": 3447.0
+      },
+      {
+        "seg_id": "s1_league1_game4_01_stac_1369334359",
+        "turn_id": 3812.0,
+        "turn_no": 69,
+        "speaker": "ljaybrad123",
+        "text": "lol I don't blame you/....",
+        "addressee": "gotwood4sheep",
+        "span_end": 3493.0
+      },
+      {
+        "seg_id": "s1_league1_game4_01_stac_1369334362",
+        "turn_id": 3813.0,
+        "turn_no": 70,
+        "speaker": "ljaybrad123",
+        "text": "I'm very tempted",
+        "addressee": "gotwood4sheep",
+        "span_end": 3529.0
+      },
+      {
+        "seg_id": "s1_league1_game4_01_stac_1369334363",
+        "turn_id": 3813.0,
+        "turn_no": 70,
+        "speaker": "ljaybrad123",
+        "text": "because its incredibly sore",
+        "addressee": "gotwood4sheep",
+        "span_end": 3557.0
+      },
+      {
+        "seg_id": "s1_league1_game4_01_stac_1369334366",
+        "turn_id": 3814.0,
+        "turn_no": 71,
+        "speaker": "gotwood4sheep",
+        "text": "I'd take some pictures",
+        "addressee": "ljaybrad123",
+        "span_end": 3601.0
+      },
+      {
+        "seg_id": "s1_league1_game4_01_stac_1369334367",
+        "turn_id": 3814.0,
+        "turn_no": 71,
+        "speaker": "gotwood4sheep",
+        "text": "and make sure a report is filed",
+        "addressee": "ljaybrad123",
+        "span_end": 3633.0
+      },
+      {
+        "seg_id": "s1_league1_game4_01_stac_1369334368",
+        "turn_id": 3814.0,
+        "turn_no": 71,
+        "speaker": "gotwood4sheep",
+        "text": "so you have something to work with",
+        "addressee": "ljaybrad123",
+        "span_end": 3668.0
+      },
+      {
+        "seg_id": "s1_league1_game4_01_stac_1369334371",
+        "turn_id": 3815.0,
+        "turn_no": 72,
+        "speaker": "gotwood4sheep",
+        "text": "if you don't deal with the evidence now",
+        "addressee": "ljaybrad123",
+        "span_end": 3729.0
+      },
+      {
+        "seg_id": "s1_league1_game4_01_stac_1369334372",
+        "turn_id": 3815.0,
+        "turn_no": 72,
+        "speaker": "gotwood4sheep",
+        "text": "it'll be tough",
+        "addressee": "ljaybrad123",
+        "span_end": 3744.0
+      },
+      {
+        "seg_id": "s1_league1_game4_01_stac_1369334375",
+        "turn_id": 3816.0,
+        "turn_no": 73,
+        "speaker": "ljaybrad123",
+        "text": "I can't take pictures....",
+        "addressee": "gotwood4sheep",
+        "span_end": 3789.0
+      },
+      {
+        "seg_id": "s1_league1_game4_01_stac_1369334378",
+        "turn_id": 3817.0,
+        "turn_no": 74,
+        "speaker": "gotwood4sheep",
+        "text": "and if you're self employed",
+        "addressee": "ljaybrad123",
+        "span_end": 3838.0
+      },
+      {
+        "seg_id": "s1_league1_game4_01_stac_1369334379",
+        "turn_id": 3817.0,
+        "turn_no": 74,
+        "speaker": "gotwood4sheep",
+        "text": "you've gotta protect your income",
+        "addressee": "ljaybrad123",
+        "span_end": 3871.0
+      },
+      {
+        "seg_id": "s1_league1_game4_01_stac_1369334382",
+        "turn_id": 3818.0,
+        "turn_no": 75,
+        "speaker": "gotwood4sheep",
+        "text": "the report and/or questions of liability are most important",
+        "addressee": "ljaybrad123",
+        "span_end": 3952.0
+      },
+      {
+        "seg_id": "s1_league1_game4_01_stac_1369334385",
+        "turn_id": 3819.0,
+        "turn_no": 76,
+        "speaker": "gotwood4sheep",
+        "text": "maybe a trip to the doctors as well in that case",
+        "addressee": "ljaybrad123",
+        "span_end": 4022.0
+      },
+      {
+        "seg_id": "s1_league1_game4_01_stac_1369334388",
+        "turn_id": 3820.0,
+        "turn_no": 77,
+        "speaker": "gotwood4sheep",
+        "text": "?",
+        "addressee": "ljaybrad123",
+        "span_end": 4045.0
+      },
+      {
+        "seg_id": "s1_league1_game4_01_stac_1369334391",
+        "turn_id": 3821.0,
+        "turn_no": 78,
+        "speaker": "ljaybrad123",
+        "text": "yeah I went to docs",
+        "addressee": "gotwood4sheep",
+        "span_end": 4084.0
+      },
+      {
+        "seg_id": "s1_league1_game4_01_stac_1369334394",
+        "turn_id": 3822.0,
+        "turn_no": 79,
+        "speaker": "gotwood4sheep",
+        "text": "well at least that's on file.",
+        "addressee": "ljaybrad123",
+        "span_end": 4135.0
+      },
+      {
+        "seg_id": "s1_league1_game4_01_stac_1369334397",
+        "turn_id": 3823.0,
+        "turn_no": 80,
+        "speaker": "gotwood4sheep",
+        "text": "I'd send the workplace a message",
+        "addressee": "ljaybrad123",
+        "span_end": 4189.0
+      },
+      {
+        "seg_id": "s1_league1_game4_01_stac_1369334398",
+        "turn_id": 3823.0,
+        "turn_no": 80,
+        "speaker": "gotwood4sheep",
+        "text": "checking they've filed an accident report",
+        "addressee": "ljaybrad123",
+        "span_end": 4231.0
+      },
+      {
+        "seg_id": "s1_league1_game4_01_stac_1369334401",
+        "turn_id": 3824.0,
+        "turn_no": 81,
+        "speaker": "gotwood4sheep",
+        "text": "and saying you're considering your options",
+        "addressee": "ljaybrad123",
+        "span_end": 4295.0
+      },
+      {
+        "seg_id": "s1_league1_game4_01_stac_1369334404",
+        "turn_id": 3825.0,
+        "turn_no": 82,
+        "speaker": "ljaybrad123",
+        "text": "bad bruising",
+        "addressee": "gotwood4sheep",
+        "span_end": 4327.0
+      },
+      {
+        "seg_id": "s1_league1_game4_01_stac_1369334405",
+        "turn_id": 3825.0,
+        "turn_no": 82,
+        "speaker": "ljaybrad123",
+        "text": "but pretty sure it's not broken",
+        "addressee": "gotwood4sheep",
+        "span_end": 4359.0
+      },
+      {
+        "seg_id": "s1_league1_game4_01_stac_1369334408",
+        "turn_id": 3826.0,
+        "turn_no": 83,
+        "speaker": "gotwood4sheep",
+        "text": "at least you give them notice",
+        "addressee": "ljaybrad123",
+        "span_end": 4410.0
+      },
+      {
+        "seg_id": "s1_league1_game4_01_stac_1369334411",
+        "turn_id": 3827.0,
+        "turn_no": 84,
+        "speaker": "gotwood4sheep",
+        "text": "hope so :(",
+        "addressee": "ljaybrad123",
+        "span_end": 4442.0
+      },
+      {
+        "seg_id": "s1_league1_game4_01_stac_1369334414",
+        "turn_id": 3828.0,
+        "turn_no": 85,
+        "speaker": "ljaybrad123",
+        "text": "I told them i needed a report yesterday",
+        "addressee": "gotwood4sheep",
+        "span_end": 4501.0
+      },
+      {
+        "seg_id": "s1_league1_game4_01_stac_1369334417",
+        "turn_id": 3829.0,
+        "turn_no": 86,
+        "speaker": "gotwood4sheep",
+        "text": "good.  well, good luck.",
+        "addressee": "ljaybrad123",
+        "span_end": 4546.0
+      },
+      {
+        "seg_id": "s1_league1_game4_01_stac_1369334420",
+        "turn_id": 3830.0,
+        "turn_no": 87,
+        "speaker": "gotwood4sheep",
+        "text": "it sucks and it's stressful,",
+        "addressee": "ljaybrad123",
+        "span_end": 4596.0
+      },
+      {
+        "seg_id": "s1_league1_game4_01_stac_1369334421",
+        "turn_id": 3830.0,
+        "turn_no": 87,
+        "speaker": "gotwood4sheep",
+        "text": "and doing it when you feel bad blows",
+        "addressee": "ljaybrad123",
+        "span_end": 4633.0
+      },
+      {
+        "seg_id": "s1_league1_game4_01_stac_1369334424",
+        "turn_id": 3831.0,
+        "turn_no": 88,
+        "speaker": "ljaybrad123",
+        "text": "thanks",
+        "addressee": "gotwood4sheep",
+        "span_end": 4659.0
+      },
+      {
+        "seg_id": "s1_league1_game4_01_stac_1369334427",
+        "turn_id": 3832.0,
+        "turn_no": 89,
+        "speaker": "gotwood4sheep",
+        "text": "but it's one of those things you have to move on, sadly",
+        "addressee": "ljaybrad123",
+        "span_end": 4736.0
+      },
+      {
+        "seg_id": "s1_league1_game4_01_stac_1369334430",
+        "turn_id": 3833.0,
+        "turn_no": 90,
+        "speaker": "gotwood4sheep",
+        "text": "and i do, of course, hope you feel better soon",
+        "addressee": "ljaybrad123",
+        "span_end": 4804.0
+      },
+      {
+        "seg_id": "s1_league1_game4_01_stac_1369334433",
+        "turn_id": 3834.0,
+        "turn_no": 91,
+        "speaker": "gotwood4sheep",
+        "text": "so you don't miss out too much",
+        "addressee": "ljaybrad123",
+        "span_end": 4856.0
+      },
+      {
+        "seg_id": "s1_league1_game4_01_stac_1369334436",
+        "turn_id": 3835.0,
+        "turn_no": 92,
+        "speaker": "ljaybrad123",
+        "text": "yeah I just feel naff - and now cant work today or tomorrow at least",
+        "addressee": "gotwood4sheep",
+        "span_end": 4944.0
+      },
+      {
+        "seg_id": "s1_league1_game4_01_stac_1369334439",
+        "turn_id": 3836.0,
+        "turn_no": 93,
+        "speaker": "gotwood4sheep",
+        "text": ":(",
+        "addressee": "ljaybrad123",
+        "span_end": 4968.0
+      },
+      {
+        "seg_id": "s1_league1_game4_01_stac_1369334442",
+        "turn_id": 3837.0,
+        "turn_no": 94,
+        "speaker": "ljaybrad123",
+        "text": "maybe longer...",
+        "addressee": "gotwood4sheep",
+        "span_end": 5003.0
+      },
+      {
+        "seg_id": "s1_league1_game4_01_stac_1369334445",
+        "turn_id": 3838.0,
+        "turn_no": 95,
+        "speaker": "ljaybrad123",
+        "text": "I can't lift any of the kids atm",
+        "addressee": "gotwood4sheep",
+        "span_end": 5055.0
+      },
+      {
+        "seg_id": "s1_league1_game4_01_stac_1369334446",
+        "turn_id": 3838.0,
+        "turn_no": 95,
+        "speaker": "ljaybrad123",
+        "text": "so i cant work",
+        "addressee": "gotwood4sheep",
+        "span_end": 5070.0
+      },
+      {
+        "seg_id": "s1_league1_game4_01_stac_1369334449",
+        "turn_id": 3839.0,
+        "turn_no": 96,
+        "speaker": "gotwood4sheep",
+        "text": "I'd definitely cost up lost earnings",
+        "addressee": "ljaybrad123",
+        "span_end": 5128.0
+      },
+      {
+        "seg_id": "s1_league1_game4_01_stac_1369334450",
+        "turn_id": 3839.0,
+        "turn_no": 96,
+        "speaker": "gotwood4sheep",
+        "text": "and try and get a settlement",
+        "addressee": "ljaybrad123",
+        "span_end": 5157.0
+      },
+      {
+        "seg_id": "s1_league1_game4_01_stacutil_1455714936",
+        "turn_id": 3840.0,
+        "turn_no": 97,
+        "speaker": "ljaybrad123",
+        "text": "yeah -",
+        "addressee": "gotwood4sheep",
+        "span_end": 5183.0
+      },
+      {
+        "seg_id": "s1_league1_game4_01_stacutil_1455714937",
+        "turn_id": 3840.0,
+        "turn_no": 97,
+        "speaker": "ljaybrad123",
+        "text": "it's just kinda like is it worth all the hassle for \u00a370",
+        "addressee": "gotwood4sheep",
+        "span_end": 5239.0
+      },
+      {
+        "seg_id": "s1_league1_game4_01_stac_1369334456",
+        "turn_id": 3841.0,
+        "turn_no": 98,
+        "speaker": "gotwood4sheep",
+        "text": "/incidental settlers pun",
+        "addressee": "ljaybrad123",
+        "span_end": 5285.0
+      },
+      {
+        "seg_id": "s1_league1_game4_01_stac_1369334459",
+        "turn_id": 3842.0,
+        "turn_no": 99,
+        "speaker": "ljaybrad123",
+        "text": ":)",
+        "addressee": "gotwood4sheep",
+        "span_end": 5308.0
+      },
+      {
+        "seg_id": "s1_league1_game4_01_stac_1369334462",
+        "turn_id": 3843.0,
+        "turn_no": 100,
+        "speaker": "gotwood4sheep",
+        "text": "You might find they're sweating it",
+        "addressee": "ljaybrad123",
+        "span_end": 5365.0
+      },
+      {
+        "seg_id": "s1_league1_game4_01_stac_1369334463",
+        "turn_id": 3843.0,
+        "turn_no": 100,
+        "speaker": "gotwood4sheep",
+        "text": "and if you asked for \u00a370",
+        "addressee": "ljaybrad123",
+        "span_end": 5390.0
+      },
+      {
+        "seg_id": "s1_league1_game4_01_stac_1369334464",
+        "turn_id": 3843.0,
+        "turn_no": 100,
+        "speaker": "gotwood4sheep",
+        "text": "they'd say sure",
+        "addressee": "ljaybrad123",
+        "span_end": 5406.0
+      },
+      {
+        "seg_id": "s1_league1_game4_01_stac_1369334467",
+        "turn_id": 3844.0,
+        "turn_no": 101,
+        "speaker": "gotwood4sheep",
+        "text": "settling works for all",
+        "addressee": "ljaybrad123",
+        "span_end": 5451.0
+      },
+      {
+        "seg_id": "s1_league1_game4_01_stac_1369334470",
+        "turn_id": 3845.0,
+        "turn_no": 102,
+        "speaker": "ljaybrad123",
+        "text": "hmmm",
+        "addressee": "gotwood4sheep",
+        "span_end": 5476.0
+      },
+      {
+        "seg_id": "s1_league1_game4_01_stac_1369334473",
+        "turn_id": 3846.0,
+        "turn_no": 103,
+        "speaker": "ljaybrad123",
+        "text": "I get the distinct feeling they dont really care",
+        "addressee": "gotwood4sheep",
+        "span_end": 5545.0
+      },
+      {
+        "seg_id": "s1_league1_game4_01_stac_1369334476",
+        "turn_id": 3847.0,
+        "turn_no": 104,
+        "speaker": "gotwood4sheep",
+        "text": "they'll care more",
+        "addressee": "ljaybrad123",
+        "span_end": 5585.0
+      },
+      {
+        "seg_id": "s1_league1_game4_01_stac_1369334477",
+        "turn_id": 3847.0,
+        "turn_no": 104,
+        "speaker": "gotwood4sheep",
+        "text": "if they think you're pursuing legal action",
+        "addressee": "ljaybrad123",
+        "span_end": 5628.0
+      },
+      {
+        "seg_id": "s1_league1_game4_01_stac_1369334480",
+        "turn_id": 3848.0,
+        "turn_no": 105,
+        "speaker": "gotwood4sheep",
+        "text": "if they really don't,",
+        "addressee": "ljaybrad123",
+        "span_end": 5672.0
+      },
+      {
+        "seg_id": "s1_league1_game4_01_stac_1369334481",
+        "turn_id": 3848.0,
+        "turn_no": 105,
+        "speaker": "gotwood4sheep",
+        "text": "default judgement, bang",
+        "addressee": "ljaybrad123",
+        "span_end": 5696.0
+      },
+      {
+        "seg_id": "s1_league1_game4_01_stac_1369334484",
+        "turn_id": 3849.0,
+        "turn_no": 106,
+        "speaker": "ljaybrad123",
+        "text": "yeah I suppose",
+        "addressee": "gotwood4sheep",
+        "span_end": 5731.0
+      },
+      {
+        "seg_id": "s1_league1_game4_01_stac_1369334487",
+        "turn_id": 3850.0,
+        "turn_no": 107,
+        "speaker": "gotwood4sheep",
+        "text": "I'd suggest a price,",
+        "addressee": "ljaybrad123",
+        "span_end": 5774.0
+      },
+      {
+        "seg_id": "s1_league1_game4_01_stac_1369334488",
+        "turn_id": 3850.0,
+        "turn_no": 107,
+        "speaker": "gotwood4sheep",
+        "text": "if they don't respond,",
+        "addressee": "ljaybrad123",
+        "span_end": 5797.0
+      },
+      {
+        "seg_id": "s1_league1_game4_01_stac_1369334489",
+        "turn_id": 3850.0,
+        "turn_no": 107,
+        "speaker": "gotwood4sheep",
+        "text": "small claims and see",
+        "addressee": "ljaybrad123",
+        "span_end": 5818.0
+      },
+      {
+        "seg_id": "s1_league1_game4_01_stac_1369334492",
+        "turn_id": 3851.0,
+        "turn_no": 108,
+        "speaker": "gotwood4sheep",
+        "text": "sounds like there's a case to be heard",
+        "addressee": "ljaybrad123",
+        "span_end": 5879.0
+      },
+      {
+        "seg_id": "s1_league1_game4_01_stac_1369334495",
+        "turn_id": 3852.0,
+        "turn_no": 109,
+        "speaker": "ljaybrad123",
+        "text": "hmmm fair point",
+        "addressee": "gotwood4sheep",
+        "span_end": 5915.0
+      },
+      {
+        "seg_id": "s1_league1_game4_01_stac_1369334498",
+        "turn_id": 3853.0,
+        "turn_no": 110,
+        "speaker": "gotwood4sheep",
+        "text": "if he's not here in 7 mins",
+        "addressee": "ljaybrad123",
+        "span_end": 5964.0
+      },
+      {
+        "seg_id": "s1_league1_game4_01_stac_1369334499",
+        "turn_id": 3853.0,
+        "turn_no": 110,
+        "speaker": "gotwood4sheep",
+        "text": "we'll not have time before william arrives",
+        "addressee": "ljaybrad123",
+        "span_end": 6007.0
+      },
+      {
+        "seg_id": "s1_league1_game4_01_stac_1369334502",
+        "turn_id": 3854.0,
+        "turn_no": 111,
+        "speaker": "gotwood4sheep",
+        "text": "sigh...",
+        "addressee": "gotwood4sheep, ljaybrad123",
+        "span_end": 6037.0
+      },
+      {
+        "seg_id": "s1_league1_game4_01_stac_1369334505",
+        "turn_id": 3855.0,
+        "turn_no": 112,
+        "speaker": "ljaybrad123",
+        "text": "no",
+        "addressee": "gotwood4sheep",
+        "span_end": 6060.0
+      },
+      {
+        "seg_id": "s1_league1_game4_01_stac_1369334508",
+        "turn_id": 3856.0,
+        "turn_no": 113,
+        "speaker": "ljaybrad123",
+        "text": ":(",
+        "addressee": "gotwood4sheep",
+        "span_end": 6083.0
+      },
+      {
+        "seg_id": "s1_league1_game4_01_stac_1369334511",
+        "turn_id": 3857.0,
+        "turn_no": 114,
+        "speaker": "gotwood4sheep",
+        "text": "just emailed everyone to see-",
+        "addressee": "ljaybrad123",
+        "span_end": 6135.0
+      },
+      {
+        "seg_id": "s1_league1_game4_01_stac_1369334512",
+        "turn_id": 3857.0,
+        "turn_no": 114,
+        "speaker": "gotwood4sheep",
+        "text": "if Tomas has a smartphone",
+        "addressee": "ljaybrad123",
+        "span_end": 6161.0
+      },
+      {
+        "seg_id": "s1_league1_game4_01_stac_1369334513",
+        "turn_id": 3857.0,
+        "turn_no": 114,
+        "speaker": "gotwood4sheep",
+        "text": "he may pick up",
+        "addressee": "ljaybrad123",
+        "span_end": 6176.0
+      },
+      {
+        "seg_id": "s1_league1_game4_01_stac_1369334516",
+        "turn_id": 3858.0,
+        "turn_no": 115,
+        "speaker": "gotwood4sheep",
+        "text": "the email",
+        "addressee": "ljaybrad123",
+        "span_end": 6208.0
+      },
+      {
+        "seg_id": "s1_league1_game4_01_stac_1369334519",
+        "turn_id": 3859.0,
+        "turn_no": 116,
+        "speaker": "ljaybrad123",
+        "text": "thanks",
+        "addressee": "gotwood4sheep",
+        "span_end": 6235.0
+      },
+      {
+        "seg_id": "s1_league1_game4_01_stac_1369334522",
+        "turn_id": 3860.0,
+        "turn_no": 117,
+        "speaker": "gotwood4sheep",
+        "text": "*twiddles thumbs*",
+        "addressee": "ljaybrad123",
+        "span_end": 6275.0
+      },
+      {
+        "seg_id": "s1_league1_game4_01_stac_1369334525",
+        "turn_id": 3861.0,
+        "turn_no": 118,
+        "speaker": "ljaybrad123",
+        "text": "'8noms oatcakes*",
+        "addressee": "gotwood4sheep",
+        "span_end": 6312.0
+      }
+    ],
+    "cdus": [
+      {
+        "cdu_id": "s1_league1_game4_01_nasher_1442310650127",
+        "members": [
+          "s1_league1_game4_01_stac_1369334273",
+          "s1_league1_game4_01_stac_1369334274"
+        ]
+      },
+      {
+        "cdu_id": "s1_league1_game4_01_asoubeille_1369764759906",
+        "members": [
+          "s1_league1_game4_01_stac_1369334363",
+          "s1_league1_game4_01_stac_1369334362"
+        ]
+      },
+      {
+        "cdu_id": "s1_league1_game4_01_asoubeille_1369764364890",
+        "members": [
+          "s1_league1_game4_01_stac_1369334328",
+          "s1_league1_game4_01_stac_1369334331"
+        ]
+      },
+      {
+        "cdu_id": "s1_league1_game4_01_nasher_1442317679568",
+        "members": [
+          "s1_league1_game4_01_stac_1369334445",
+          "s1_league1_game4_01_stac_1369334446"
+        ]
+      },
+      {
+        "cdu_id": "s1_league1_game4_01_asoubeille_1369818118921",
+        "members": [
+          "s1_league1_game4_01_stac_1369334450",
+          "s1_league1_game4_01_stac_1369334449"
+        ]
+      },
+      {
+        "cdu_id": "s1_league1_game4_01_asoubeille_1369765171437",
+        "members": [
+          "s1_league1_game4_01_stac_1369334398",
+          "s1_league1_game4_01_stac_1369334401"
+        ]
+      },
+      {
+        "cdu_id": "s1_league1_game4_01_asoubeille_1369818817703",
+        "members": [
+          "s1_league1_game4_01_stac_1369334512",
+          "s1_league1_game4_01_stac_1369334513"
+        ]
+      },
+      {
+        "cdu_id": "s1_league1_game4_01_asoubeille_1369818459203",
+        "members": [
+          "s1_league1_game4_01_stac_1369334481",
+          "s1_league1_game4_01_stac_1369334480"
+        ]
+      },
+      {
+        "cdu_id": "s1_league1_game4_01_nasher_1442308848784",
+        "members": [
+          "s1_league1_game4_01_stac_1369334228",
+          "s1_league1_game4_01_stac_1369334225"
+        ]
+      },
+      {
+        "cdu_id": "s1_league1_game4_01_asoubeille_1369817725203",
+        "members": [
+          "s1_league1_game4_01_stac_1369334420",
+          "s1_league1_game4_01_stac_1369334421"
+        ]
+      },
+      {
+        "cdu_id": "s1_league1_game4_01_asoubeille_1369751019468",
+        "members": [
+          "s1_league1_game4_01_stac_1369334143",
+          "s1_league1_game4_01_stac_1369334146"
+        ]
+      },
+      {
+        "cdu_id": "s1_league1_game4_01_asoubeille_1369818577125",
+        "members": [
+          "s1_league1_game4_01_stac_1369334488",
+          "s1_league1_game4_01_stac_1369334489"
+        ]
+      },
+      {
+        "cdu_id": "s1_league1_game4_01_asoubeille_1369818677625",
+        "members": [
+          "s1_league1_game4_01_stac_1369334498",
+          "s1_league1_game4_01_stac_1369334499"
+        ]
+      },
+      {
+        "cdu_id": "s1_league1_game4_01_asoubeille_1369765273890",
+        "members": [
+          "s1_league1_game4_01_stac_1369334404",
+          "s1_league1_game4_01_stac_1369334405"
+        ]
+      },
+      {
+        "cdu_id": "s1_league1_game4_01_asoubeille_1369764857953",
+        "members": [
+          "s1_league1_game4_01_stac_1369334367",
+          "s1_league1_game4_01_stac_1369334366"
+        ]
+      },
+      {
+        "cdu_id": "s1_league1_game4_01_asoubeille_1369818264296",
+        "members": [
+          "s1_league1_game4_01_stac_1369334463",
+          "s1_league1_game4_01_stac_1369334464",
+          "s1_league1_game4_01_stac_1369334462"
+        ]
+      },
+      {
+        "cdu_id": "s1_league1_game4_01_asoubeille_1369818368218",
+        "members": [
+          "s1_league1_game4_01_stac_1369334476",
+          "s1_league1_game4_01_stac_1369334477"
+        ]
+      },
+      {
+        "cdu_id": "s1_league1_game4_01_asoubeille_1369753005359",
+        "members": [
+          "s1_league1_game4_01_stac_1369334238",
+          "s1_league1_game4_01_stac_1369334237"
+        ]
+      },
+      {
+        "cdu_id": "s1_league1_game4_01_asoubeille_1369764928859",
+        "members": [
+          "s1_league1_game4_01_stac_1369334372",
+          "s1_league1_game4_01_stac_1369334371"
+        ]
+      },
+      {
+        "cdu_id": "s1_league1_game4_01_asoubeille_1369764045968",
+        "members": [
+          "s1_league1_game4_01_stac_1369334304",
+          "s1_league1_game4_01_stac_1369334303"
+        ]
+      },
+      {
+        "cdu_id": "s1_league1_game4_01_nasher_1442311192858",
+        "members": [
+          "s1_league1_game4_01_stacutil_1455716798",
+          "s1_league1_game4_01_nasher_1442311120088"
+        ]
+      },
+      {
+        "cdu_id": "s1_league1_game4_01_nasher_1442311120088",
+        "members": [
+          "s1_league1_game4_01_stacutil_1455716799",
+          "s1_league1_game4_01_nasher_1442311060017"
+        ]
+      },
+      {
+        "cdu_id": "s1_league1_game4_01_asoubeille_1369751302953",
+        "members": [
+          "s1_league1_game4_01_stac_1369334152",
+          "s1_league1_game4_01_stac_1369334155"
+        ]
+      },
+      {
+        "cdu_id": "s1_league1_game4_01_nasher_1442309563569",
+        "members": [
+          "s1_league1_game4_01_stac_1369334268",
+          "s1_league1_game4_01_stac_1369334270",
+          "s1_league1_game4_01_stac_1369334269"
+        ]
+      },
+      {
+        "cdu_id": "s1_league1_game4_01_asoubeille_1369764977531",
+        "members": [
+          "s1_league1_game4_01_stac_1369334378",
+          "s1_league1_game4_01_stac_1369334379"
+        ]
+      },
+      {
+        "cdu_id": "s1_league1_game4_01_asoubeille_1369753769484",
+        "members": [
+          "s1_league1_game4_01_stac_1369334253",
+          "s1_league1_game4_01_stac_1369334252"
+        ]
+      },
+      {
+        "cdu_id": "s1_league1_game4_01_nasher_1442308881754",
+        "members": [
+          "s1_league1_game4_01_stac_1369334231",
+          "s1_league1_game4_01_stac_1369334234"
+        ]
+      },
+      {
+        "cdu_id": "s1_league1_game4_01_nasher_1442311060017",
+        "members": [
+          "s1_league1_game4_01_stac_1369334296",
+          "s1_league1_game4_01_stac_1369334299"
+        ]
+      },
+      {
+        "cdu_id": "s1_league1_game4_01_asoubeille_1369753525093",
+        "members": [
+          "s1_league1_game4_01_stac_1369334248",
+          "s1_league1_game4_01_stac_1369334249"
+        ]
+      },
+      {
+        "cdu_id": "s1_league1_game4_01_nasher_1442317022949",
+        "members": [
+          "s1_league1_game4_01_stac_1369334385",
+          "s1_league1_game4_01_stac_1369334388"
+        ]
+      },
+      {
+        "cdu_id": "s1_league1_game4_01_asoubeille_1369751795265",
+        "members": [
+          "s1_league1_game4_01_stac_1369334195",
+          "s1_league1_game4_01_stac_1369334194"
+        ]
+      }
+    ],
+    "relations": [
+      {
+        "rel_id": "s1_league1_game4_01_asoubeille_1369750942484",
+        "source": "s1_league1_game4_01_stac_1369334134",
+        "target": "s1_league1_game4_01_stac_1369334137",
+        "type": "Acknowledgement"
+      },
+      {
+        "rel_id": "s1_league1_game4_01_pdenis_1393344943465",
+        "source": "s1_league1_game4_01_stac_1369334134",
+        "target": "s1_league1_game4_01_stac_1369334164",
+        "type": "Continuation"
+      },
+      {
+        "rel_id": "s1_league1_game4_01_asoubeille_1369750954750",
+        "source": "s1_league1_game4_01_stac_1369334137",
+        "target": "s1_league1_game4_01_stac_1369334140",
+        "type": "Continuation"
+      },
+      {
+        "rel_id": "s1_league1_game4_01_asoubeille_1369750969359",
+        "source": "s1_league1_game4_01_stac_1369334140",
+        "target": "s1_league1_game4_01_asoubeille_1369751019468",
+        "type": "Question_answer_pair"
+      },
+      {
+        "rel_id": "s1_league1_game4_01_asoubeille_1369750980312",
+        "source": "s1_league1_game4_01_stac_1369334143",
+        "target": "s1_league1_game4_01_stac_1369334146",
+        "type": "Elaboration"
+      },
+      {
+        "rel_id": "s1_league1_game4_01_asoubeille_1369751216421",
+        "source": "s1_league1_game4_01_stac_1369334143",
+        "target": "s1_league1_game4_01_asoubeille_1369751302953",
+        "type": "Correction"
+      },
+      {
+        "rel_id": "s1_league1_game4_01_asoubeille_1369751285375",
+        "source": "s1_league1_game4_01_stac_1369334152",
+        "target": "s1_league1_game4_01_stac_1369334155",
+        "type": "Elaboration"
+      },
+      {
+        "rel_id": "s1_league1_game4_01_asoubeille_1369751555906",
+        "source": "s1_league1_game4_01_stac_1369334158",
+        "target": "s1_league1_game4_01_stac_1369334161",
+        "type": "Contrast"
+      },
+      {
+        "rel_id": "s1_league1_game4_01_asoubeille_1369751630843",
+        "source": "s1_league1_game4_01_stac_1369334164",
+        "target": "s1_league1_game4_01_stac_1369334167",
+        "type": "Acknowledgement"
+      },
+      {
+        "rel_id": "s1_league1_game4_01_pdenis_1393346665391",
+        "source": "s1_league1_game4_01_stac_1369334164",
+        "target": "s1_league1_game4_01_stac_1369334216",
+        "type": "Continuation"
+      },
+      {
+        "rel_id": "s1_league1_game4_01_asoubeille_1369751646343",
+        "source": "s1_league1_game4_01_stac_1369334167",
+        "target": "s1_league1_game4_01_stac_1369334170",
+        "type": "Clarification_question"
+      },
+      {
+        "rel_id": "s1_league1_game4_01_asoubeille_1369751670609",
+        "source": "s1_league1_game4_01_stac_1369334170",
+        "target": "s1_league1_game4_01_stac_1369334173",
+        "type": "Question_answer_pair"
+      },
+      {
+        "rel_id": "s1_league1_game4_01_pdenis_1393345264778",
+        "source": "s1_league1_game4_01_stac_1369334170",
+        "target": "s1_league1_game4_01_stac_1369334179",
+        "type": "Q_Elab"
+      },
+      {
+        "rel_id": "s1_league1_game4_01_asoubeille_1369751681250",
+        "source": "s1_league1_game4_01_stac_1369334173",
+        "target": "s1_league1_game4_01_stac_1369334176",
+        "type": "Acknowledgement"
+      },
+      {
+        "rel_id": "s1_league1_game4_01_asoubeille_1369751692875",
+        "source": "s1_league1_game4_01_stac_1369334176",
+        "target": "s1_league1_game4_01_stac_1369334179",
+        "type": "Q_Elab"
+      },
+      {
+        "rel_id": "s1_league1_game4_01_asoubeille_1369751706937",
+        "source": "s1_league1_game4_01_stac_1369334179",
+        "target": "s1_league1_game4_01_stac_1369334182",
+        "type": "Question_answer_pair"
+      },
+      {
+        "rel_id": "s1_league1_game4_01_asoubeille_1369751718390",
+        "source": "s1_league1_game4_01_stac_1369334182",
+        "target": "s1_league1_game4_01_stac_1369334185",
+        "type": "Acknowledgement"
+      },
+      {
+        "rel_id": "s1_league1_game4_01_asoubeille_1369751731281",
+        "source": "s1_league1_game4_01_stac_1369334182",
+        "target": "s1_league1_game4_01_stac_1369334188",
+        "type": "Comment"
+      },
+      {
+        "rel_id": "s1_league1_game4_01_asoubeille_1369751757265",
+        "source": "s1_league1_game4_01_stac_1369334182",
+        "target": "s1_league1_game4_01_stac_1369334191",
+        "type": "Elaboration"
+      },
+      {
+        "rel_id": "s1_league1_game4_01_asoubeille_1369751738265",
+        "source": "s1_league1_game4_01_stac_1369334185",
+        "target": "s1_league1_game4_01_stac_1369334188",
+        "type": "Comment"
+      },
+      {
+        "rel_id": "s1_league1_game4_01_pdenis_1393348470723",
+        "source": "s1_league1_game4_01_stac_1369334191",
+        "target": "s1_league1_game4_01_asoubeille_1369751795265",
+        "type": "Explanation"
+      },
+      {
+        "rel_id": "s1_league1_game4_01_pdenis_1393346360708",
+        "source": "s1_league1_game4_01_stac_1369334195",
+        "target": "s1_league1_game4_01_stac_1369334194",
+        "type": "Conditional"
+      },
+      {
+        "rel_id": "s1_league1_game4_01_nasher_1459244506467",
+        "source": "s1_league1_game4_01_stac_1369334201",
+        "target": "s1_league1_game4_01_stac_1369334204",
+        "type": "Comment"
+      },
+      {
+        "rel_id": "s1_league1_game4_01_asoubeille_1369752622859",
+        "source": "s1_league1_game4_01_stac_1369334204",
+        "target": "s1_league1_game4_01_stac_1369334207",
+        "type": "Comment"
+      },
+      {
+        "rel_id": "s1_league1_game4_01_asoubeille_1369752637296",
+        "source": "s1_league1_game4_01_stac_1369334204",
+        "target": "s1_league1_game4_01_stac_1369334210",
+        "type": "Elaboration"
+      },
+      {
+        "rel_id": "s1_league1_game4_01_asoubeille_1369752665468",
+        "source": "s1_league1_game4_01_stac_1369334210",
+        "target": "s1_league1_game4_01_stac_1369334213",
+        "type": "Comment"
+      },
+      {
+        "rel_id": "s1_league1_game4_01_nasher_1442308960036",
+        "source": "s1_league1_game4_01_stac_1369334210",
+        "target": "s1_league1_game4_01_stac_1369334213",
+        "type": "Acknowledgement"
+      },
+      {
+        "rel_id": "s1_league1_game4_01_asoubeille_1369752692406",
+        "source": "s1_league1_game4_01_stac_1369334216",
+        "target": "s1_league1_game4_01_stac_1369334219",
+        "type": "Clarification_question"
+      },
+      {
+        "rel_id": "s1_league1_game4_01_nasher_1442309292216",
+        "source": "s1_league1_game4_01_stac_1369334216",
+        "target": "s1_league1_game4_01_nasher_1442309563569",
+        "type": "Continuation"
+      },
+      {
+        "rel_id": "s1_league1_game4_01_asoubeille_1369752705140",
+        "source": "s1_league1_game4_01_stac_1369334219",
+        "target": "s1_league1_game4_01_stac_1369334222",
+        "type": "Question_answer_pair"
+      },
+      {
+        "rel_id": "s1_league1_game4_01_asoubeille_1369752719234",
+        "source": "s1_league1_game4_01_stac_1369334222",
+        "target": "s1_league1_game4_01_nasher_1442308848784",
+        "type": "Clarification_question"
+      },
+      {
+        "rel_id": "s1_league1_game4_01_asoubeille_1369753703765",
+        "source": "s1_league1_game4_01_stac_1369334222",
+        "target": "s1_league1_game4_01_asoubeille_1369753525093",
+        "type": "Contrast"
+      },
+      {
+        "rel_id": "s1_league1_game4_01_asoubeille_1369752741515",
+        "source": "s1_league1_game4_01_stac_1369334225",
+        "target": "s1_league1_game4_01_stac_1369334228",
+        "type": "Alternation"
+      },
+      {
+        "rel_id": "s1_league1_game4_01_pdenis_1393346958196",
+        "source": "s1_league1_game4_01_stac_1369334231",
+        "target": "s1_league1_game4_01_stac_1369334234",
+        "type": "Continuation"
+      },
+      {
+        "rel_id": "s1_league1_game4_01_asoubeille_1369752857000",
+        "source": "s1_league1_game4_01_stac_1369334234",
+        "target": "s1_league1_game4_01_asoubeille_1369753005359",
+        "type": "Continuation"
+      },
+      {
+        "rel_id": "s1_league1_game4_01_asoubeille_1369752867296",
+        "source": "s1_league1_game4_01_stac_1369334237",
+        "target": "s1_league1_game4_01_stac_1369334238",
+        "type": "Explanation"
+      },
+      {
+        "rel_id": "s1_league1_game4_01_asoubeille_1369753216937",
+        "source": "s1_league1_game4_01_stac_1369334244",
+        "target": "s1_league1_game4_01_stac_1369334245",
+        "type": "Contrast"
+      },
+      {
+        "rel_id": "s1_league1_game4_01_asoubeille_1369753489187",
+        "source": "s1_league1_game4_01_stac_1369334248",
+        "target": "s1_league1_game4_01_stac_1369334249",
+        "type": "Conditional"
+      },
+      {
+        "rel_id": "s1_league1_game4_01_asoubeille_1369753755625",
+        "source": "s1_league1_game4_01_stac_1369334252",
+        "target": "s1_league1_game4_01_stac_1369334253",
+        "type": "Alternation"
+      },
+      {
+        "rel_id": "s1_league1_game4_01_asoubeille_1369753864968",
+        "source": "s1_league1_game4_01_stac_1369334259",
+        "target": "s1_league1_game4_01_stac_1369334262",
+        "type": "Acknowledgement"
+      },
+      {
+        "rel_id": "s1_league1_game4_01_asoubeille_1369753880593",
+        "source": "s1_league1_game4_01_stac_1369334259",
+        "target": "s1_league1_game4_01_stac_1369334265",
+        "type": "Explanation"
+      },
+      {
+        "rel_id": "s1_league1_game4_01_asoubeille_1369763246421",
+        "source": "s1_league1_game4_01_stac_1369334268",
+        "target": "s1_league1_game4_01_stac_1369334269",
+        "type": "Contrast"
+      },
+      {
+        "rel_id": "s1_league1_game4_01_asoubeille_1369763192718",
+        "source": "s1_league1_game4_01_stac_1369334269",
+        "target": "s1_league1_game4_01_stac_1369334270",
+        "type": "Explanation"
+      },
+      {
+        "rel_id": "s1_league1_game4_01_asoubeille_1369763268500",
+        "source": "s1_league1_game4_01_stac_1369334270",
+        "target": "s1_league1_game4_01_nasher_1442310650127",
+        "type": "Contrast"
+      },
+      {
+        "rel_id": "s1_league1_game4_01_asoubeille_1369763301687",
+        "source": "s1_league1_game4_01_stac_1369334273",
+        "target": "s1_league1_game4_01_stac_1369334274",
+        "type": "Contrast"
+      },
+      {
+        "rel_id": "s1_league1_game4_01_asoubeille_1369763333093",
+        "source": "s1_league1_game4_01_stac_1369334275",
+        "target": "s1_league1_game4_01_stac_1369334278",
+        "type": "Comment"
+      },
+      {
+        "rel_id": "s1_league1_game4_01_asoubeille_1369763342875",
+        "source": "s1_league1_game4_01_stac_1369334278",
+        "target": "s1_league1_game4_01_stac_1369334279",
+        "type": "Explanation"
+      },
+      {
+        "rel_id": "s1_league1_game4_01_asoubeille_1369763372750",
+        "source": "s1_league1_game4_01_stac_1369334279",
+        "target": "s1_league1_game4_01_stac_1369334282",
+        "type": "Comment"
+      },
+      {
+        "rel_id": "s1_league1_game4_01_asoubeille_1369763387593",
+        "source": "s1_league1_game4_01_stac_1369334279",
+        "target": "s1_league1_game4_01_stac_1369334285",
+        "type": "Explanation"
+      },
+      {
+        "rel_id": "s1_league1_game4_01_asoubeille_1369763427265",
+        "source": "s1_league1_game4_01_stac_1369334279",
+        "target": "s1_league1_game4_01_stac_1369334291",
+        "type": "Comment"
+      },
+      {
+        "rel_id": "s1_league1_game4_01_asoubeille_1369763399812",
+        "source": "s1_league1_game4_01_stac_1369334285",
+        "target": "s1_league1_game4_01_stac_1369334288",
+        "type": "Result"
+      },
+      {
+        "rel_id": "s1_league1_game4_01_asoubeille_1369763474968",
+        "source": "s1_league1_game4_01_stac_1369334285",
+        "target": "s1_league1_game4_01_stac_1369334294",
+        "type": "Comment"
+      },
+      {
+        "rel_id": "s1_league1_game4_01_asoubeille_1369764333656",
+        "source": "s1_league1_game4_01_stac_1369334285",
+        "target": "s1_league1_game4_01_stac_1369334327",
+        "type": "Q_Elab"
+      },
+      {
+        "rel_id": "s1_league1_game4_01_asoubeille_1369764617890",
+        "source": "s1_league1_game4_01_stac_1369334285",
+        "target": "s1_league1_game4_01_stac_1369334344",
+        "type": "Q_Elab"
+      },
+      {
+        "rel_id": "s1_league1_game4_01_nasher_1442316270574",
+        "source": "s1_league1_game4_01_stac_1369334285",
+        "target": "s1_league1_game4_01_stac_1369334300",
+        "type": "Q_Elab"
+      },
+      {
+        "rel_id": "s1_league1_game4_01_asoubeille_1369764057281",
+        "source": "s1_league1_game4_01_stac_1369334291",
+        "target": "s1_league1_game4_01_asoubeille_1369764045968",
+        "type": "Contrast"
+      },
+      {
+        "rel_id": "s1_league1_game4_01_nasher_1442311315557",
+        "source": "s1_league1_game4_01_stac_1369334294",
+        "target": "s1_league1_game4_01_nasher_1442311192858",
+        "type": "Contrast"
+      },
+      {
+        "rel_id": "s1_league1_game4_01_nasher_1442311184671",
+        "source": "s1_league1_game4_01_stacutil_1455716798",
+        "target": "s1_league1_game4_01_nasher_1442311120088",
+        "type": "Conditional"
+      },
+      {
+        "rel_id": "s1_league1_game4_01_nasher_1442311109273",
+        "source": "s1_league1_game4_01_stacutil_1455716799",
+        "target": "s1_league1_game4_01_nasher_1442311060017",
+        "type": "Alternation"
+      },
+      {
+        "rel_id": "s1_league1_game4_01_asoubeille_1369763569031",
+        "source": "s1_league1_game4_01_stac_1369334296",
+        "target": "s1_league1_game4_01_stac_1369334299",
+        "type": "Continuation"
+      },
+      {
+        "rel_id": "s1_league1_game4_01_asoubeille_1369764138656",
+        "source": "s1_league1_game4_01_stac_1369334300",
+        "target": "s1_league1_game4_01_stac_1369334317",
+        "type": "Question_answer_pair"
+      },
+      {
+        "rel_id": "s1_league1_game4_01_asoubeille_1369763648421",
+        "source": "s1_league1_game4_01_stac_1369334304",
+        "target": "s1_league1_game4_01_stac_1369334303",
+        "type": "Conditional"
+      },
+      {
+        "rel_id": "s1_league1_game4_01_asoubeille_1369764098578",
+        "source": "s1_league1_game4_01_stac_1369334307",
+        "target": "s1_league1_game4_01_stac_1369334310",
+        "type": "Acknowledgement"
+      },
+      {
+        "rel_id": "s1_league1_game4_01_asoubeille_1369764109859",
+        "source": "s1_league1_game4_01_stac_1369334307",
+        "target": "s1_league1_game4_01_stac_1369334313",
+        "type": "Comment"
+      },
+      {
+        "rel_id": "s1_league1_game4_01_nasher_1459245047960",
+        "source": "s1_league1_game4_01_stac_1369334307",
+        "target": "s1_league1_game4_01_stac_1369334310",
+        "type": "Comment"
+      },
+      {
+        "rel_id": "s1_league1_game4_01_pdenis_1393348673188",
+        "source": "s1_league1_game4_01_stac_1369334310",
+        "target": "s1_league1_game4_01_stac_1369334313",
+        "type": "Continuation"
+      },
+      {
+        "rel_id": "s1_league1_game4_01_asoubeille_1369764194890",
+        "source": "s1_league1_game4_01_stac_1369334316",
+        "target": "s1_league1_game4_01_stac_1369334317",
+        "type": "Explanation"
+      },
+      {
+        "rel_id": "s1_league1_game4_01_asoubeille_1369764248500",
+        "source": "s1_league1_game4_01_stac_1369334317",
+        "target": "s1_league1_game4_01_stac_1369334320",
+        "type": "Continuation"
+      },
+      {
+        "rel_id": "s1_league1_game4_01_asoubeille_1369764291328",
+        "source": "s1_league1_game4_01_stac_1369334317",
+        "target": "s1_league1_game4_01_stac_1369334323",
+        "type": "Comment"
+      },
+      {
+        "rel_id": "s1_league1_game4_01_asoubeille_1369764301734",
+        "source": "s1_league1_game4_01_stac_1369334323",
+        "target": "s1_league1_game4_01_stac_1369334324",
+        "type": "Comment"
+      },
+      {
+        "rel_id": "s1_league1_game4_01_asoubeille_1369764467375",
+        "source": "s1_league1_game4_01_stac_1369334323",
+        "target": "s1_league1_game4_01_stac_1369334337",
+        "type": "Acknowledgement"
+      },
+      {
+        "rel_id": "s1_league1_game4_01_asoubeille_1369764683781",
+        "source": "s1_league1_game4_01_stac_1369334323",
+        "target": "s1_league1_game4_01_stac_1369334356",
+        "type": "Question_answer_pair"
+      },
+      {
+        "rel_id": "s1_league1_game4_01_nasher_1442316579386",
+        "source": "s1_league1_game4_01_stac_1369334327",
+        "target": "s1_league1_game4_01_asoubeille_1369764364890",
+        "type": "Q_Elab"
+      },
+      {
+        "rel_id": "s1_league1_game4_01_asoubeille_1369764386953",
+        "source": "s1_league1_game4_01_stac_1369334328",
+        "target": "s1_league1_game4_01_stac_1369334331",
+        "type": "Alternation"
+      },
+      {
+        "rel_id": "s1_league1_game4_01_asoubeille_1369764478265",
+        "source": "s1_league1_game4_01_stac_1369334337",
+        "target": "s1_league1_game4_01_stac_1369334338",
+        "type": "Contrast"
+      },
+      {
+        "rel_id": "s1_league1_game4_01_asoubeille_1369764564859",
+        "source": "s1_league1_game4_01_stac_1369334338",
+        "target": "s1_league1_game4_01_stac_1369334341",
+        "type": "Question_answer_pair"
+      },
+      {
+        "rel_id": "s1_league1_game4_01_asoubeille_1369764577953",
+        "source": "s1_league1_game4_01_stac_1369334341",
+        "target": "s1_league1_game4_01_stac_1369334344",
+        "type": "Q_Elab"
+      },
+      {
+        "rel_id": "s1_league1_game4_01_asoubeille_1369764671046",
+        "source": "s1_league1_game4_01_stac_1369334344",
+        "target": "s1_league1_game4_01_stac_1369334353",
+        "type": "Comment"
+      },
+      {
+        "rel_id": "s1_league1_game4_01_asoubeille_1369764645375",
+        "source": "s1_league1_game4_01_stac_1369334347",
+        "target": "s1_league1_game4_01_stac_1369334350",
+        "type": "Comment"
+      },
+      {
+        "rel_id": "s1_league1_game4_01_asoubeille_1369765313906",
+        "source": "s1_league1_game4_01_stac_1369334347",
+        "target": "s1_league1_game4_01_asoubeille_1369765273890",
+        "type": "Elaboration"
+      },
+      {
+        "rel_id": "s1_league1_game4_01_asoubeille_1369764695703",
+        "source": "s1_league1_game4_01_stac_1369334356",
+        "target": "s1_league1_game4_01_stac_1369334359",
+        "type": "Continuation"
+      },
+      {
+        "rel_id": "s1_league1_game4_01_asoubeille_1369820941218",
+        "source": "s1_league1_game4_01_stac_1369334356",
+        "target": "s1_league1_game4_01_asoubeille_1369764759906",
+        "type": "Continuation"
+      },
+      {
+        "rel_id": "s1_league1_game4_01_asoubeille_1369764740734",
+        "source": "s1_league1_game4_01_stac_1369334362",
+        "target": "s1_league1_game4_01_stac_1369334363",
+        "type": "Explanation"
+      },
+      {
+        "rel_id": "s1_league1_game4_01_asoubeille_1369764811250",
+        "source": "s1_league1_game4_01_stac_1369334366",
+        "target": "s1_league1_game4_01_stac_1369334367",
+        "type": "Continuation"
+      },
+      {
+        "rel_id": "s1_league1_game4_01_asoubeille_1369764951453",
+        "source": "s1_league1_game4_01_stac_1369334366",
+        "target": "s1_league1_game4_01_stac_1369334375",
+        "type": "Contrast"
+      },
+      {
+        "rel_id": "s1_league1_game4_01_asoubeille_1369764915093",
+        "source": "s1_league1_game4_01_stac_1369334371",
+        "target": "s1_league1_game4_01_stac_1369334372",
+        "type": "Conditional"
+      },
+      {
+        "rel_id": "s1_league1_game4_01_asoubeille_1369765077187",
+        "source": "s1_league1_game4_01_stac_1369334375",
+        "target": "s1_league1_game4_01_nasher_1442317022949",
+        "type": "Result"
+      },
+      {
+        "rel_id": "s1_league1_game4_01_asoubeille_1369764964687",
+        "source": "s1_league1_game4_01_stac_1369334378",
+        "target": "s1_league1_game4_01_stac_1369334379",
+        "type": "Conditional"
+      },
+      {
+        "rel_id": "s1_league1_game4_01_asoubeille_1369765093750",
+        "source": "s1_league1_game4_01_stac_1369334385",
+        "target": "s1_league1_game4_01_stac_1369334388",
+        "type": "Continuation"
+      },
+      {
+        "rel_id": "s1_league1_game4_01_asoubeille_1369765135828",
+        "source": "s1_league1_game4_01_stac_1369334391",
+        "target": "s1_league1_game4_01_stac_1369334394",
+        "type": "Comment"
+      },
+      {
+        "rel_id": "s1_league1_game4_01_asoubeille_1369765181625",
+        "source": "s1_league1_game4_01_stac_1369334391",
+        "target": "s1_league1_game4_01_stac_1369334397",
+        "type": "Continuation"
+      },
+      {
+        "rel_id": "s1_league1_game4_01_asoubeille_1369765330140",
+        "source": "s1_league1_game4_01_stac_1369334397",
+        "target": "s1_league1_game4_01_stac_1369334408",
+        "type": "Elaboration"
+      },
+      {
+        "rel_id": "s1_league1_game4_01_asoubeille_1369817585921",
+        "source": "s1_league1_game4_01_stac_1369334397",
+        "target": "s1_league1_game4_01_stac_1369334414",
+        "type": "Acknowledgement"
+      },
+      {
+        "rel_id": "s1_league1_game4_01_nasher_1442317298442",
+        "source": "s1_league1_game4_01_stac_1369334397",
+        "target": "s1_league1_game4_01_asoubeille_1369765171437",
+        "type": "Elaboration"
+      },
+      {
+        "rel_id": "s1_league1_game4_01_asoubeille_1369765202828",
+        "source": "s1_league1_game4_01_stac_1369334398",
+        "target": "s1_league1_game4_01_stac_1369334401",
+        "type": "Continuation"
+      },
+      {
+        "rel_id": "s1_league1_game4_01_asoubeille_1369765228359",
+        "source": "s1_league1_game4_01_stac_1369334404",
+        "target": "s1_league1_game4_01_stac_1369334405",
+        "type": "Contrast"
+      },
+      {
+        "rel_id": "s1_league1_game4_01_asoubeille_1369817451812",
+        "source": "s1_league1_game4_01_stac_1369334414",
+        "target": "s1_league1_game4_01_stac_1369334417",
+        "type": "Acknowledgement"
+      },
+      {
+        "rel_id": "s1_league1_game4_01_asoubeille_1369817863203",
+        "source": "s1_league1_game4_01_stac_1369334417",
+        "target": "s1_league1_game4_01_stac_1369334424",
+        "type": "Acknowledgement"
+      },
+      {
+        "rel_id": "s1_league1_game4_01_asoubeille_1369817668593",
+        "source": "s1_league1_game4_01_stac_1369334420",
+        "target": "s1_league1_game4_01_stac_1369334421",
+        "type": "Continuation"
+      },
+      {
+        "rel_id": "s1_league1_game4_01_asoubeille_1369817904140",
+        "source": "s1_league1_game4_01_stac_1369334427",
+        "target": "s1_league1_game4_01_stac_1369334430",
+        "type": "Continuation"
+      },
+      {
+        "rel_id": "s1_league1_game4_01_asoubeille_1369817919515",
+        "source": "s1_league1_game4_01_stac_1369334430",
+        "target": "s1_league1_game4_01_stac_1369334433",
+        "type": "Result"
+      },
+      {
+        "rel_id": "s1_league1_game4_01_asoubeille_1369818002234",
+        "source": "s1_league1_game4_01_stac_1369334433",
+        "target": "s1_league1_game4_01_stac_1369334436",
+        "type": "Elaboration"
+      },
+      {
+        "rel_id": "s1_league1_game4_01_asoubeille_1369817974375",
+        "source": "s1_league1_game4_01_stac_1369334436",
+        "target": "s1_league1_game4_01_stac_1369334439",
+        "type": "Comment"
+      },
+      {
+        "rel_id": "s1_league1_game4_01_asoubeille_1369818050140",
+        "source": "s1_league1_game4_01_stac_1369334436",
+        "target": "s1_league1_game4_01_stac_1369334442",
+        "type": "Continuation"
+      },
+      {
+        "rel_id": "s1_league1_game4_01_asoubeille_1369818129031",
+        "source": "s1_league1_game4_01_stac_1369334436",
+        "target": "s1_league1_game4_01_asoubeille_1369818118921",
+        "type": "Result"
+      },
+      {
+        "rel_id": "s1_league1_game4_01_nasher_1442317657241",
+        "source": "s1_league1_game4_01_stac_1369334436",
+        "target": "s1_league1_game4_01_nasher_1442317679568",
+        "type": "Elaboration"
+      },
+      {
+        "rel_id": "s1_league1_game4_01_asoubeille_1369818065156",
+        "source": "s1_league1_game4_01_stac_1369334445",
+        "target": "s1_league1_game4_01_stac_1369334446",
+        "type": "Result"
+      },
+      {
+        "rel_id": "s1_league1_game4_01_asoubeille_1369818099984",
+        "source": "s1_league1_game4_01_stac_1369334449",
+        "target": "s1_league1_game4_01_stac_1369334450",
+        "type": "Continuation"
+      },
+      {
+        "rel_id": "s1_league1_game4_01_asoubeille_1369818209265",
+        "source": "s1_league1_game4_01_stac_1369334450",
+        "target": "s1_league1_game4_01_stac_1369334456",
+        "type": "Comment"
+      },
+      {
+        "rel_id": "s1_league1_game4_01_nasher_1442317808909",
+        "source": "s1_league1_game4_01_stacutil_1455714936",
+        "target": "s1_league1_game4_01_stacutil_1455714937",
+        "type": "Contrast"
+      },
+      {
+        "rel_id": "s1_league1_game4_01_asoubeille_1369818217968",
+        "source": "s1_league1_game4_01_stac_1369334456",
+        "target": "s1_league1_game4_01_stac_1369334459",
+        "type": "Comment"
+      },
+      {
+        "rel_id": "s1_league1_game4_01_asoubeille_1369818236843",
+        "source": "s1_league1_game4_01_stac_1369334462",
+        "target": "s1_league1_game4_01_stac_1369334463",
+        "type": "Continuation"
+      },
+      {
+        "rel_id": "s1_league1_game4_01_asoubeille_1369818250312",
+        "source": "s1_league1_game4_01_stac_1369334463",
+        "target": "s1_league1_game4_01_stac_1369334464",
+        "type": "Result"
+      },
+      {
+        "rel_id": "s1_league1_game4_01_asoubeille_1369818327500",
+        "source": "s1_league1_game4_01_stac_1369334467",
+        "target": "s1_league1_game4_01_stac_1369334470",
+        "type": "Acknowledgement"
+      },
+      {
+        "rel_id": "s1_league1_game4_01_asoubeille_1369818344687",
+        "source": "s1_league1_game4_01_stac_1369334467",
+        "target": "s1_league1_game4_01_stac_1369334473",
+        "type": "Contrast"
+      },
+      {
+        "rel_id": "s1_league1_game4_01_asoubeille_1369818376593",
+        "source": "s1_league1_game4_01_stac_1369334473",
+        "target": "s1_league1_game4_01_asoubeille_1369818368218",
+        "type": "Contrast"
+      },
+      {
+        "rel_id": "s1_league1_game4_01_asoubeille_1369818357250",
+        "source": "s1_league1_game4_01_stac_1369334477",
+        "target": "s1_league1_game4_01_stac_1369334476",
+        "type": "Continuation"
+      },
+      {
+        "rel_id": "s1_league1_game4_01_asoubeille_1369818403593",
+        "source": "s1_league1_game4_01_stac_1369334480",
+        "target": "s1_league1_game4_01_stac_1369334481",
+        "type": "Conditional"
+      },
+      {
+        "rel_id": "s1_league1_game4_01_asoubeille_1369818550046",
+        "source": "s1_league1_game4_01_stac_1369334487",
+        "target": "s1_league1_game4_01_asoubeille_1369818577125",
+        "type": "Continuation"
+      },
+      {
+        "rel_id": "s1_league1_game4_01_nasher_1513015915294",
+        "source": "s1_league1_game4_01_stac_1369334488",
+        "target": "s1_league1_game4_01_stac_1369334489",
+        "type": "Conditional"
+      },
+      {
+        "rel_id": "s1_league1_game4_01_asoubeille_1369818659109",
+        "source": "s1_league1_game4_01_stac_1369334498",
+        "target": "s1_league1_game4_01_stac_1369334499",
+        "type": "Conditional"
+      },
+      {
+        "rel_id": "s1_league1_game4_01_asoubeille_1369818827718",
+        "source": "s1_league1_game4_01_stac_1369334511",
+        "target": "s1_league1_game4_01_asoubeille_1369818817703",
+        "type": "Explanation"
+      },
+      {
+        "rel_id": "s1_league1_game4_01_asoubeille_1369818859953",
+        "source": "s1_league1_game4_01_stac_1369334511",
+        "target": "s1_league1_game4_01_stac_1369334516",
+        "type": "Elaboration"
+      },
+      {
+        "rel_id": "s1_league1_game4_01_asoubeille_1369818770343",
+        "source": "s1_league1_game4_01_stac_1369334512",
+        "target": "s1_league1_game4_01_stac_1369334513",
+        "type": "Conditional"
+      },
+      {
+        "rel_id": "s1_league1_game4_01_asoubeille_1369818901609",
+        "source": "s1_league1_game4_01_stac_1369334516",
+        "target": "s1_league1_game4_01_stac_1369334519",
+        "type": "Acknowledgement"
+      },
+      {
+        "rel_id": "s1_league1_game4_01_asoubeille_1369819026859",
+        "source": "s1_league1_game4_01_stac_1369334522",
+        "target": "s1_league1_game4_01_stac_1369334525",
+        "type": "Parallel"
+      },
+      {
+        "rel_id": "s1_league1_game4_01_asoubeille_1369751040187",
+        "source": "s1_league1_game4_01_asoubeille_1369751019468",
+        "target": "s1_league1_game4_01_stac_1369334149",
+        "type": "Comment"
+      },
+      {
+        "rel_id": "s1_league1_game4_01_asoubeille_1369751326281",
+        "source": "s1_league1_game4_01_asoubeille_1369751302953",
+        "target": "s1_league1_game4_01_stac_1369334158",
+        "type": "Acknowledgement"
+      },
+      {
+        "rel_id": "s1_league1_game4_01_asoubeille_1369751868500",
+        "source": "s1_league1_game4_01_asoubeille_1369751795265",
+        "target": "s1_league1_game4_01_stac_1369334198",
+        "type": "Comment"
+      },
+      {
+        "rel_id": "s1_league1_game4_01_asoubeille_1369751890312",
+        "source": "s1_league1_game4_01_asoubeille_1369751795265",
+        "target": "s1_league1_game4_01_stac_1369334201",
+        "type": "Continuation"
+      },
+      {
+        "rel_id": "s1_league1_game4_01_asoubeille_1369752215484",
+        "source": "s1_league1_game4_01_asoubeille_1369751795265",
+        "target": "s1_league1_game4_01_stac_1369334204",
+        "type": "Comment"
+      },
+      {
+        "rel_id": "s1_league1_game4_01_asoubeille_1369753160484",
+        "source": "s1_league1_game4_01_asoubeille_1369753005359",
+        "target": "s1_league1_game4_01_stac_1369334241",
+        "type": "Acknowledgement"
+      },
+      {
+        "rel_id": "s1_league1_game4_01_asoubeille_1369753337875",
+        "source": "s1_league1_game4_01_asoubeille_1369753005359",
+        "target": "s1_league1_game4_01_stac_1369334244",
+        "type": "Comment"
+      },
+      {
+        "rel_id": "s1_league1_game4_01_asoubeille_1369753784671",
+        "source": "s1_league1_game4_01_asoubeille_1369753525093",
+        "target": "s1_league1_game4_01_asoubeille_1369753769484",
+        "type": "Acknowledgement"
+      },
+      {
+        "rel_id": "s1_league1_game4_01_asoubeille_1369753814921",
+        "source": "s1_league1_game4_01_asoubeille_1369753769484",
+        "target": "s1_league1_game4_01_stac_1369334256",
+        "type": "Explanation"
+      },
+      {
+        "rel_id": "s1_league1_game4_01_asoubeille_1369753848671",
+        "source": "s1_league1_game4_01_asoubeille_1369753769484",
+        "target": "s1_league1_game4_01_stac_1369334259",
+        "type": "Correction"
+      },
+      {
+        "rel_id": "s1_league1_game4_01_asoubeille_1369764078203",
+        "source": "s1_league1_game4_01_asoubeille_1369764045968",
+        "target": "s1_league1_game4_01_stac_1369334307",
+        "type": "Correction"
+      },
+      {
+        "rel_id": "s1_league1_game4_01_asoubeille_1369764414109",
+        "source": "s1_league1_game4_01_asoubeille_1369764364890",
+        "target": "s1_league1_game4_01_stac_1369334334",
+        "type": "Comment"
+      },
+      {
+        "rel_id": "s1_league1_game4_01_asoubeille_1369764634500",
+        "source": "s1_league1_game4_01_asoubeille_1369764364890",
+        "target": "s1_league1_game4_01_stac_1369334347",
+        "type": "Question_answer_pair"
+      },
+      {
+        "rel_id": "s1_league1_game4_01_nasher_1459244731367",
+        "source": "s1_league1_game4_01_asoubeille_1369764759906",
+        "target": "s1_league1_game4_01_asoubeille_1369764857953",
+        "type": "Continuation"
+      },
+      {
+        "rel_id": "s1_league1_game4_01_asoubeille_1369764866734",
+        "source": "s1_league1_game4_01_asoubeille_1369764857953",
+        "target": "s1_league1_game4_01_stac_1369334368",
+        "type": "Result"
+      },
+      {
+        "rel_id": "s1_league1_game4_01_asoubeille_1369764904890",
+        "source": "s1_league1_game4_01_asoubeille_1369764857953",
+        "target": "s1_league1_game4_01_asoubeille_1369764928859",
+        "type": "Explanation"
+      },
+      {
+        "rel_id": "s1_league1_game4_01_asoubeille_1369764984359",
+        "source": "s1_league1_game4_01_asoubeille_1369764928859",
+        "target": "s1_league1_game4_01_asoubeille_1369764977531",
+        "type": "Continuation"
+      },
+      {
+        "rel_id": "s1_league1_game4_01_asoubeille_1369765025781",
+        "source": "s1_league1_game4_01_asoubeille_1369764977531",
+        "target": "s1_league1_game4_01_stac_1369334382",
+        "type": "Continuation"
+      },
+      {
+        "rel_id": "s1_league1_game4_01_asoubeille_1369765348828",
+        "source": "s1_league1_game4_01_asoubeille_1369765273890",
+        "target": "s1_league1_game4_01_stac_1369334411",
+        "type": "Acknowledgement"
+      },
+      {
+        "rel_id": "s1_league1_game4_01_asoubeille_1369817770796",
+        "source": "s1_league1_game4_01_asoubeille_1369765273890",
+        "target": "s1_league1_game4_01_asoubeille_1369817725203",
+        "type": "Elaboration"
+      },
+      {
+        "rel_id": "s1_league1_game4_01_nasher_1459245194789",
+        "source": "s1_league1_game4_01_asoubeille_1369765273890",
+        "target": "s1_league1_game4_01_stac_1369334411",
+        "type": "Comment"
+      },
+      {
+        "rel_id": "s1_league1_game4_01_asoubeille_1369817887015",
+        "source": "s1_league1_game4_01_asoubeille_1369817725203",
+        "target": "s1_league1_game4_01_stac_1369334427",
+        "type": "Contrast"
+      },
+      {
+        "rel_id": "s1_league1_game4_01_asoubeille_1369818151531",
+        "source": "s1_league1_game4_01_asoubeille_1369818118921",
+        "target": "s1_league1_game4_01_stacutil_1455714936",
+        "type": "Acknowledgement"
+      },
+      {
+        "rel_id": "s1_league1_game4_01_asoubeille_1369818280390",
+        "source": "s1_league1_game4_01_asoubeille_1369818118921",
+        "target": "s1_league1_game4_01_asoubeille_1369818264296",
+        "type": "Explanation"
+      },
+      {
+        "rel_id": "s1_league1_game4_01_asoubeille_1369818312062",
+        "source": "s1_league1_game4_01_asoubeille_1369818118921",
+        "target": "s1_league1_game4_01_stac_1369334467",
+        "type": "Explanation"
+      },
+      {
+        "rel_id": "s1_league1_game4_01_asoubeille_1369818586875",
+        "source": "s1_league1_game4_01_asoubeille_1369818264296",
+        "target": "s1_league1_game4_01_stac_1369334487",
+        "type": "Continuation"
+      },
+      {
+        "rel_id": "s1_league1_game4_01_asoubeille_1369818476906",
+        "source": "s1_league1_game4_01_asoubeille_1369818368218",
+        "target": "s1_league1_game4_01_asoubeille_1369818459203",
+        "type": "Alternation"
+      },
+      {
+        "rel_id": "s1_league1_game4_01_asoubeille_1369818499171",
+        "source": "s1_league1_game4_01_asoubeille_1369818368218",
+        "target": "s1_league1_game4_01_stac_1369334484",
+        "type": "Acknowledgement"
+      },
+      {
+        "rel_id": "s1_league1_game4_01_asoubeille_1369818618343",
+        "source": "s1_league1_game4_01_asoubeille_1369818368218",
+        "target": "s1_league1_game4_01_stac_1369334492",
+        "type": "Comment"
+      },
+      {
+        "rel_id": "s1_league1_game4_01_asoubeille_1369818486640",
+        "source": "s1_league1_game4_01_asoubeille_1369818459203",
+        "target": "s1_league1_game4_01_stac_1369334484",
+        "type": "Acknowledgement"
+      },
+      {
+        "rel_id": "s1_league1_game4_01_asoubeille_1369818643625",
+        "source": "s1_league1_game4_01_asoubeille_1369818577125",
+        "target": "s1_league1_game4_01_stac_1369334495",
+        "type": "Acknowledgement"
+      },
+      {
+        "rel_id": "s1_league1_game4_01_asoubeille_1369818702078",
+        "source": "s1_league1_game4_01_asoubeille_1369818677625",
+        "target": "s1_league1_game4_01_stac_1369334502",
+        "type": "Comment"
+      },
+      {
+        "rel_id": "s1_league1_game4_01_asoubeille_1369818722078",
+        "source": "s1_league1_game4_01_asoubeille_1369818677625",
+        "target": "s1_league1_game4_01_stac_1369334505",
+        "type": "Acknowledgement"
+      },
+      {
+        "rel_id": "s1_league1_game4_01_asoubeille_1369818740062",
+        "source": "s1_league1_game4_01_asoubeille_1369818677625",
+        "target": "s1_league1_game4_01_stac_1369334508",
+        "type": "Comment"
+      },
+      {
+        "rel_id": "s1_league1_game4_01_asoubeille_1369818800125",
+        "source": "s1_league1_game4_01_asoubeille_1369818677625",
+        "target": "s1_league1_game4_01_stac_1369334511",
+        "type": "Continuation"
+      },
+      {
+        "rel_id": "s1_league1_game4_01_asoubeille_1369818972578",
+        "source": "s1_league1_game4_01_asoubeille_1369818677625",
+        "target": "s1_league1_game4_01_stac_1369334522",
+        "type": "Background"
+      },
+      {
+        "rel_id": "s1_league1_game4_01_asoubeille_1369752835796",
+        "source": "s1_league1_game4_01_nasher_1442308848784",
+        "target": "s1_league1_game4_01_nasher_1442308881754",
+        "type": "Question_answer_pair"
+      },
+      {
+        "rel_id": "s1_league1_game4_01_asoubeille_1369763287484",
+        "source": "s1_league1_game4_01_nasher_1442310650127",
+        "target": "s1_league1_game4_01_stac_1369334275",
+        "type": "Result"
+      },
+      {
+        "rel_id": "s1_league1_game4_01_asoubeille_1369764177703",
+        "source": "s1_league1_game4_01_nasher_1442311192858",
+        "target": "s1_league1_game4_01_stac_1369334316",
+        "type": "Acknowledgement"
+      },
+      {
+        "rel_id": "s1_league1_game4_01_asoubeille_1369765125765",
+        "source": "s1_league1_game4_01_nasher_1442317022949",
+        "target": "s1_league1_game4_01_stac_1369334391",
+        "type": "Question_answer_pair"
+      }
+    ]
+  }
+}

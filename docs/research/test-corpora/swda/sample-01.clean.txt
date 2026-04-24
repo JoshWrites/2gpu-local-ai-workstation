@@ -1,0 +1,32 @@
+# Switchboard Dialog Act Corpus: cleaned per-turn text
+# Source CSV: sw_0912_3267.utt.csv
+# Caller A / Caller B are two anonymous telephone participants.
+# Disfluency markup ({D}, {F}, /, [, +, -, etc.) is verbatim from SwDA.
+# See https://web.stanford.edu/~jurafsky/ws97/manual.august1.html for conventions.
+
+A: Wondering how you keep up on the news. -/
+B: Primarily with our local newspaper and T V. /
+A: Uh-huh. /
+B: I listen to the radio but [ not, + {F um, } not ] like I did when I was working.  / I am recently retired <noise>  / to that means I have a lot  of time to watch the news on T V.  / How do you gain your news? /
+A: [ I guess the, + I get the ] WASHINGTON POST -- /
+B: <<Very faint>>  Okay. /
+A: -- {C and } that is a pretty big newspaper  / {C and } I think that's almost exclusive [ me, + -ly ] my  (( first of the ))  news.  / Though I have the radio on when I go to work, I don't think the news usually hits,  / <laughter> {C because } I'm not going right on the hour. /
+B: {F Oh, } I see. /
+A: You know. /
+B: {D Well, } [ that's, + that is ] one of the handicaps with both T V [ and, +  and ] radio.  / If you're not available on the hour or half hour, then you lose out on an awful lot.  / {D Well, } what is your newspaper?  / That is the WASHINGTON POST -- /
+A: Right. /
+B: -- is that correct?  / I have read that when we were in that area,  / {C and } it is a splendid newspaper. /
+A: Uh-huh. /
+B: {D So, } what more do we need to discuss <laughter>,
+A: <Laughter>.
+B: tonight?  / That seems like a very short one. /
+A: Right.  / I think that, {D you know, } [ we, + we've ] resolved the issue  / {C and } that's what we were asked to do. /
+B: {D Well, } I can discuss a lot of the news that we have,  / {C but, } {F uh, } I feel that that's not part of our --
+A: Right. /
+B: -- responsibility. /
+A: Right. /
+B: {D So } thank you for calling. /
+A: {F Oh, } okay.  / {D Well, } thanks for discussing it. /
+B: All right. /
+A: # Bye-bye. # /
+B: # Good-bye. # /

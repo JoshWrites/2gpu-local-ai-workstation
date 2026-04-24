@@ -1,0 +1,94 @@
+# MRDA (ICSI Meeting Recorder Dialogue Act Corpus) excerpt — clean text
+# Source file: Bdb001.txt
+# Speakers: fe### = female, me### = male, with numeric ID.
+# This is a naturalistic meeting transcript; disfluencies are minimally scrubbed.
+
+fe016: okay. so um i was going to try to get out of here like in half an hour. um because i really appreciate people coming. and the main thing that i was going to ask people to help with today is to give input on what kinds of database format we should use in starting to link up things like word transcripts and annotations of word transcripts. so anything that transcribers or discourse coders or whatever put in the signal with time marks for like words and phone boundaries and all the stuff we get out of the forced alignments and the recognizer. so we have this um i think a starting point is clearly the the channelized output of dave gelbart's program. which don brought a copy of.
+me011: yeah. yeah i'm i'm familiar with that. i mean we i sort of already have developed an x.m.l. format for this sort of stuff.
+fe016: um which
+me018: can i see it?
+me011: and so the only question is it the sort of thing that you want to use or not. have you looked at that? i mean i had a web page up.
+fe016: right. so i actually mostly need to be able to link up or
+me011: so
+fe016: it's it's a question both of what the representation is and
+me011: you mean this? i guess i am going to be standing up and drawing on the board.
+fe016: okay. yeah. so you should definitely.
+me011: um so so it definitely had that as a concept. so it has a single timeline.
+fe016: uhhuh.
+me011: and then you can have lots of different sections. each of which have i.d.'s attached to it. and then you can refer from other sections to those i.d.'s. if you want to. so that um so that you start with with a timeline tag. timeline. and then you have a bunch of times. i don't i don't remember exactly what my notation was.
+mn017: oh i remember seeing an example of this.
+me011: but it
+fe016: right. right.
+mn017: yeah.
+me011: yeah. t. equals one point three two. uh and then i i also had optional things like accuracy. and then i.d. equals t. one uh one seven. and then i also wanted to to be to be able to not specify specifically what the time was and just have a stamp.
+fe016: right.
+me011: yeah so these are arbitrary assigned by a program. not not by a user. so you have a whole bunch of those. and then somewhere further down you might have something like an utterance tag. which has start equals t. seventeen. end equals t. eighteen. so what that's saying is we know it starts at this particular time. we don't know when it ends.
+fe016: okay.
+me011: right? but it ends at this t. eighteen. which may be somewhere else. we say there's another utterance. we don't know what the time actually is. but we know that it's the same time as this end time.
+mn017: huh.
+me011: you know thirty eight. whatever you want.
+mn017: so you're essentially defining a lattice.
+me011: okay. yes. exactly.
+mn017: yeah.
+me011: and then uh and then these also have i.d.'s. right? so you could you could have some sort of other other tag later in the file that would be something like um oh i don't know uh noise type equals door slam. you know? and then uh you could either say time equals a particular time mark or you could do other sorts of references. so or or you might have a prosody. prosody. right? d. ? t. ?
+fe016: it's an o. instead of an i. . but the d. is good.
+me011: you like the d. ?
+fe016: yeah.
+me011: that's a good d. . um you know so you could have some sort of type here. and then you could have um the utterance that it's referring to could be u. seventeen or something like that.
+fe016: okay. so i mean that seems that seems great for all of the encoding of things with time. and
+me011: oh well.
+fe016: um i i guess my question is more uh what what do you do with say a forced alignment? i mean you've got all these phone labels. and what do you do if you just conceptually if you get um transcriptions where the words are staying but the time boundaries are changing because you've got a new recognition output? or sort of what's the um sequence of going from the waveforms that stay the same the transcripts that may or may not change and then the utterance which where the time boundaries that may or may not change?
+mn017: oh that's that's actually very nicely handled here.
+fe016: um
+mn017: because you could you could all you'd have to change is the um time stamps in the timeline without without uh changing the i.d.'s.
+fe016: and you'd be able to propagate all of the the information?
+me011: right. that's the that's why you do that extra level of indirection. so that you can just change the timeline.
+mn017: except the timeline is going to be huge. if you say
+me011: yes.
+fe016: yeah. yeah especially at the phone level.
+mn017: suppose you have a phone level alignment.
+fe016: the we we have phone level backtraces.
+mn017: you'd have you'd have
+me011: yeah this i don't think i would do this for phone level.
+fe016: um
+me011: i think for phone level you want to use some sort of binary representation. because it'll be too dense otherwise.
+fe016: okay. so if you were doing that and you had this sort of companion uh thing that gets called up for phone level uh what would that look like? how would you
+me011: i would use just an existing an existing way of doing it.
+mn017: huh. but but why not use it for phone level? it's just a matter of it's just a matter of it being bigger. but if you have you know barring memory limitations uh i mean this is still the
+me011: it's parsing limitations. i don't want to have this text file that you have to read in the whole thing to do something very simple for.
+mn017: oh no. you would use it only for purposes where you actually want the phone level information i'd imagine.
+fe016: so you could have some file that configures how much information you want in your in your x.m.l. or something.
+me011: right. i mean you'd
+fe016: um because it does get very with
+me011: i i am imagining you'd have multiple versions of this depending on the information that you want.
+mn017: you
+fe016: right.
+me011: um i'm just what i'm wondering is whether i think for word level this would be okay.
+fe016: yeah. yeah.
+me011: for word level it's all right.
+fe016: definitely.
+mn017: uhhuh.
+me011: for lower than word level you're talking about so much data that i just i don't know. i don't know if that
+fe016: i mean we actually have so one thing that don is doing is we're we're running for every frame you get a pitch value.
+me018: lattices are big too.
+fe016: and not only one pitch value but different kinds of pitch values. depending on
+me011: yeah i mean for something like that i would use p. file. or or any frame level stuff i would use p. file.
+fe016: meaning?
+me011: uh that's a well or something like it. it's uh icsi has a format for frame level representation of features.
+fe016: okay.
+me011: um
+fe016: that you could call that you would tie into this representation with like an i.d.
+me011: right. right. or or there's a there's a particular way in x.m.l. to refer to external resources.
+fe016: and okay.
+me011: so you would say refer to this external file. um so that external file wouldn't be in
+fe016: so that might that might work.
+me018: but what what's the advantage of doing that versus just putting it into this format?
+me011: more compact. which i think is is better.
+me018: uhhuh.
+me011: i mean if you did it at this
+fe016: i mean these are long meetings. and with for every frame
+me011: you don't want to do it with that
+fe016: um
+me011: anything at frame level you had better encode binary. or it's going to be really painful.
+mn017: or you just i mean i like text formats. um you can always uh g. zip them. and um you know decompress them on the fly if if space is really a concern.
+me018: yeah i was i was thinking the advantage is that we can share this with other people.

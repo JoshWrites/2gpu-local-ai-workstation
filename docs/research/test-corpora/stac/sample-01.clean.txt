@@ -1,0 +1,285 @@
+# STAC (Strategic Conversation) linguistic-only corpus — clean text
+# Dialogue ID: 331_s1_league1_game4_1
+# Source: https://www.irit.fr/STAC/ (CC BY-NC-SA 4.0)
+# Context: chat logs from multi-player Settlers of Catan games.
+# Players negotiate trades ('1 wheat for 1 clay?') and react to game events.
+# Each line below is ONE STAC EDU (elementary discourse unit), tagged with
+# (seg_id) at end for cross-reference to the annotated relations file.
+
+
+gotwood4sheep: Hey LJ!    (s1_league1_game4_01_stac_1369334134)
+
+ljaybrad123: hi :D    (s1_league1_game4_01_stac_1369334137)
+
+ljaybrad123: how are you?    (s1_league1_game4_01_stac_1369334140)
+
+gotwood4sheep: having the best midsummer evar    (s1_league1_game4_01_stac_1369334143)
+
+gotwood4sheep: the longest day of rain of the year    (s1_league1_game4_01_stac_1369334146)
+
+ljaybrad123: nice    (s1_league1_game4_01_stac_1369334149)
+
+ljaybrad123: though technically it was yesterday    (s1_league1_game4_01_stac_1369334152)
+
+ljaybrad123: it fell on the 20th this year which was odd    (s1_league1_game4_01_stac_1369334155)
+
+gotwood4sheep: indeed, at least it was mostly sunny    (s1_league1_game4_01_stac_1369334158)
+
+gotwood4sheep: today has been driech    (s1_league1_game4_01_stac_1369334161)
+
+gotwood4sheep: waiting on tomas now and william about 8.15, right?    (s1_league1_game4_01_stac_1369334164)
+
+ljaybrad123: yesh    (s1_league1_game4_01_stac_1369334167)
+
+ljaybrad123: how did tuesdays game go?    (s1_league1_game4_01_stac_1369334170)
+
+gotwood4sheep: fine, pretty quick    (s1_league1_game4_01_stac_1369334173)
+
+ljaybrad123: gdgd    (s1_league1_game4_01_stac_1369334176)
+
+ljaybrad123: who won?    (s1_league1_game4_01_stac_1369334179)
+
+gotwood4sheep: i deed    (s1_league1_game4_01_stac_1369334182)
+
+ljaybrad123: nice    (s1_league1_game4_01_stac_1369334185)
+
+ljaybrad123: well done    (s1_league1_game4_01_stac_1369334188)
+
+gotwood4sheep: lucky    (s1_league1_game4_01_stac_1369334191)
+
+gotwood4sheep: william kept rolling 7s    (s1_league1_game4_01_stac_1369334194)
+gotwood4sheep: whenever he was >7 resources    (s1_league1_game4_01_stac_1369334195)
+
+ljaybrad123: :(    (s1_league1_game4_01_stac_1369334198)
+
+gotwood4sheep: and more 8s came up than 6s when i only had 8s    (s1_league1_game4_01_stac_1369334201)
+
+ljaybrad123: we had soooo many 7s last game    (s1_league1_game4_01_stac_1369334204)
+
+gotwood4sheep: lol annoyyying    (s1_league1_game4_01_stac_1369334207)
+
+ljaybrad123: i think 7 7s in a row    (s1_league1_game4_01_stac_1369334210)
+
+gotwood4sheep: wow crazy    (s1_league1_game4_01_stac_1369334213)
+
+gotwood4sheep: come on tom    (s1_league1_game4_01_stac_1369334216)
+
+gotwood4sheep: where's he at    (s1_league1_game4_01_stac_1369334219)
+
+ljaybrad123: no idea...    (s1_league1_game4_01_stac_1369334222)
+
+gotwood4sheep: how long shall we give him?    (s1_league1_game4_01_stac_1369334225)
+
+gotwood4sheep: or shall we camp on the server till 8.15!    (s1_league1_game4_01_stac_1369334228)
+
+ljaybrad123: erm...    (s1_league1_game4_01_stac_1369334231)
+
+ljaybrad123: unless the second game happens early it doesnt bother me...    (s1_league1_game4_01_stac_1369334234)
+
+ljaybrad123: i might return to minecraft though...    (s1_league1_game4_01_stac_1369334237)
+ljaybrad123: I kinda just caught the bug    (s1_league1_game4_01_stac_1369334238)
+
+gotwood4sheep: cool!    (s1_league1_game4_01_stac_1369334241)
+
+gotwood4sheep: I haven't played    (s1_league1_game4_01_stac_1369334244)
+gotwood4sheep: but know its addictive nature from my friends    (s1_league1_game4_01_stac_1369334245)
+
+ljaybrad123: if he doesn't turn up    (s1_league1_game4_01_stac_1369334248)
+ljaybrad123: then the final game is the decider.;;;    (s1_league1_game4_01_stac_1369334249)
+
+gotwood4sheep: i guess,    (s1_league1_game4_01_stac_1369334252)
+gotwood4sheep: unless we have time to reschedule the tomas game before 27th?    (s1_league1_game4_01_stac_1369334253)
+
+gotwood4sheep: don't want to deprive his fun and games :D    (s1_league1_game4_01_stac_1369334256)
+
+ljaybrad123: he goes away tomorrow...    (s1_league1_game4_01_stac_1369334259)
+
+gotwood4sheep: ahhhhh    (s1_league1_game4_01_stac_1369334262)
+
+ljaybrad123: thats why we were going to do 2 tonight    (s1_league1_game4_01_stac_1369334265)
+
+gotwood4sheep: hmm no emails.    (s1_league1_game4_01_stac_1369334268)
+gotwood4sheep: ah well, i'm in no rush,    (s1_league1_game4_01_stac_1369334269)
+gotwood4sheep: not going outside :D    (s1_league1_game4_01_stac_1369334270)
+
+ljaybrad123: I was going to...    (s1_league1_game4_01_stac_1369334273)
+ljaybrad123: but woud need to be done by 8.15 ...    (s1_league1_game4_01_stac_1369334274)
+ljaybrad123: so not going to happen    (s1_league1_game4_01_stac_1369334275)
+
+ljaybrad123: could have played earlier    (s1_league1_game4_01_stac_1369334278)
+ljaybrad123: because Im off work :(    (s1_league1_game4_01_stac_1369334279)
+
+gotwood4sheep: d'oh :(    (s1_league1_game4_01_stac_1369334282)
+
+ljaybrad123: I fell at work yesterday    (s1_league1_game4_01_stac_1369334285)
+
+ljaybrad123: so off for the rest of the week    (s1_league1_game4_01_stac_1369334288)
+
+ljaybrad123: sadly unpaid :(    (s1_league1_game4_01_stac_1369334291)
+
+gotwood4sheep: um...sorry to hear it...    (s1_league1_game4_01_stac_1369334294)
+gotwood4sheep: but if you fell at work    (s1_league1_game4_01_stacutil_1455716798)
+gotwood4sheep: shouldn't they be paying,    (s1_league1_game4_01_stacutil_1455716799)
+gotwood4sheep: or at least bracing themse    (s1_league1_game4_01_stac_1369334296)
+
+gotwood4sheep: lves for a claim?    (s1_league1_game4_01_stac_1369334299)
+gotwood4sheep:  what kind of fall?    (s1_league1_game4_01_stac_1369334300)
+
+gotwood4sheep: you shouldn't lose pay    (s1_league1_game4_01_stac_1369334303)
+gotwood4sheep: if it was work-related :/    (s1_league1_game4_01_stac_1369334304)
+
+ljaybrad123: erm... im technically self employed...    (s1_league1_game4_01_stac_1369334307)
+
+gotwood4sheep: oh ouch    (s1_league1_game4_01_stac_1369334310)
+
+gotwood4sheep: :(    (s1_league1_game4_01_stac_1369334313)
+
+ljaybrad123: and they should be...    (s1_league1_game4_01_stac_1369334316)
+ljaybrad123: they made me wear slippy overshoes.    (s1_league1_game4_01_stac_1369334317)
+
+ljaybrad123: we'll see what happens    (s1_league1_game4_01_stac_1369334320)
+
+gotwood4sheep: sounds like a liability case to be contested.    (s1_league1_game4_01_stac_1369334323)
+gotwood4sheep:  good luck    (s1_league1_game4_01_stac_1369334324)
+
+gotwood4sheep: are you ok?    (s1_league1_game4_01_stac_1369334327)
+gotwood4sheep: just sore?    (s1_league1_game4_01_stac_1369334328)
+
+gotwood4sheep: or is it possibly worse?    (s1_league1_game4_01_stac_1369334331)
+
+gotwood4sheep: sorry, don't want to sound prying :P    (s1_league1_game4_01_stac_1369334334)
+
+ljaybrad123: it does -    (s1_league1_game4_01_stac_1369334337)
+ljaybrad123: but I don't really know what to do...    (s1_league1_game4_01_stac_1369334338)
+
+gotwood4sheep: there's always no win no fee people    (s1_league1_game4_01_stac_1369334341)
+
+gotwood4sheep: did they file an accident report?    (s1_league1_game4_01_stac_1369334344)
+
+ljaybrad123: erm bad bruising - muscle damge -    (s1_league1_game4_01_stac_1369334347)
+
+gotwood4sheep: ouch :(    (s1_league1_game4_01_stac_1369334350)
+
+gotwood4sheep: sorry, guess whose dad worked in insurance :P    (s1_league1_game4_01_stac_1369334353)
+
+ljaybrad123: yeah im tempted    (s1_league1_game4_01_stac_1369334356)
+
+ljaybrad123: lol I don't blame you/....    (s1_league1_game4_01_stac_1369334359)
+
+ljaybrad123: I'm very tempted    (s1_league1_game4_01_stac_1369334362)
+ljaybrad123: because its incredibly sore    (s1_league1_game4_01_stac_1369334363)
+
+gotwood4sheep: I'd take some pictures    (s1_league1_game4_01_stac_1369334366)
+gotwood4sheep: and make sure a report is filed    (s1_league1_game4_01_stac_1369334367)
+gotwood4sheep: so you have something to work with    (s1_league1_game4_01_stac_1369334368)
+
+gotwood4sheep: if you don't deal with the evidence now    (s1_league1_game4_01_stac_1369334371)
+gotwood4sheep: it'll be tough    (s1_league1_game4_01_stac_1369334372)
+
+ljaybrad123: I can't take pictures....    (s1_league1_game4_01_stac_1369334375)
+
+gotwood4sheep: and if you're self employed    (s1_league1_game4_01_stac_1369334378)
+gotwood4sheep: you've gotta protect your income    (s1_league1_game4_01_stac_1369334379)
+
+gotwood4sheep: the report and/or questions of liability are most important    (s1_league1_game4_01_stac_1369334382)
+
+gotwood4sheep: maybe a trip to the doctors as well in that case    (s1_league1_game4_01_stac_1369334385)
+
+gotwood4sheep: ?    (s1_league1_game4_01_stac_1369334388)
+
+ljaybrad123: yeah I went to docs    (s1_league1_game4_01_stac_1369334391)
+
+gotwood4sheep: well at least that's on file.    (s1_league1_game4_01_stac_1369334394)
+
+gotwood4sheep: I'd send the workplace a message    (s1_league1_game4_01_stac_1369334397)
+gotwood4sheep: checking they've filed an accident report    (s1_league1_game4_01_stac_1369334398)
+
+gotwood4sheep: and saying you're considering your options    (s1_league1_game4_01_stac_1369334401)
+
+ljaybrad123: bad bruising    (s1_league1_game4_01_stac_1369334404)
+ljaybrad123: but pretty sure it's not broken    (s1_league1_game4_01_stac_1369334405)
+
+gotwood4sheep: at least you give them notice    (s1_league1_game4_01_stac_1369334408)
+
+gotwood4sheep: hope so :(    (s1_league1_game4_01_stac_1369334411)
+
+ljaybrad123: I told them i needed a report yesterday    (s1_league1_game4_01_stac_1369334414)
+
+gotwood4sheep: good.  well, good luck.    (s1_league1_game4_01_stac_1369334417)
+
+gotwood4sheep: it sucks and it's stressful,    (s1_league1_game4_01_stac_1369334420)
+gotwood4sheep: and doing it when you feel bad blows    (s1_league1_game4_01_stac_1369334421)
+
+ljaybrad123: thanks    (s1_league1_game4_01_stac_1369334424)
+
+gotwood4sheep: but it's one of those things you have to move on, sadly    (s1_league1_game4_01_stac_1369334427)
+
+gotwood4sheep: and i do, of course, hope you feel better soon    (s1_league1_game4_01_stac_1369334430)
+
+gotwood4sheep: so you don't miss out too much    (s1_league1_game4_01_stac_1369334433)
+
+ljaybrad123: yeah I just feel naff - and now cant work today or tomorrow at least    (s1_league1_game4_01_stac_1369334436)
+
+gotwood4sheep: :(    (s1_league1_game4_01_stac_1369334439)
+
+ljaybrad123: maybe longer...    (s1_league1_game4_01_stac_1369334442)
+
+ljaybrad123: I can't lift any of the kids atm    (s1_league1_game4_01_stac_1369334445)
+ljaybrad123: so i cant work    (s1_league1_game4_01_stac_1369334446)
+
+gotwood4sheep: I'd definitely cost up lost earnings    (s1_league1_game4_01_stac_1369334449)
+gotwood4sheep: and try and get a settlement    (s1_league1_game4_01_stac_1369334450)
+
+ljaybrad123: yeah -    (s1_league1_game4_01_stacutil_1455714936)
+ljaybrad123: it's just kinda like is it worth all the hassle for £70    (s1_league1_game4_01_stacutil_1455714937)
+
+gotwood4sheep: /incidental settlers pun    (s1_league1_game4_01_stac_1369334456)
+
+ljaybrad123: :)    (s1_league1_game4_01_stac_1369334459)
+
+gotwood4sheep: You might find they're sweating it    (s1_league1_game4_01_stac_1369334462)
+gotwood4sheep: and if you asked for £70    (s1_league1_game4_01_stac_1369334463)
+gotwood4sheep: they'd say sure    (s1_league1_game4_01_stac_1369334464)
+
+gotwood4sheep: settling works for all    (s1_league1_game4_01_stac_1369334467)
+
+ljaybrad123: hmmm    (s1_league1_game4_01_stac_1369334470)
+
+ljaybrad123: I get the distinct feeling they dont really care    (s1_league1_game4_01_stac_1369334473)
+
+gotwood4sheep: they'll care more    (s1_league1_game4_01_stac_1369334476)
+gotwood4sheep: if they think you're pursuing legal action    (s1_league1_game4_01_stac_1369334477)
+
+gotwood4sheep: if they really don't,    (s1_league1_game4_01_stac_1369334480)
+gotwood4sheep: default judgement, bang    (s1_league1_game4_01_stac_1369334481)
+
+ljaybrad123: yeah I suppose    (s1_league1_game4_01_stac_1369334484)
+
+gotwood4sheep: I'd suggest a price,    (s1_league1_game4_01_stac_1369334487)
+gotwood4sheep: if they don't respond,    (s1_league1_game4_01_stac_1369334488)
+gotwood4sheep: small claims and see    (s1_league1_game4_01_stac_1369334489)
+
+gotwood4sheep: sounds like there's a case to be heard    (s1_league1_game4_01_stac_1369334492)
+
+ljaybrad123: hmmm fair point    (s1_league1_game4_01_stac_1369334495)
+
+gotwood4sheep: if he's not here in 7 mins    (s1_league1_game4_01_stac_1369334498)
+gotwood4sheep: we'll not have time before william arrives    (s1_league1_game4_01_stac_1369334499)
+
+gotwood4sheep: sigh...    (s1_league1_game4_01_stac_1369334502)
+
+ljaybrad123: no    (s1_league1_game4_01_stac_1369334505)
+
+ljaybrad123: :(    (s1_league1_game4_01_stac_1369334508)
+
+gotwood4sheep: just emailed everyone to see-    (s1_league1_game4_01_stac_1369334511)
+gotwood4sheep: if Tomas has a smartphone    (s1_league1_game4_01_stac_1369334512)
+gotwood4sheep: he may pick up    (s1_league1_game4_01_stac_1369334513)
+
+gotwood4sheep: the email    (s1_league1_game4_01_stac_1369334516)
+
+ljaybrad123: thanks    (s1_league1_game4_01_stac_1369334519)
+
+gotwood4sheep: *twiddles thumbs*    (s1_league1_game4_01_stac_1369334522)
+
+ljaybrad123: '8noms oatcakes*    (s1_league1_game4_01_stac_1369334525)

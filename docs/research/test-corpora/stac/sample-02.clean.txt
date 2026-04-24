@@ -1,0 +1,191 @@
+# STAC (Strategic Conversation) linguistic-only corpus — clean text
+# Dialogue ID: 592_s1_league3_game6_1
+# Source: https://www.irit.fr/STAC/ (CC BY-NC-SA 4.0)
+# Context: chat logs from multi-player Settlers of Catan games.
+# Players negotiate trades ('1 wheat for 1 clay?') and react to game events.
+# Each line below is ONE STAC EDU (elementary discourse unit), tagged with
+# (seg_id) at end for cross-reference to the annotated relations file.
+
+
+inca: hey, like the room name    (s1_league3_game6_01_stac_1456328048)
+
+Gaeilgeoir: evening    (s1_league3_game6_01_stac_1377311144)
+
+Gaeilgeoir: indeed.    (s1_league3_game6_01_stac_1377311147)
+
+Gaeilgeoir: hopefully I can net my first win    (s1_league3_game6_01_stac_1377311150)
+
+Gaeilgeoir: you must be doing pretty well?    (s1_league3_game6_01_stac_1377311153)
+
+inca: i think it's between me and kieran for the extravagant prize,    (s1_league3_game6_01_stac_1377311156)
+inca: not sure exactly how it works though    (s1_league3_game6_01_stac_1377311157)
+
+Gaeilgeoir: best of luck so    (s1_league3_game6_01_stac_1377311160)
+
+Gaeilgeoir: £20, is it?    (s1_league3_game6_01_stac_1377311163)
+
+inca: cheers    (s1_league3_game6_01_stac_1377311166)
+
+inca: yep    (s1_league3_game6_01_stac_1377311169)
+
+inca: would be quite nice    (s1_league3_game6_01_stac_1377311172)
+
+inca: if you win,    (s1_league3_game6_01_stac_1377311175)
+inca: we'll all have had a win    (s1_league3_game6_01_stac_1377311176)
+
+inca: that would be a nice ending    (s1_league3_game6_01_stac_1377311179)
+
+Gaeilgeoir: indeed.    (s1_league3_game6_01_stac_1377311182)
+Gaeilgeoir: what's happened to carina lately?    (s1_league3_game6_01_stac_1377311183)
+
+inca: not sure,    (s1_league3_game6_01_stac_1377311186)
+inca: a few weeks ago she said she was away travelling somewhere, and that we could play without    (s1_league3_game6_01_stac_1377311187)
+
+inca: haven't heard from her  since    (s1_league3_game6_01_stac_1377311190)
+
+inca: *without her if necessary    (s1_league3_game6_01_stac_1377311193)
+
+Gaeilgeoir: ok,    (s1_league3_game6_01_stac_1377311196)
+Gaeilgeoir: fair enough.    (s1_league3_game6_01_stac_1377311197)
+
+Gaeilgeoir: elusive German :P    (s1_league3_game6_01_stac_1377311200)
+
+inca: haha, indeed    (s1_league3_game6_01_stac_1377311203)
+
+Gaeilgeoir: http://www.youtube.com/watch?v=aGSKrC7dGcY    (s1_league3_game6_01_stac_1377311206)
+
+Gaeilgeoir: tune    (s1_league3_game6_01_stac_1377311209)
+
+inca: like it    (s1_league3_game6_01_stac_1377311212)
+
+inca: think i'll play it throughout the game    (s1_league3_game6_01_stac_1377311215)
+
+Gaeilgeoir: haha, nice.    (s1_league3_game6_01_stac_1377311218)
+
+Gaeilgeoir: I'm a bit weird when it comes to music.    (s1_league3_game6_01_stac_1377311221)
+Gaeilgeoir: most of my favourite artists are from the 80's/90's    (s1_league3_game6_01_stac_1377311222)
+
+inca: heh that's not too weird really,    (s1_league3_game6_01_stac_1377311225)
+inca: music's taken a bad turn recently    (s1_league3_game6_01_stac_1377311226)
+
+Gaeilgeoir: very true    (s1_league3_game6_01_stac_1377311229)
+
+inca: i'm sort of a classical musician,    (s1_league3_game6_01_stac_1377311232)
+inca: but i respect popular music from the time in which it was actually    (s1_league3_game6_01_stac_1377311233)
+
+inca: *actually musical    (s1_league3_game6_01_stac_1377311236)
+
+Gaeilgeoir: What do you play?    (s1_league3_game6_01_stac_1377311239)
+Gaeilgeoir: I play some piano    (s1_league3_game6_01_stac_1377311240)
+
+inca: cool,    (s1_league3_game6_01_stacutil_1464017301)
+inca: i play trumpet    (s1_league3_game6_01_stacutil_1464017302)
+
+inca: and piano very poorly    (s1_league3_game6_01_stac_1377311246)
+
+inca: what level are you?    (s1_league3_game6_01_stac_1377311249)
+
+Gaeilgeoir: quite mediocre.    (s1_league3_game6_01_stac_1377311252)
+Gaeilgeoir: Grade 5 or 6.    (s1_league3_game6_01_stac_1377311253)
+
+Gaeilgeoir: I enjoy it though    (s1_league3_game6_01_stac_1377311256)
+
+Gaeilgeoir: Trumpet sounds great though.    (s1_league3_game6_01_stac_1377311259)
+
+inca: nice, no shame in that all    (s1_league3_game6_01_stac_1377311262)
+
+inca: enough to impress people    (s1_league3_game6_01_stac_1377311265)
+
+inca: and yeah trumpet's great fun    (s1_league3_game6_01_stac_1377311268)
+
+Gaeilgeoir: one more tune for you    (s1_league3_game6_01_stac_1377311271)
+
+Gaeilgeoir: http://www.youtube.com/watch?v=xwtdhWltSIg&feature=related    (s1_league3_game6_01_stacutil_1405013275)
+
+Gaeilgeoir: what classical composers do you like?    (s1_league3_game6_01_stac_1377311278)
+
+inca: haha i like this,    (s1_league3_game6_01_stac_1377311281)
+inca: we played an arrangement of this in my brass band this year    (s1_league3_game6_01_stac_1377311282)
+
+Gaeilgeoir: sweet.    (s1_league3_game6_01_stac_1377311285)
+Gaeilgeoir: any chance that's on youtube?    (s1_league3_game6_01_stac_1377311286)
+
+inca: can't find it sadly    (s1_league3_game6_01_stac_1377311289)
+
+inca: i mostly like late romantic /20th century composers,    (s1_league3_game6_01_stac_1377311292)
+inca: my favourite is shostakovich    (s1_league3_game6_01_stac_1377311293)
+
+inca: how about you?    (s1_league3_game6_01_stac_1377311296)
+
+Gaeilgeoir: Most German/Austrian composers from the 18th/19th centuries.    (s1_league3_game6_01_stac_1377311299)
+
+Gaeilgeoir: I particularly like Wagner and Bach.    (s1_league3_game6_01_stac_1377311302)
+
+Gaeilgeoir: Rachmaninov also has some beautiful piano works    (s1_league3_game6_01_stac_1377311305)
+
+Gaeilgeoir: And Sibelius.    (s1_league3_game6_01_stac_1377311308)
+Gaeilgeoir: I like him too.    (s1_league3_game6_01_stac_1377311309)
+Gaeilgeoir: There are too many. :P    (s1_league3_game6_01_stacutil_1403627609)
+
+inca: haha nice,    (s1_league3_game6_01_stac_1377311314)
+inca: yeah wagner's awesome    (s1_league3_game6_01_stac_1377311315)
+
+inca: particularly for a brass player    (s1_league3_game6_01_stac_1377311318)
+
+Gaeilgeoir: yep.    (s1_league3_game6_01_stac_1377311321)
+
+Gaeilgeoir: I don't know if you know John Field.    (s1_league3_game6_01_stac_1377311324)
+Gaeilgeoir: He was an Irish composer    (s1_league3_game6_01_stac_1377311325)
+Gaeilgeoir: so I'm quite proud of him too.    (s1_league3_game6_01_stac_1377311326)
+Gaeilgeoir: Some gr    (s1_league3_game6_01_stac_1377311327)
+
+Gaeilgeoir: Some great piano work    (s1_league3_game6_01_stac_1377311330)
+
+inca: ah, no i haven't heard of him    (s1_league3_game6_01_stac_1377311333)
+
+Gaeilgeoir: doesn't look like Kieran's coming    (s1_league3_game6_01_stac_1377311336)
+
+inca: indeed, that's a problem    (s1_league3_game6_01_stac_1377311339)
+
+Gaeilgeoir: any response from him at all?    (s1_league3_game6_01_stac_1377311342)
+
+inca: i'll send an e-mail just on the off-chance he's online but forgotten    (s1_league3_game6_01_stac_1377311345)
+
+inca: he definitely said he could play before    (s1_league3_game6_01_stac_1377311348)
+
+inca: if we can't do it tonight,    (s1_league3_game6_01_stac_1377311351)
+inca: our last hope really is that we can play it on wednesday    (s1_league3_game6_01_stac_1377311352)
+
+inca: if we're allowed to    (s1_league3_game6_01_stac_1377311355)
+
+Gaeilgeoir: unfortunately, I won't be able.    (s1_league3_game6_01_stac_1377311358)
+
+inca: ah    (s1_league3_game6_01_stac_1377311361)
+
+Gaeilgeoir: But if you want to do so,    (s1_league3_game6_01_stac_1377311364)
+Gaeilgeoir: please go ahead.    (s1_league3_game6_01_stac_1377311365)
+Gaeilgeoir: As I said, I don't mind at this stage    (s1_league3_game6_01_stac_1377311366)
+
+inca: well it would be a shame to exclude you,    (s1_league3_game6_01_stac_1377311369)
+inca: since you showed up today and all    (s1_league3_game6_01_stac_1377311370)
+
+Gaeilgeoir: ah god, I'd be online anyway, trust me.    (s1_league3_game6_01_stac_1377311373)
+
+inca: to be honest i think the fairest thing would be for us to play it now without him    (s1_league3_game6_01_stac_1377311376)
+
+Gaeilgeoir: I have six windows open at once here    (s1_league3_game6_01_stac_1377311379)
+
+Gaeilgeoir: well,    (s1_league3_game6_01_stac_1377311382)
+Gaeilgeoir: we can start.    (s1_league3_game6_01_stac_1377311383)
+
+Gaeilgeoir: if he comes,    (s1_league3_game6_01_stac_1377311386)
+Gaeilgeoir: we can restart.    (s1_league3_game6_01_stac_1377311387)
+
+inca: yep, that sounds fair    (s1_league3_game6_01_stac_1377311390)
+
+inca: OK,    (s1_league3_game6_01_stac_1377311393)
+inca: good luck    (s1_league3_game6_01_stac_1377311394)
+
+Gaeilgeoir: you too    (s1_league3_game6_01_stac_1377311397)
+
+Gaeilgeoir: :)    (s1_league3_game6_01_stac_1377311400)

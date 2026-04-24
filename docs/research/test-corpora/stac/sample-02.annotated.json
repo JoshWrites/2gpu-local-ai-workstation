@@ -1,0 +1,1749 @@
+{
+  "schema_source": "STAC linguistic-only JSON format",
+  "schema_doc": "STAC json format.pdf (bundled with corpus)",
+  "dialogue_id": "592_s1_league3_game6_1",
+  "dialogue": {
+    "dialogue_id": "592_s1_league3_game6_1",
+    "edus": [
+      {
+        "seg_id": "s1_league3_game6_01_stac_1456328048",
+        "turn_id": 6021.0,
+        "turn_no": 0,
+        "speaker": "inca",
+        "text": "hey, like the room name",
+        "addressee": "Gaeilgeoir",
+        "span_end": 37.0
+      },
+      {
+        "seg_id": "s1_league3_game6_01_stac_1377311144",
+        "turn_id": 6022.0,
+        "turn_no": 1,
+        "speaker": "Gaeilgeoir",
+        "text": "evening",
+        "addressee": "inca",
+        "span_end": 62.0
+      },
+      {
+        "seg_id": "s1_league3_game6_01_stac_1377311147",
+        "turn_id": 6023.0,
+        "turn_no": 2,
+        "speaker": "Gaeilgeoir",
+        "text": "indeed.",
+        "addressee": "inca",
+        "span_end": 87.0
+      },
+      {
+        "seg_id": "s1_league3_game6_01_stac_1377311150",
+        "turn_id": 6024.0,
+        "turn_no": 3,
+        "speaker": "Gaeilgeoir",
+        "text": "hopefully I can net my first win",
+        "addressee": "inca",
+        "span_end": 137.0
+      },
+      {
+        "seg_id": "s1_league3_game6_01_stac_1377311153",
+        "turn_id": 6025.0,
+        "turn_no": 4,
+        "speaker": "Gaeilgeoir",
+        "text": "you must be doing pretty well?",
+        "addressee": "inca",
+        "span_end": 185.0
+      },
+      {
+        "seg_id": "s1_league3_game6_01_stac_1377311156",
+        "turn_id": 6026.0,
+        "turn_no": 5,
+        "speaker": "inca",
+        "text": "i think it's between me and kieran for the extravagant prize,",
+        "addressee": "Gaeilgeoir",
+        "span_end": 258.0
+      },
+      {
+        "seg_id": "s1_league3_game6_01_stac_1377311157",
+        "turn_id": 6026.0,
+        "turn_no": 5,
+        "speaker": "inca",
+        "text": "not sure exactly how it works though",
+        "addressee": "Gaeilgeoir",
+        "span_end": 295.0
+      },
+      {
+        "seg_id": "s1_league3_game6_01_stac_1377311160",
+        "turn_id": 6027.0,
+        "turn_no": 6,
+        "speaker": "Gaeilgeoir",
+        "text": "best of luck so",
+        "addressee": "inca",
+        "span_end": 328.0
+      },
+      {
+        "seg_id": "s1_league3_game6_01_stac_1377311163",
+        "turn_id": 6028.0,
+        "turn_no": 7,
+        "speaker": "Gaeilgeoir",
+        "text": "\u00a320, is it?",
+        "addressee": "inca",
+        "span_end": 357.0
+      },
+      {
+        "seg_id": "s1_league3_game6_01_stac_1377311166",
+        "turn_id": 6029.0,
+        "turn_no": 8,
+        "speaker": "inca",
+        "text": "cheers",
+        "addressee": "Gaeilgeoir",
+        "span_end": 375.0
+      },
+      {
+        "seg_id": "s1_league3_game6_01_stac_1377311169",
+        "turn_id": 6030.0,
+        "turn_no": 9,
+        "speaker": "inca",
+        "text": "yep",
+        "addressee": "Gaeilgeoir",
+        "span_end": 390.0
+      },
+      {
+        "seg_id": "s1_league3_game6_01_stac_1377311172",
+        "turn_id": 6031.0,
+        "turn_no": 10,
+        "speaker": "inca",
+        "text": "would be quite nice",
+        "addressee": "Gaeilgeoir",
+        "span_end": 422.0
+      },
+      {
+        "seg_id": "s1_league3_game6_01_stac_1377311175",
+        "turn_id": 6032.0,
+        "turn_no": 11,
+        "speaker": "inca",
+        "text": "if you win,",
+        "addressee": "Gaeilgeoir",
+        "span_end": 446.0
+      },
+      {
+        "seg_id": "s1_league3_game6_01_stac_1377311176",
+        "turn_id": 6032.0,
+        "turn_no": 11,
+        "speaker": "inca",
+        "text": "we'll all have had a win",
+        "addressee": "Gaeilgeoir",
+        "span_end": 471.0
+      },
+      {
+        "seg_id": "s1_league3_game6_01_stac_1377311179",
+        "turn_id": 6033.0,
+        "turn_no": 12,
+        "speaker": "inca",
+        "text": "that would be a nice ending",
+        "addressee": "Gaeilgeoir",
+        "span_end": 511.0
+      },
+      {
+        "seg_id": "s1_league3_game6_01_stac_1377311182",
+        "turn_id": 6034.0,
+        "turn_no": 13,
+        "speaker": "Gaeilgeoir",
+        "text": "indeed.",
+        "addressee": "inca",
+        "span_end": 537.0
+      },
+      {
+        "seg_id": "s1_league3_game6_01_stac_1377311183",
+        "turn_id": 6034.0,
+        "turn_no": 13,
+        "speaker": "Gaeilgeoir",
+        "text": "what's happened to carina lately?",
+        "addressee": "inca",
+        "span_end": 571.0
+      },
+      {
+        "seg_id": "s1_league3_game6_01_stac_1377311186",
+        "turn_id": 6035.0,
+        "turn_no": 14,
+        "speaker": "inca",
+        "text": "not sure,",
+        "addressee": "Gaeilgeoir",
+        "span_end": 593.0
+      },
+      {
+        "seg_id": "s1_league3_game6_01_stac_1377311187",
+        "turn_id": 6035.0,
+        "turn_no": 14,
+        "speaker": "inca",
+        "text": "a few weeks ago she said she was away travelling somewhere, and that we could play without",
+        "addressee": "Gaeilgeoir",
+        "span_end": 684.0
+      },
+      {
+        "seg_id": "s1_league3_game6_01_stac_1377311190",
+        "turn_id": 6036.0,
+        "turn_no": 15,
+        "speaker": "inca",
+        "text": "haven't heard from her  since",
+        "addressee": "Gaeilgeoir",
+        "span_end": 726.0
+      },
+      {
+        "seg_id": "s1_league3_game6_01_stac_1377311193",
+        "turn_id": 6037.0,
+        "turn_no": 16,
+        "speaker": "inca",
+        "text": "*without her if necessary",
+        "addressee": "Gaeilgeoir",
+        "span_end": 764.0
+      },
+      {
+        "seg_id": "s1_league3_game6_01_stac_1377311196",
+        "turn_id": 6038.0,
+        "turn_no": 17,
+        "speaker": "Gaeilgeoir",
+        "text": "ok,",
+        "addressee": "inca",
+        "span_end": 786.0
+      },
+      {
+        "seg_id": "s1_league3_game6_01_stac_1377311197",
+        "turn_id": 6038.0,
+        "turn_no": 17,
+        "speaker": "Gaeilgeoir",
+        "text": "fair enough.",
+        "addressee": "inca",
+        "span_end": 799.0
+      },
+      {
+        "seg_id": "s1_league3_game6_01_stac_1377311200",
+        "turn_id": 6039.0,
+        "turn_no": 18,
+        "speaker": "Gaeilgeoir",
+        "text": "elusive German :P",
+        "addressee": "inca",
+        "span_end": 835.0
+      },
+      {
+        "seg_id": "s1_league3_game6_01_stac_1377311203",
+        "turn_id": 6040.0,
+        "turn_no": 19,
+        "speaker": "inca",
+        "text": "haha, indeed",
+        "addressee": "Gaeilgeoir",
+        "span_end": 860.0
+      },
+      {
+        "seg_id": "s1_league3_game6_01_stac_1377311206",
+        "turn_id": 6041.0,
+        "turn_no": 20,
+        "speaker": "Gaeilgeoir",
+        "text": "http://www.youtube.com/watch?v=aGSKrC7dGcY",
+        "addressee": "inca",
+        "span_end": 921.0
+      },
+      {
+        "seg_id": "s1_league3_game6_01_stac_1377311209",
+        "turn_id": 6042.0,
+        "turn_no": 21,
+        "speaker": "Gaeilgeoir",
+        "text": "tune",
+        "addressee": "inca",
+        "span_end": 944.0
+      },
+      {
+        "seg_id": "s1_league3_game6_01_stac_1377311212",
+        "turn_id": 6043.0,
+        "turn_no": 22,
+        "speaker": "inca",
+        "text": "like it",
+        "addressee": "Gaeilgeoir",
+        "span_end": 964.0
+      },
+      {
+        "seg_id": "s1_league3_game6_01_stac_1377311215",
+        "turn_id": 6044.0,
+        "turn_no": 23,
+        "speaker": "inca",
+        "text": "think i'll play it throughout the game",
+        "addressee": "Gaeilgeoir",
+        "span_end": 1015.0
+      },
+      {
+        "seg_id": "s1_league3_game6_01_stac_1377311218",
+        "turn_id": 6045.0,
+        "turn_no": 24,
+        "speaker": "Gaeilgeoir",
+        "text": "haha, nice.",
+        "addressee": "inca",
+        "span_end": 1045.0
+      },
+      {
+        "seg_id": "s1_league3_game6_01_stac_1377311221",
+        "turn_id": 6046.0,
+        "turn_no": 25,
+        "speaker": "Gaeilgeoir",
+        "text": "I'm a bit weird when it comes to music.",
+        "addressee": "inca",
+        "span_end": 1103.0
+      },
+      {
+        "seg_id": "s1_league3_game6_01_stac_1377311222",
+        "turn_id": 6046.0,
+        "turn_no": 25,
+        "speaker": "Gaeilgeoir",
+        "text": "most of my favourite artists are from the 80's/90's",
+        "addressee": "inca",
+        "span_end": 1155.0
+      },
+      {
+        "seg_id": "s1_league3_game6_01_stac_1377311225",
+        "turn_id": 6047.0,
+        "turn_no": 26,
+        "speaker": "inca",
+        "text": "heh that's not too weird really,",
+        "addressee": "Gaeilgeoir",
+        "span_end": 1200.0
+      },
+      {
+        "seg_id": "s1_league3_game6_01_stac_1377311226",
+        "turn_id": 6047.0,
+        "turn_no": 26,
+        "speaker": "inca",
+        "text": "music's taken a bad turn recently",
+        "addressee": "Gaeilgeoir",
+        "span_end": 1234.0
+      },
+      {
+        "seg_id": "s1_league3_game6_01_stac_1377311229",
+        "turn_id": 6048.0,
+        "turn_no": 27,
+        "speaker": "Gaeilgeoir",
+        "text": "very true",
+        "addressee": "inca",
+        "span_end": 1262.0
+      },
+      {
+        "seg_id": "s1_league3_game6_01_stac_1377311232",
+        "turn_id": 6049.0,
+        "turn_no": 28,
+        "speaker": "inca",
+        "text": "i'm sort of a classical musician,",
+        "addressee": "Gaeilgeoir",
+        "span_end": 1308.0
+      },
+      {
+        "seg_id": "s1_league3_game6_01_stac_1377311233",
+        "turn_id": 6049.0,
+        "turn_no": 28,
+        "speaker": "inca",
+        "text": "but i respect popular music from the time in which it was actually",
+        "addressee": "Gaeilgeoir",
+        "span_end": 1375.0
+      },
+      {
+        "seg_id": "s1_league3_game6_01_stac_1377311236",
+        "turn_id": 6050.0,
+        "turn_no": 29,
+        "speaker": "inca",
+        "text": "*actually musical",
+        "addressee": "Gaeilgeoir",
+        "span_end": 1405.0
+      },
+      {
+        "seg_id": "s1_league3_game6_01_stac_1377311239",
+        "turn_id": 6051.0,
+        "turn_no": 30,
+        "speaker": "Gaeilgeoir",
+        "text": "What do you play?",
+        "addressee": "inca",
+        "span_end": 1441.0
+      },
+      {
+        "seg_id": "s1_league3_game6_01_stac_1377311240",
+        "turn_id": 6051.0,
+        "turn_no": 30,
+        "speaker": "Gaeilgeoir",
+        "text": "I play some piano",
+        "addressee": "inca",
+        "span_end": 1459.0
+      },
+      {
+        "seg_id": "s1_league3_game6_01_stacutil_1464017301",
+        "turn_id": 6052.0,
+        "turn_no": 31,
+        "speaker": "inca",
+        "text": "cool,",
+        "addressee": "Gaeilgeoir",
+        "span_end": 1477.0
+      },
+      {
+        "seg_id": "s1_league3_game6_01_stacutil_1464017302",
+        "turn_id": 6052.0,
+        "turn_no": 31,
+        "speaker": "inca",
+        "text": "i play trumpet",
+        "addressee": "Gaeilgeoir",
+        "span_end": 1492.0
+      },
+      {
+        "seg_id": "s1_league3_game6_01_stac_1377311246",
+        "turn_id": 6053.0,
+        "turn_no": 32,
+        "speaker": "inca",
+        "text": "and piano very poorly",
+        "addressee": "Gaeilgeoir",
+        "span_end": 1526.0
+      },
+      {
+        "seg_id": "s1_league3_game6_01_stac_1377311249",
+        "turn_id": 6054.0,
+        "turn_no": 33,
+        "speaker": "inca",
+        "text": "what level are you?",
+        "addressee": "Gaeilgeoir",
+        "span_end": 1558.0
+      },
+      {
+        "seg_id": "s1_league3_game6_01_stac_1377311252",
+        "turn_id": 6055.0,
+        "turn_no": 34,
+        "speaker": "Gaeilgeoir",
+        "text": "quite mediocre.",
+        "addressee": "inca",
+        "span_end": 1592.0
+      },
+      {
+        "seg_id": "s1_league3_game6_01_stac_1377311253",
+        "turn_id": 6055.0,
+        "turn_no": 34,
+        "speaker": "Gaeilgeoir",
+        "text": "Grade 5 or 6.",
+        "addressee": "inca",
+        "span_end": 1606.0
+      },
+      {
+        "seg_id": "s1_league3_game6_01_stac_1377311256",
+        "turn_id": 6056.0,
+        "turn_no": 35,
+        "speaker": "Gaeilgeoir",
+        "text": "I enjoy it though",
+        "addressee": "inca",
+        "span_end": 1642.0
+      },
+      {
+        "seg_id": "s1_league3_game6_01_stac_1377311259",
+        "turn_id": 6057.0,
+        "turn_no": 36,
+        "speaker": "Gaeilgeoir",
+        "text": "Trumpet sounds great though.",
+        "addressee": "inca",
+        "span_end": 1689.0
+      },
+      {
+        "seg_id": "s1_league3_game6_01_stac_1377311262",
+        "turn_id": 6058.0,
+        "turn_no": 37,
+        "speaker": "inca",
+        "text": "nice, no shame in that all",
+        "addressee": "Gaeilgeoir",
+        "span_end": 1728.0
+      },
+      {
+        "seg_id": "s1_league3_game6_01_stac_1377311265",
+        "turn_id": 6059.0,
+        "turn_no": 38,
+        "speaker": "inca",
+        "text": "enough to impress people",
+        "addressee": "Gaeilgeoir",
+        "span_end": 1765.0
+      },
+      {
+        "seg_id": "s1_league3_game6_01_stac_1377311268",
+        "turn_id": 6060.0,
+        "turn_no": 39,
+        "speaker": "inca",
+        "text": "and yeah trumpet's great fun",
+        "addressee": "Gaeilgeoir",
+        "span_end": 1806.0
+      },
+      {
+        "seg_id": "s1_league3_game6_01_stac_1377311271",
+        "turn_id": 6061.0,
+        "turn_no": 40,
+        "speaker": "Gaeilgeoir",
+        "text": "one more tune for you",
+        "addressee": "inca",
+        "span_end": 1846.0
+      },
+      {
+        "seg_id": "s1_league3_game6_01_stacutil_1405013275",
+        "turn_id": 6062.0,
+        "turn_no": 41,
+        "speaker": "Gaeilgeoir",
+        "text": "http://www.youtube.com/watch?v=xwtdhWltSIg&feature=related",
+        "addressee": "inca",
+        "span_end": 1923.0
+      },
+      {
+        "seg_id": "s1_league3_game6_01_stac_1377311278",
+        "turn_id": 6063.0,
+        "turn_no": 42,
+        "speaker": "Gaeilgeoir",
+        "text": "what classical composers do you like?",
+        "addressee": "inca",
+        "span_end": 1979.0
+      },
+      {
+        "seg_id": "s1_league3_game6_01_stac_1377311281",
+        "turn_id": 6064.0,
+        "turn_no": 43,
+        "speaker": "inca",
+        "text": "haha i like this,",
+        "addressee": "Gaeilgeoir",
+        "span_end": 2009.0
+      },
+      {
+        "seg_id": "s1_league3_game6_01_stac_1377311282",
+        "turn_id": 6064.0,
+        "turn_no": 43,
+        "speaker": "inca",
+        "text": "we played an arrangement of this in my brass band this year",
+        "addressee": "Gaeilgeoir",
+        "span_end": 2069.0
+      },
+      {
+        "seg_id": "s1_league3_game6_01_stac_1377311285",
+        "turn_id": 6065.0,
+        "turn_no": 44,
+        "speaker": "Gaeilgeoir",
+        "text": "sweet.",
+        "addressee": "inca",
+        "span_end": 2094.0
+      },
+      {
+        "seg_id": "s1_league3_game6_01_stac_1377311286",
+        "turn_id": 6065.0,
+        "turn_no": 44,
+        "speaker": "Gaeilgeoir",
+        "text": "any chance that's on youtube?",
+        "addressee": "inca",
+        "span_end": 2124.0
+      },
+      {
+        "seg_id": "s1_league3_game6_01_stac_1377311289",
+        "turn_id": 6066.0,
+        "turn_no": 45,
+        "speaker": "inca",
+        "text": "can't find it sadly",
+        "addressee": "Gaeilgeoir",
+        "span_end": 2156.0
+      },
+      {
+        "seg_id": "s1_league3_game6_01_stac_1377311292",
+        "turn_id": 6067.0,
+        "turn_no": 46,
+        "speaker": "inca",
+        "text": "i mostly like late romantic /20th century composers,",
+        "addressee": "Gaeilgeoir",
+        "span_end": 2221.0
+      },
+      {
+        "seg_id": "s1_league3_game6_01_stac_1377311293",
+        "turn_id": 6067.0,
+        "turn_no": 46,
+        "speaker": "inca",
+        "text": "my favourite is shostakovich",
+        "addressee": "Gaeilgeoir",
+        "span_end": 2250.0
+      },
+      {
+        "seg_id": "s1_league3_game6_01_stac_1377311296",
+        "turn_id": 6068.0,
+        "turn_no": 47,
+        "speaker": "inca",
+        "text": "how about you?",
+        "addressee": "Gaeilgeoir",
+        "span_end": 2277.0
+      },
+      {
+        "seg_id": "s1_league3_game6_01_stac_1377311299",
+        "turn_id": 6069.0,
+        "turn_no": 48,
+        "speaker": "Gaeilgeoir",
+        "text": "Most German/Austrian composers from the 18th/19th centuries.",
+        "addressee": "inca",
+        "span_end": 2356.0
+      },
+      {
+        "seg_id": "s1_league3_game6_01_stac_1377311302",
+        "turn_id": 6070.0,
+        "turn_no": 49,
+        "speaker": "Gaeilgeoir",
+        "text": "I particularly like Wagner and Bach.",
+        "addressee": "inca",
+        "span_end": 2411.0
+      },
+      {
+        "seg_id": "s1_league3_game6_01_stac_1377311305",
+        "turn_id": 6071.0,
+        "turn_no": 50,
+        "speaker": "Gaeilgeoir",
+        "text": "Rachmaninov also has some beautiful piano works",
+        "addressee": "inca",
+        "span_end": 2477.0
+      },
+      {
+        "seg_id": "s1_league3_game6_01_stac_1377311308",
+        "turn_id": 6072.0,
+        "turn_no": 51,
+        "speaker": "Gaeilgeoir",
+        "text": "And Sibelius.",
+        "addressee": "inca",
+        "span_end": 2509.0
+      },
+      {
+        "seg_id": "s1_league3_game6_01_stac_1377311309",
+        "turn_id": 6072.0,
+        "turn_no": 51,
+        "speaker": "Gaeilgeoir",
+        "text": "I like him too.",
+        "addressee": "inca",
+        "span_end": 2525.0
+      },
+      {
+        "seg_id": "s1_league3_game6_01_stacutil_1403627609",
+        "turn_id": 6072.0,
+        "turn_no": 51,
+        "speaker": "Gaeilgeoir",
+        "text": "There are too many. :P",
+        "addressee": "inca",
+        "span_end": 2548.0
+      },
+      {
+        "seg_id": "s1_league3_game6_01_stac_1377311314",
+        "turn_id": 6073.0,
+        "turn_no": 52,
+        "speaker": "inca",
+        "text": "haha nice,",
+        "addressee": "Gaeilgeoir",
+        "span_end": 2571.0
+      },
+      {
+        "seg_id": "s1_league3_game6_01_stac_1377311315",
+        "turn_id": 6073.0,
+        "turn_no": 52,
+        "speaker": "inca",
+        "text": "yeah wagner's awesome",
+        "addressee": "Gaeilgeoir",
+        "span_end": 2593.0
+      },
+      {
+        "seg_id": "s1_league3_game6_01_stac_1377311318",
+        "turn_id": 6074.0,
+        "turn_no": 53,
+        "speaker": "inca",
+        "text": "particularly for a brass player",
+        "addressee": "Gaeilgeoir",
+        "span_end": 2637.0
+      },
+      {
+        "seg_id": "s1_league3_game6_01_stac_1377311321",
+        "turn_id": 6075.0,
+        "turn_no": 54,
+        "speaker": "Gaeilgeoir",
+        "text": "yep.",
+        "addressee": "inca",
+        "span_end": 2660.0
+      },
+      {
+        "seg_id": "s1_league3_game6_01_stac_1377311324",
+        "turn_id": 6076.0,
+        "turn_no": 55,
+        "speaker": "Gaeilgeoir",
+        "text": "I don't know if you know John Field.",
+        "addressee": "inca",
+        "span_end": 2715.0
+      },
+      {
+        "seg_id": "s1_league3_game6_01_stac_1377311325",
+        "turn_id": 6076.0,
+        "turn_no": 55,
+        "speaker": "Gaeilgeoir",
+        "text": "He was an Irish composer",
+        "addressee": "inca",
+        "span_end": 2740.0
+      },
+      {
+        "seg_id": "s1_league3_game6_01_stac_1377311326",
+        "turn_id": 6076.0,
+        "turn_no": 55,
+        "speaker": "Gaeilgeoir",
+        "text": "so I'm quite proud of him too.",
+        "addressee": "inca",
+        "span_end": 2771.0
+      },
+      {
+        "seg_id": "s1_league3_game6_01_stac_1377311327",
+        "turn_id": 6076.0,
+        "turn_no": 55,
+        "speaker": "Gaeilgeoir",
+        "text": "Some gr",
+        "addressee": "inca",
+        "span_end": 2779.0
+      },
+      {
+        "seg_id": "s1_league3_game6_01_stac_1377311330",
+        "turn_id": 6077.0,
+        "turn_no": 56,
+        "speaker": "Gaeilgeoir",
+        "text": "Some great piano work",
+        "addressee": "inca",
+        "span_end": 2819.0
+      },
+      {
+        "seg_id": "s1_league3_game6_01_stac_1377311333",
+        "turn_id": 6078.0,
+        "turn_no": 57,
+        "speaker": "inca",
+        "text": "ah, no i haven't heard of him",
+        "addressee": "Gaeilgeoir",
+        "span_end": 2861.0
+      },
+      {
+        "seg_id": "s1_league3_game6_01_stac_1377311336",
+        "turn_id": 6079.0,
+        "turn_no": 58,
+        "speaker": "Gaeilgeoir",
+        "text": "doesn't look like Kieran's coming",
+        "addressee": "inca",
+        "span_end": 2913.0
+      },
+      {
+        "seg_id": "s1_league3_game6_01_stac_1377311339",
+        "turn_id": 6080.0,
+        "turn_no": 59,
+        "speaker": "inca",
+        "text": "indeed, that's a problem",
+        "addressee": "Gaeilgeoir",
+        "span_end": 2950.0
+      },
+      {
+        "seg_id": "s1_league3_game6_01_stac_1377311342",
+        "turn_id": 6081.0,
+        "turn_no": 60,
+        "speaker": "Gaeilgeoir",
+        "text": "any response from him at all?",
+        "addressee": "inca",
+        "span_end": 2998.0
+      },
+      {
+        "seg_id": "s1_league3_game6_01_stac_1377311345",
+        "turn_id": 6082.0,
+        "turn_no": 61,
+        "speaker": "inca",
+        "text": "i'll send an e-mail just on the off-chance he's online but forgotten",
+        "addressee": "Gaeilgeoir",
+        "span_end": 3079.0
+      },
+      {
+        "seg_id": "s1_league3_game6_01_stac_1377311348",
+        "turn_id": 6083.0,
+        "turn_no": 62,
+        "speaker": "inca",
+        "text": "he definitely said he could play before",
+        "addressee": "Gaeilgeoir",
+        "span_end": 3131.0
+      },
+      {
+        "seg_id": "s1_league3_game6_01_stac_1377311351",
+        "turn_id": 6084.0,
+        "turn_no": 63,
+        "speaker": "inca",
+        "text": "if we can't do it tonight,",
+        "addressee": "Gaeilgeoir",
+        "span_end": 3170.0
+      },
+      {
+        "seg_id": "s1_league3_game6_01_stac_1377311352",
+        "turn_id": 6084.0,
+        "turn_no": 63,
+        "speaker": "inca",
+        "text": "our last hope really is that we can play it on wednesday",
+        "addressee": "Gaeilgeoir",
+        "span_end": 3227.0
+      },
+      {
+        "seg_id": "s1_league3_game6_01_stac_1377311355",
+        "turn_id": 6085.0,
+        "turn_no": 64,
+        "speaker": "inca",
+        "text": "if we're allowed to",
+        "addressee": "Gaeilgeoir",
+        "span_end": 3259.0
+      },
+      {
+        "seg_id": "s1_league3_game6_01_stac_1377311358",
+        "turn_id": 6086.0,
+        "turn_no": 65,
+        "speaker": "Gaeilgeoir",
+        "text": "unfortunately, I won't be able.",
+        "addressee": "inca",
+        "span_end": 3309.0
+      },
+      {
+        "seg_id": "s1_league3_game6_01_stac_1377311361",
+        "turn_id": 6087.0,
+        "turn_no": 66,
+        "speaker": "inca",
+        "text": "ah",
+        "addressee": "Gaeilgeoir",
+        "span_end": 3324.0
+      },
+      {
+        "seg_id": "s1_league3_game6_01_stac_1377311364",
+        "turn_id": 6088.0,
+        "turn_no": 67,
+        "speaker": "Gaeilgeoir",
+        "text": "But if you want to do so,",
+        "addressee": "inca",
+        "span_end": 3368.0
+      },
+      {
+        "seg_id": "s1_league3_game6_01_stac_1377311365",
+        "turn_id": 6088.0,
+        "turn_no": 67,
+        "speaker": "Gaeilgeoir",
+        "text": "please go ahead.",
+        "addressee": "inca",
+        "span_end": 3385.0
+      },
+      {
+        "seg_id": "s1_league3_game6_01_stac_1377311366",
+        "turn_id": 6088.0,
+        "turn_no": 67,
+        "speaker": "Gaeilgeoir",
+        "text": "As I said, I don't mind at this stage",
+        "addressee": "inca",
+        "span_end": 3423.0
+      },
+      {
+        "seg_id": "s1_league3_game6_01_stac_1377311369",
+        "turn_id": 6089.0,
+        "turn_no": 68,
+        "speaker": "inca",
+        "text": "well it would be a shame to exclude you,",
+        "addressee": "Gaeilgeoir",
+        "span_end": 3476.0
+      },
+      {
+        "seg_id": "s1_league3_game6_01_stac_1377311370",
+        "turn_id": 6089.0,
+        "turn_no": 68,
+        "speaker": "inca",
+        "text": "since you showed up today and all",
+        "addressee": "Gaeilgeoir",
+        "span_end": 3510.0
+      },
+      {
+        "seg_id": "s1_league3_game6_01_stac_1377311373",
+        "turn_id": 6090.0,
+        "turn_no": 69,
+        "speaker": "Gaeilgeoir",
+        "text": "ah god, I'd be online anyway, trust me.",
+        "addressee": "inca",
+        "span_end": 3568.0
+      },
+      {
+        "seg_id": "s1_league3_game6_01_stac_1377311376",
+        "turn_id": 6091.0,
+        "turn_no": 70,
+        "speaker": "inca",
+        "text": "to be honest i think the fairest thing would be for us to play it now without him",
+        "addressee": "Gaeilgeoir",
+        "span_end": 3662.0
+      },
+      {
+        "seg_id": "s1_league3_game6_01_stac_1377311379",
+        "turn_id": 6092.0,
+        "turn_no": 71,
+        "speaker": "Gaeilgeoir",
+        "text": "I have six windows open at once here",
+        "addressee": "inca",
+        "span_end": 3717.0
+      },
+      {
+        "seg_id": "s1_league3_game6_01_stac_1377311382",
+        "turn_id": 6093.0,
+        "turn_no": 72,
+        "speaker": "Gaeilgeoir",
+        "text": "well,",
+        "addressee": "inca",
+        "span_end": 3741.0
+      },
+      {
+        "seg_id": "s1_league3_game6_01_stac_1377311383",
+        "turn_id": 6093.0,
+        "turn_no": 72,
+        "speaker": "Gaeilgeoir",
+        "text": "we can start.",
+        "addressee": "inca",
+        "span_end": 3755.0
+      },
+      {
+        "seg_id": "s1_league3_game6_01_stac_1377311386",
+        "turn_id": 6094.0,
+        "turn_no": 73,
+        "speaker": "Gaeilgeoir",
+        "text": "if he comes,",
+        "addressee": "inca",
+        "span_end": 3786.0
+      },
+      {
+        "seg_id": "s1_league3_game6_01_stac_1377311387",
+        "turn_id": 6094.0,
+        "turn_no": 73,
+        "speaker": "Gaeilgeoir",
+        "text": "we can restart.",
+        "addressee": "inca",
+        "span_end": 3802.0
+      },
+      {
+        "seg_id": "s1_league3_game6_01_stac_1377311390",
+        "turn_id": 6095.0,
+        "turn_no": 74,
+        "speaker": "inca",
+        "text": "yep, that sounds fair",
+        "addressee": "Gaeilgeoir",
+        "span_end": 3836.0
+      },
+      {
+        "seg_id": "s1_league3_game6_01_stac_1377311393",
+        "turn_id": 6096.0,
+        "turn_no": 75,
+        "speaker": "inca",
+        "text": "OK,",
+        "addressee": "Gaeilgeoir",
+        "span_end": 3852.0
+      },
+      {
+        "seg_id": "s1_league3_game6_01_stac_1377311394",
+        "turn_id": 6096.0,
+        "turn_no": 75,
+        "speaker": "inca",
+        "text": "good luck",
+        "addressee": "Gaeilgeoir",
+        "span_end": 3862.0
+      },
+      {
+        "seg_id": "s1_league3_game6_01_stac_1377311397",
+        "turn_id": 6097.0,
+        "turn_no": 76,
+        "speaker": "Gaeilgeoir",
+        "text": "you too",
+        "addressee": "inca",
+        "span_end": 3888.0
+      },
+      {
+        "seg_id": "s1_league3_game6_01_stac_1377311400",
+        "turn_id": 6098.0,
+        "turn_no": 77,
+        "speaker": "Gaeilgeoir",
+        "text": ":)",
+        "addressee": "inca",
+        "span_end": 3909.0
+      }
+    ],
+    "cdus": [
+      {
+        "cdu_id": "s1_league3_game6_01_nasher_1464013417094",
+        "members": [
+          "s1_league3_game6_01_stac_1377311355",
+          "s1_league3_game6_01_stac_1377311352"
+        ]
+      },
+      {
+        "cdu_id": "s1_league3_game6_01_asoubeille_1377709244230",
+        "members": [
+          "s1_league3_game6_01_stac_1377311369",
+          "s1_league3_game6_01_stac_1377311370"
+        ]
+      },
+      {
+        "cdu_id": "s1_league3_game6_01_asoubeille_1377707525196",
+        "members": [
+          "s1_league3_game6_01_stac_1377311293",
+          "s1_league3_game6_01_stac_1377311292"
+        ]
+      },
+      {
+        "cdu_id": "s1_league3_game6_01_asoubeille_1377705251686",
+        "members": [
+          "s1_league3_game6_01_nasher_1464014364206",
+          "s1_league3_game6_01_stac_1377311232"
+        ]
+      },
+      {
+        "cdu_id": "s1_league3_game6_01_asoubeille_1377709649869",
+        "members": [
+          "s1_league3_game6_01_stac_1377311386",
+          "s1_league3_game6_01_stac_1377311387"
+        ]
+      },
+      {
+        "cdu_id": "s1_league3_game6_01_asoubeille_1377709082546",
+        "members": [
+          "s1_league3_game6_01_stac_1377311364",
+          "s1_league3_game6_01_stac_1377311365"
+        ]
+      },
+      {
+        "cdu_id": "s1_league3_game6_01_asoubeille_1377708687051",
+        "members": [
+          "s1_league3_game6_01_stac_1377311326",
+          "s1_league3_game6_01_stac_1377311325",
+          "s1_league3_game6_01_stac_1377311324"
+        ]
+      },
+      {
+        "cdu_id": "s1_league3_game6_01_asoubeille_1377708927885",
+        "members": [
+          "s1_league3_game6_01_stac_1377311351",
+          "s1_league3_game6_01_nasher_1464013417094"
+        ]
+      },
+      {
+        "cdu_id": "s1_league3_game6_01_asoubeille_1377707931123",
+        "members": [
+          "s1_league3_game6_01_stac_1377311314",
+          "s1_league3_game6_01_stac_1377311315",
+          "s1_league3_game6_01_stac_1377311318"
+        ]
+      },
+      {
+        "cdu_id": "s1_league3_game6_01_asoubeille_1377709523552",
+        "members": [
+          "s1_league3_game6_01_stac_1377311383",
+          "s1_league3_game6_01_stac_1377311382"
+        ]
+      },
+      {
+        "cdu_id": "s1_league3_game6_01_nasher_1464014985567",
+        "members": [
+          "s1_league3_game6_01_stac_1377311246",
+          "s1_league3_game6_01_stacutil_1464017302"
+        ]
+      },
+      {
+        "cdu_id": "s1_league3_game6_01_skar_1462787655227",
+        "members": [
+          "s1_league3_game6_01_stac_1377311309",
+          "s1_league3_game6_01_stac_1377311308"
+        ]
+      },
+      {
+        "cdu_id": "s1_league3_game6_01_nasher_1464014364206",
+        "members": [
+          "s1_league3_game6_01_stac_1377311233",
+          "s1_league3_game6_01_stac_1377311236"
+        ]
+      },
+      {
+        "cdu_id": "s1_league3_game6_01_asoubeille_1377704537950",
+        "members": [
+          "s1_league3_game6_01_stac_1377311193",
+          "s1_league3_game6_01_stac_1377311187"
+        ]
+      },
+      {
+        "cdu_id": "s1_league3_game6_01_asoubeille_1377703930083",
+        "members": [
+          "s1_league3_game6_01_stac_1377311157",
+          "s1_league3_game6_01_stac_1377311156"
+        ]
+      },
+      {
+        "cdu_id": "s1_league3_game6_01_asoubeille_1377704191054",
+        "members": [
+          "s1_league3_game6_01_stac_1377311176",
+          "s1_league3_game6_01_stac_1377311175"
+        ]
+      },
+      {
+        "cdu_id": "s1_league3_game6_01_asoubeille_1377704956268",
+        "members": [
+          "s1_league3_game6_01_stac_1377311221",
+          "s1_league3_game6_01_stac_1377311222"
+        ]
+      },
+      {
+        "cdu_id": "s1_league3_game6_01_asoubeille_1377705425216",
+        "members": [
+          "s1_league3_game6_01_stac_1377311252",
+          "s1_league3_game6_01_stac_1377311253"
+        ]
+      },
+      {
+        "cdu_id": "s1_league3_game6_01_asoubeille_1377704818576",
+        "members": [
+          "s1_league3_game6_01_stac_1377311209",
+          "s1_league3_game6_01_stac_1377311206"
+        ]
+      },
+      {
+        "cdu_id": "s1_league3_game6_01_asoubeille_1377708619132",
+        "members": [
+          "s1_league3_game6_01_stac_1377311330",
+          "s1_league3_game6_01_stac_1377311327"
+        ]
+      }
+    ],
+    "relations": [
+      {
+        "rel_id": "s1_league3_game6_01_skar_1462192464934",
+        "source": "s1_league3_game6_01_stac_1456328048",
+        "target": "s1_league3_game6_01_stac_1377311147",
+        "type": "Acknowledgement"
+      },
+      {
+        "rel_id": "s1_league3_game6_01_asoubeille_1377703822537",
+        "source": "s1_league3_game6_01_stac_1377311144",
+        "target": "s1_league3_game6_01_stac_1377311150",
+        "type": "Continuation"
+      },
+      {
+        "rel_id": "s1_league3_game6_01_asoubeille_1377703838889",
+        "source": "s1_league3_game6_01_stac_1377311150",
+        "target": "s1_league3_game6_01_stac_1377311153",
+        "type": "Clarification_question"
+      },
+      {
+        "rel_id": "s1_league3_game6_01_asoubeille_1377703857560",
+        "source": "s1_league3_game6_01_stac_1377311153",
+        "target": "s1_league3_game6_01_asoubeille_1377703930083",
+        "type": "Question_answer_pair"
+      },
+      {
+        "rel_id": "s1_league3_game6_01_asoubeille_1377703887255",
+        "source": "s1_league3_game6_01_stac_1377311156",
+        "target": "s1_league3_game6_01_stac_1377311157",
+        "type": "Contrast"
+      },
+      {
+        "rel_id": "s1_league3_game6_01_asoubeille_1377704021718",
+        "source": "s1_league3_game6_01_stac_1377311160",
+        "target": "s1_league3_game6_01_stac_1377311163",
+        "type": "Clarification_question"
+      },
+      {
+        "rel_id": "s1_league3_game6_01_asoubeille_1377704062868",
+        "source": "s1_league3_game6_01_stac_1377311160",
+        "target": "s1_league3_game6_01_stac_1377311166",
+        "type": "Acknowledgement"
+      },
+      {
+        "rel_id": "s1_league3_game6_01_asoubeille_1377704045932",
+        "source": "s1_league3_game6_01_stac_1377311163",
+        "target": "s1_league3_game6_01_stac_1377311169",
+        "type": "Question_answer_pair"
+      },
+      {
+        "rel_id": "s1_league3_game6_01_asoubeille_1377704092795",
+        "source": "s1_league3_game6_01_stac_1377311169",
+        "target": "s1_league3_game6_01_stac_1377311172",
+        "type": "Comment"
+      },
+      {
+        "rel_id": "s1_league3_game6_01_asoubeille_1377704214128",
+        "source": "s1_league3_game6_01_stac_1377311172",
+        "target": "s1_league3_game6_01_asoubeille_1377704191054",
+        "type": "Continuation"
+      },
+      {
+        "rel_id": "s1_league3_game6_01_asoubeille_1377704124307",
+        "source": "s1_league3_game6_01_stac_1377311175",
+        "target": "s1_league3_game6_01_stac_1377311176",
+        "type": "Conditional"
+      },
+      {
+        "rel_id": "s1_league3_game6_01_asoubeille_1377704366077",
+        "source": "s1_league3_game6_01_stac_1377311179",
+        "target": "s1_league3_game6_01_stac_1377311182",
+        "type": "Acknowledgement"
+      },
+      {
+        "rel_id": "s1_league3_game6_01_asoubeille_1377704384861",
+        "source": "s1_league3_game6_01_stac_1377311182",
+        "target": "s1_league3_game6_01_stac_1377311183",
+        "type": "Clarification_question"
+      },
+      {
+        "rel_id": "s1_league3_game6_01_asoubeille_1377704409716",
+        "source": "s1_league3_game6_01_stac_1377311183",
+        "target": "s1_league3_game6_01_stac_1377311186",
+        "type": "Question_answer_pair"
+      },
+      {
+        "rel_id": "s1_league3_game6_01_asoubeille_1377704430683",
+        "source": "s1_league3_game6_01_stac_1377311183",
+        "target": "s1_league3_game6_01_asoubeille_1377704537950",
+        "type": "Question_answer_pair"
+      },
+      {
+        "rel_id": "s1_league3_game6_01_nasher_1464014221536",
+        "source": "s1_league3_game6_01_stac_1377311186",
+        "target": "s1_league3_game6_01_asoubeille_1377704537950",
+        "type": "Contrast"
+      },
+      {
+        "rel_id": "s1_league3_game6_01_asoubeille_1377704480346",
+        "source": "s1_league3_game6_01_stac_1377311187",
+        "target": "s1_league3_game6_01_stac_1377311190",
+        "type": "Contrast"
+      },
+      {
+        "rel_id": "s1_league3_game6_01_asoubeille_1377704510514",
+        "source": "s1_league3_game6_01_stac_1377311187",
+        "target": "s1_league3_game6_01_stac_1377311193",
+        "type": "Correction"
+      },
+      {
+        "rel_id": "s1_league3_game6_01_skar_1462787371441",
+        "source": "s1_league3_game6_01_stac_1377311196",
+        "target": "s1_league3_game6_01_stac_1377311197",
+        "type": "Elaboration"
+      },
+      {
+        "rel_id": "s1_league3_game6_01_asoubeille_1377704712990",
+        "source": "s1_league3_game6_01_stac_1377311200",
+        "target": "s1_league3_game6_01_stac_1377311203",
+        "type": "Acknowledgement"
+      },
+      {
+        "rel_id": "s1_league3_game6_01_asoubeille_1377704786167",
+        "source": "s1_league3_game6_01_stac_1377311200",
+        "target": "s1_league3_game6_01_asoubeille_1377704818576",
+        "type": "Narration"
+      },
+      {
+        "rel_id": "s1_league3_game6_01_asoubeille_1377704799305",
+        "source": "s1_league3_game6_01_stac_1377311206",
+        "target": "s1_league3_game6_01_stac_1377311209",
+        "type": "Continuation"
+      },
+      {
+        "rel_id": "s1_league3_game6_01_asoubeille_1377704860689",
+        "source": "s1_league3_game6_01_stac_1377311212",
+        "target": "s1_league3_game6_01_stac_1377311215",
+        "type": "Result"
+      },
+      {
+        "rel_id": "s1_league3_game6_01_asoubeille_1377704877311",
+        "source": "s1_league3_game6_01_stac_1377311215",
+        "target": "s1_league3_game6_01_stac_1377311218",
+        "type": "Comment"
+      },
+      {
+        "rel_id": "s1_league3_game6_01_asoubeille_1377704912801",
+        "source": "s1_league3_game6_01_stac_1377311221",
+        "target": "s1_league3_game6_01_stac_1377311222",
+        "type": "Explanation"
+      },
+      {
+        "rel_id": "s1_league3_game6_01_asoubeille_1377705044270",
+        "source": "s1_league3_game6_01_stac_1377311225",
+        "target": "s1_league3_game6_01_stac_1377311226",
+        "type": "Explanation"
+      },
+      {
+        "rel_id": "s1_league3_game6_01_asoubeille_1377705064667",
+        "source": "s1_league3_game6_01_stac_1377311226",
+        "target": "s1_league3_game6_01_stac_1377311229",
+        "type": "Acknowledgement"
+      },
+      {
+        "rel_id": "s1_league3_game6_01_asoubeille_1377705136874",
+        "source": "s1_league3_game6_01_stac_1377311226",
+        "target": "s1_league3_game6_01_asoubeille_1377705251686",
+        "type": "Elaboration"
+      },
+      {
+        "rel_id": "s1_league3_game6_01_nasher_1464014424155",
+        "source": "s1_league3_game6_01_stac_1377311232",
+        "target": "s1_league3_game6_01_nasher_1464014364206",
+        "type": "Contrast"
+      },
+      {
+        "rel_id": "s1_league3_game6_01_asoubeille_1377705196968",
+        "source": "s1_league3_game6_01_stac_1377311233",
+        "target": "s1_league3_game6_01_stac_1377311236",
+        "type": "Correction"
+      },
+      {
+        "rel_id": "s1_league3_game6_01_asoubeille_1377705299920",
+        "source": "s1_league3_game6_01_stac_1377311239",
+        "target": "s1_league3_game6_01_stac_1377311240",
+        "type": "Background"
+      },
+      {
+        "rel_id": "s1_league3_game6_01_asoubeille_1377711099041",
+        "source": "s1_league3_game6_01_stac_1377311239",
+        "target": "s1_league3_game6_01_nasher_1464014985567",
+        "type": "Question_answer_pair"
+      },
+      {
+        "rel_id": "s1_league3_game6_01_asoubeille_1377705376189",
+        "source": "s1_league3_game6_01_stac_1377311240",
+        "target": "s1_league3_game6_01_stac_1377311249",
+        "type": "Clarification_question"
+      },
+      {
+        "rel_id": "s1_league3_game6_01_asoubeille_1377711112417",
+        "source": "s1_league3_game6_01_stac_1377311240",
+        "target": "s1_league3_game6_01_stacutil_1464017301",
+        "type": "Acknowledgement"
+      },
+      {
+        "rel_id": "s1_league3_game6_01_asoubeille_1377705352141",
+        "source": "s1_league3_game6_01_stacutil_1464017302",
+        "target": "s1_league3_game6_01_stac_1377311246",
+        "type": "Continuation"
+      },
+      {
+        "rel_id": "s1_league3_game6_01_asoubeille_1377705581383",
+        "source": "s1_league3_game6_01_stacutil_1464017302",
+        "target": "s1_league3_game6_01_stac_1377311259",
+        "type": "Comment"
+      },
+      {
+        "rel_id": "s1_league3_game6_01_asoubeille_1377705391309",
+        "source": "s1_league3_game6_01_stac_1377311249",
+        "target": "s1_league3_game6_01_asoubeille_1377705425216",
+        "type": "Question_answer_pair"
+      },
+      {
+        "rel_id": "s1_league3_game6_01_asoubeille_1377705411440",
+        "source": "s1_league3_game6_01_stac_1377311252",
+        "target": "s1_league3_game6_01_stac_1377311253",
+        "type": "Elaboration"
+      },
+      {
+        "rel_id": "s1_league3_game6_01_asoubeille_1377707048945",
+        "source": "s1_league3_game6_01_stac_1377311259",
+        "target": "s1_league3_game6_01_stac_1377311268",
+        "type": "Acknowledgement"
+      },
+      {
+        "rel_id": "s1_league3_game6_01_asoubeille_1377706970859",
+        "source": "s1_league3_game6_01_stac_1377311262",
+        "target": "s1_league3_game6_01_stac_1377311265",
+        "type": "Continuation"
+      },
+      {
+        "rel_id": "s1_league3_game6_01_asoubeille_1377707126431",
+        "source": "s1_league3_game6_01_stac_1377311271",
+        "target": "s1_league3_game6_01_stacutil_1405013275",
+        "type": "Elaboration"
+      },
+      {
+        "rel_id": "s1_league3_game6_01_asoubeille_1377707309051",
+        "source": "s1_league3_game6_01_stac_1377311271",
+        "target": "s1_league3_game6_01_stac_1377311281",
+        "type": "Question_answer_pair"
+      },
+      {
+        "rel_id": "s1_league3_game6_01_asoubeille_1377707267899",
+        "source": "s1_league3_game6_01_stacutil_1405013275",
+        "target": "s1_league3_game6_01_stac_1377311278",
+        "type": "Continuation"
+      },
+      {
+        "rel_id": "s1_league3_game6_01_asoubeille_1377707538830",
+        "source": "s1_league3_game6_01_stac_1377311278",
+        "target": "s1_league3_game6_01_asoubeille_1377707525196",
+        "type": "Question_answer_pair"
+      },
+      {
+        "rel_id": "s1_league3_game6_01_asoubeille_1377707329716",
+        "source": "s1_league3_game6_01_stac_1377311281",
+        "target": "s1_league3_game6_01_stac_1377311282",
+        "type": "Continuation"
+      },
+      {
+        "rel_id": "s1_league3_game6_01_asoubeille_1377707383209",
+        "source": "s1_league3_game6_01_stac_1377311282",
+        "target": "s1_league3_game6_01_stac_1377311285",
+        "type": "Acknowledgement"
+      },
+      {
+        "rel_id": "s1_league3_game6_01_asoubeille_1377707428632",
+        "source": "s1_league3_game6_01_stac_1377311282",
+        "target": "s1_league3_game6_01_stac_1377311286",
+        "type": "Clarification_question"
+      },
+      {
+        "rel_id": "s1_league3_game6_01_asoubeille_1377711348852",
+        "source": "s1_league3_game6_01_stac_1377311285",
+        "target": "s1_league3_game6_01_stac_1377311286",
+        "type": "Clarification_question"
+      },
+      {
+        "rel_id": "s1_league3_game6_01_asoubeille_1377707453511",
+        "source": "s1_league3_game6_01_stac_1377311286",
+        "target": "s1_league3_game6_01_stac_1377311289",
+        "type": "Question_answer_pair"
+      },
+      {
+        "rel_id": "s1_league3_game6_01_asoubeille_1377707511992",
+        "source": "s1_league3_game6_01_stac_1377311292",
+        "target": "s1_league3_game6_01_stac_1377311293",
+        "type": "Elaboration"
+      },
+      {
+        "rel_id": "s1_league3_game6_01_asoubeille_1377707598612",
+        "source": "s1_league3_game6_01_stac_1377311296",
+        "target": "s1_league3_game6_01_stac_1377311299",
+        "type": "Question_answer_pair"
+      },
+      {
+        "rel_id": "s1_league3_game6_01_skar_1462787914696",
+        "source": "s1_league3_game6_01_stac_1377311296",
+        "target": "s1_league3_game6_01_asoubeille_1377708687051",
+        "type": "Question_answer_pair"
+      },
+      {
+        "rel_id": "s1_league3_game6_01_asoubeille_1377707610748",
+        "source": "s1_league3_game6_01_stac_1377311299",
+        "target": "s1_league3_game6_01_stac_1377311302",
+        "type": "Elaboration"
+      },
+      {
+        "rel_id": "s1_league3_game6_01_asoubeille_1377707627786",
+        "source": "s1_league3_game6_01_stac_1377311299",
+        "target": "s1_league3_game6_01_stac_1377311305",
+        "type": "Parallel"
+      },
+      {
+        "rel_id": "s1_league3_game6_01_asoubeille_1377707855093",
+        "source": "s1_league3_game6_01_stac_1377311302",
+        "target": "s1_league3_game6_01_asoubeille_1377707931123",
+        "type": "Acknowledgement"
+      },
+      {
+        "rel_id": "s1_league3_game6_01_asoubeille_1377707731394",
+        "source": "s1_league3_game6_01_stac_1377311305",
+        "target": "s1_league3_game6_01_skar_1462787655227",
+        "type": "Parallel"
+      },
+      {
+        "rel_id": "s1_league3_game6_01_skar_1462787617287",
+        "source": "s1_league3_game6_01_stac_1377311308",
+        "target": "s1_league3_game6_01_stac_1377311309",
+        "type": "Continuation"
+      },
+      {
+        "rel_id": "s1_league3_game6_01_nasher_1464013232529",
+        "source": "s1_league3_game6_01_stac_1377311314",
+        "target": "s1_league3_game6_01_stac_1377311315",
+        "type": "Elaboration"
+      },
+      {
+        "rel_id": "s1_league3_game6_01_asoubeille_1377707893118",
+        "source": "s1_league3_game6_01_stac_1377311315",
+        "target": "s1_league3_game6_01_stac_1377311318",
+        "type": "Elaboration"
+      },
+      {
+        "rel_id": "s1_league3_game6_01_nasher_1489681762680",
+        "source": "s1_league3_game6_01_stac_1377311324",
+        "target": "s1_league3_game6_01_stac_1377311325",
+        "type": "Elaboration"
+      },
+      {
+        "rel_id": "s1_league3_game6_01_asoubeille_1377708529898",
+        "source": "s1_league3_game6_01_stac_1377311325",
+        "target": "s1_league3_game6_01_stac_1377311326",
+        "type": "Result"
+      },
+      {
+        "rel_id": "s1_league3_game6_01_asoubeille_1377708631544",
+        "source": "s1_league3_game6_01_stac_1377311326",
+        "target": "s1_league3_game6_01_asoubeille_1377708619132",
+        "type": "Elaboration"
+      },
+      {
+        "rel_id": "s1_league3_game6_01_asoubeille_1377708600265",
+        "source": "s1_league3_game6_01_stac_1377311327",
+        "target": "s1_league3_game6_01_stac_1377311330",
+        "type": "Correction"
+      },
+      {
+        "rel_id": "s1_league3_game6_01_asoubeille_1377708795812",
+        "source": "s1_league3_game6_01_stac_1377311336",
+        "target": "s1_league3_game6_01_stac_1377311339",
+        "type": "Acknowledgement"
+      },
+      {
+        "rel_id": "s1_league3_game6_01_asoubeille_1377708827107",
+        "source": "s1_league3_game6_01_stac_1377311339",
+        "target": "s1_league3_game6_01_stac_1377311342",
+        "type": "Clarification_question"
+      },
+      {
+        "rel_id": "s1_league3_game6_01_asoubeille_1377708848099",
+        "source": "s1_league3_game6_01_stac_1377311342",
+        "target": "s1_league3_game6_01_stac_1377311345",
+        "type": "Question_answer_pair"
+      },
+      {
+        "rel_id": "s1_league3_game6_01_asoubeille_1377708875316",
+        "source": "s1_league3_game6_01_stac_1377311345",
+        "target": "s1_league3_game6_01_stac_1377311348",
+        "type": "Explanation"
+      },
+      {
+        "rel_id": "s1_league3_game6_01_asoubeille_1377708937673",
+        "source": "s1_league3_game6_01_stac_1377311348",
+        "target": "s1_league3_game6_01_asoubeille_1377708927885",
+        "type": "Continuation"
+      },
+      {
+        "rel_id": "s1_league3_game6_01_nasher_1464013494619",
+        "source": "s1_league3_game6_01_stac_1377311351",
+        "target": "s1_league3_game6_01_nasher_1464013417094",
+        "type": "Conditional"
+      },
+      {
+        "rel_id": "s1_league3_game6_01_asoubeille_1377708967408",
+        "source": "s1_league3_game6_01_stac_1377311355",
+        "target": "s1_league3_game6_01_stac_1377311352",
+        "type": "Conditional"
+      },
+      {
+        "rel_id": "s1_league3_game6_01_asoubeille_1377709006792",
+        "source": "s1_league3_game6_01_stac_1377311358",
+        "target": "s1_league3_game6_01_stac_1377311361",
+        "type": "Acknowledgement"
+      },
+      {
+        "rel_id": "s1_league3_game6_01_asoubeille_1377709051262",
+        "source": "s1_league3_game6_01_stac_1377311364",
+        "target": "s1_league3_game6_01_stac_1377311365",
+        "type": "Conditional"
+      },
+      {
+        "rel_id": "s1_league3_game6_01_asoubeille_1377709225547",
+        "source": "s1_league3_game6_01_stac_1377311369",
+        "target": "s1_league3_game6_01_stac_1377311370",
+        "type": "Explanation"
+      },
+      {
+        "rel_id": "s1_league3_game6_01_asoubeille_1377709467125",
+        "source": "s1_league3_game6_01_stac_1377311373",
+        "target": "s1_league3_game6_01_stac_1377311379",
+        "type": "Elaboration"
+      },
+      {
+        "rel_id": "s1_league3_game6_01_asoubeille_1377709485541",
+        "source": "s1_league3_game6_01_stac_1377311376",
+        "target": "s1_league3_game6_01_asoubeille_1377709523552",
+        "type": "Acknowledgement"
+      },
+      {
+        "rel_id": "s1_league3_game6_01_asoubeille_1377709543716",
+        "source": "s1_league3_game6_01_stac_1377311382",
+        "target": "s1_league3_game6_01_stac_1377311383",
+        "type": "Elaboration"
+      },
+      {
+        "rel_id": "s1_league3_game6_01_asoubeille_1377709635097",
+        "source": "s1_league3_game6_01_stac_1377311386",
+        "target": "s1_league3_game6_01_stac_1377311387",
+        "type": "Conditional"
+      },
+      {
+        "rel_id": "s1_league3_game6_01_asoubeille_1377709890406",
+        "source": "s1_league3_game6_01_stac_1377311393",
+        "target": "s1_league3_game6_01_stac_1377311394",
+        "type": "Continuation"
+      },
+      {
+        "rel_id": "s1_league3_game6_01_asoubeille_1377709932507",
+        "source": "s1_league3_game6_01_stac_1377311394",
+        "target": "s1_league3_game6_01_stac_1377311397",
+        "type": "Continuation"
+      },
+      {
+        "rel_id": "s1_league3_game6_01_asoubeille_1377709941611",
+        "source": "s1_league3_game6_01_stac_1377311397",
+        "target": "s1_league3_game6_01_stac_1377311400",
+        "type": "Comment"
+      },
+      {
+        "rel_id": "s1_league3_game6_01_asoubeille_1377703953070",
+        "source": "s1_league3_game6_01_asoubeille_1377703930083",
+        "target": "s1_league3_game6_01_stac_1377311160",
+        "type": "Comment"
+      },
+      {
+        "rel_id": "s1_league3_game6_01_asoubeille_1377704232079",
+        "source": "s1_league3_game6_01_asoubeille_1377704191054",
+        "target": "s1_league3_game6_01_stac_1377311179",
+        "type": "Comment"
+      },
+      {
+        "rel_id": "s1_league3_game6_01_asoubeille_1377704553329",
+        "source": "s1_league3_game6_01_asoubeille_1377704537950",
+        "target": "s1_league3_game6_01_stac_1377311196",
+        "type": "Acknowledgement"
+      },
+      {
+        "rel_id": "s1_league3_game6_01_asoubeille_1377704699862",
+        "source": "s1_league3_game6_01_asoubeille_1377704537950",
+        "target": "s1_league3_game6_01_stac_1377311200",
+        "type": "Comment"
+      },
+      {
+        "rel_id": "s1_league3_game6_01_asoubeille_1377711783800",
+        "source": "s1_league3_game6_01_asoubeille_1377704537950",
+        "target": "s1_league3_game6_01_stac_1377311336",
+        "type": "Narration"
+      },
+      {
+        "rel_id": "s1_league3_game6_01_asoubeille_1377704842496",
+        "source": "s1_league3_game6_01_asoubeille_1377704818576",
+        "target": "s1_league3_game6_01_stac_1377311212",
+        "type": "Comment"
+      },
+      {
+        "rel_id": "s1_league3_game6_01_asoubeille_1377704972262",
+        "source": "s1_league3_game6_01_asoubeille_1377704818576",
+        "target": "s1_league3_game6_01_asoubeille_1377704956268",
+        "type": "Explanation"
+      },
+      {
+        "rel_id": "s1_league3_game6_01_asoubeille_1377707103569",
+        "source": "s1_league3_game6_01_asoubeille_1377704818576",
+        "target": "s1_league3_game6_01_stac_1377311271",
+        "type": "Continuation"
+      },
+      {
+        "rel_id": "s1_league3_game6_01_asoubeille_1377705031838",
+        "source": "s1_league3_game6_01_asoubeille_1377704956268",
+        "target": "s1_league3_game6_01_stac_1377311225",
+        "type": "Result"
+      },
+      {
+        "rel_id": "s1_league3_game6_01_asoubeille_1377705284583",
+        "source": "s1_league3_game6_01_asoubeille_1377705251686",
+        "target": "s1_league3_game6_01_stac_1377311239",
+        "type": "Clarification_question"
+      },
+      {
+        "rel_id": "s1_league3_game6_01_asoubeille_1377707214702",
+        "source": "s1_league3_game6_01_asoubeille_1377705251686",
+        "target": "s1_league3_game6_01_stac_1377311278",
+        "type": "Clarification_question"
+      },
+      {
+        "rel_id": "s1_league3_game6_01_asoubeille_1377705447363",
+        "source": "s1_league3_game6_01_asoubeille_1377705425216",
+        "target": "s1_league3_game6_01_stac_1377311256",
+        "type": "Contrast"
+      },
+      {
+        "rel_id": "s1_league3_game6_01_asoubeille_1377706809281",
+        "source": "s1_league3_game6_01_asoubeille_1377705425216",
+        "target": "s1_league3_game6_01_stac_1377311262",
+        "type": "Acknowledgement"
+      },
+      {
+        "rel_id": "s1_league3_game6_01_asoubeille_1377707575027",
+        "source": "s1_league3_game6_01_asoubeille_1377707525196",
+        "target": "s1_league3_game6_01_stac_1377311296",
+        "type": "Clarification_question"
+      },
+      {
+        "rel_id": "s1_league3_game6_01_asoubeille_1377707958741",
+        "source": "s1_league3_game6_01_asoubeille_1377707931123",
+        "target": "s1_league3_game6_01_stac_1377311321",
+        "type": "Acknowledgement"
+      },
+      {
+        "rel_id": "s1_league3_game6_01_asoubeille_1377708662645",
+        "source": "s1_league3_game6_01_asoubeille_1377708687051",
+        "target": "s1_league3_game6_01_stac_1377311333",
+        "type": "Question_answer_pair"
+      },
+      {
+        "rel_id": "s1_league3_game6_01_asoubeille_1377708991447",
+        "source": "s1_league3_game6_01_asoubeille_1377708927885",
+        "target": "s1_league3_game6_01_stac_1377311358",
+        "type": "Contrast"
+      },
+      {
+        "rel_id": "s1_league3_game6_01_asoubeille_1377709037679",
+        "source": "s1_league3_game6_01_asoubeille_1377708927885",
+        "target": "s1_league3_game6_01_asoubeille_1377709082546",
+        "type": "Contrast"
+      },
+      {
+        "rel_id": "s1_league3_game6_01_asoubeille_1377709102541",
+        "source": "s1_league3_game6_01_asoubeille_1377709082546",
+        "target": "s1_league3_game6_01_stac_1377311366",
+        "type": "Background"
+      },
+      {
+        "rel_id": "s1_league3_game6_01_asoubeille_1377709263090",
+        "source": "s1_league3_game6_01_asoubeille_1377709082546",
+        "target": "s1_league3_game6_01_asoubeille_1377709244230",
+        "type": "Comment"
+      },
+      {
+        "rel_id": "s1_league3_game6_01_asoubeille_1377709383399",
+        "source": "s1_league3_game6_01_asoubeille_1377709244230",
+        "target": "s1_league3_game6_01_stac_1377311373",
+        "type": "Contrast"
+      },
+      {
+        "rel_id": "s1_league3_game6_01_asoubeille_1377709416575",
+        "source": "s1_league3_game6_01_asoubeille_1377709244230",
+        "target": "s1_league3_game6_01_stac_1377311376",
+        "type": "Continuation"
+      },
+      {
+        "rel_id": "s1_league3_game6_01_asoubeille_1377709660961",
+        "source": "s1_league3_game6_01_asoubeille_1377709523552",
+        "target": "s1_league3_game6_01_asoubeille_1377709649869",
+        "type": "Continuation"
+      },
+      {
+        "rel_id": "s1_league3_game6_01_asoubeille_1377709684201",
+        "source": "s1_league3_game6_01_asoubeille_1377709523552",
+        "target": "s1_league3_game6_01_stac_1377311390",
+        "type": "Acknowledgement"
+      },
+      {
+        "rel_id": "s1_league3_game6_01_asoubeille_1377709879348",
+        "source": "s1_league3_game6_01_asoubeille_1377709523552",
+        "target": "s1_league3_game6_01_stac_1377311393",
+        "type": "Acknowledgement"
+      },
+      {
+        "rel_id": "s1_league3_game6_01_asoubeille_1377709697496",
+        "source": "s1_league3_game6_01_asoubeille_1377709649869",
+        "target": "s1_league3_game6_01_stac_1377311390",
+        "type": "Acknowledgement"
+      },
+      {
+        "rel_id": "s1_league3_game6_01_skar_1462787702263",
+        "source": "s1_league3_game6_01_skar_1462787655227",
+        "target": "s1_league3_game6_01_stacutil_1403627609",
+        "type": "Comment"
+      },
+      {
+        "rel_id": "s1_league3_game6_01_skar_1462787894461",
+        "source": "s1_league3_game6_01_skar_1462787655227",
+        "target": "s1_league3_game6_01_asoubeille_1377708687051",
+        "type": "Continuation"
+      }
+    ]
+  }
+}
