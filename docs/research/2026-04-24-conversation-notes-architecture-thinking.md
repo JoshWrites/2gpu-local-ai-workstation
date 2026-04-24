@@ -243,6 +243,29 @@ Each phase is independently useful:
 - **V3:** Two-user time-slicing. Per-user session state; scheduler alternates turns.
 - **V4:** Registry + miss-logger + audit tool. The curation loop becomes real.
 
+## Erratum (added after round-2 research landed, same session)
+
+In Reframing 4's discussion of the transient-specialist swap mechanism (Step 2
+of the sequence), the original draft said the outgoing primary should write a
+**prose handoff spec** for the incoming specialist. Round-2 research contradicts
+this. Agent 4's Thread 2 findings (see
+`2026-04-24-session-persistence-and-reassembly-prior-art.md`) establish the
+empirical ranking of handoff payload shapes:
+
+    raw transcript > transcript + structured retrieval >
+    structured facts alone (Mem0) > outgoing-model summary
+
+Outgoing-model prose summary is the **worst-measured** payload shape. The correct
+design is a **structured-facts schema** — fields like `goal`, `decisions_made`,
+`open_threads`, `attempted_approaches`, `current_blocker`, `specialist_request` —
+that the outgoing model fills in and the incoming model reads. Mem0's numbers
+quantify the tradeoff: ~6 accuracy points lost vs. raw transcript, in exchange
+for ~12× latency and ~10× cost reduction.
+
+This updates the handoff-spec-writer Council member's role from "write a prose
+problem statement" to "fill a schema." Small change in interface, large change
+in expected quality.
+
 ## Honest uncertainties / open questions
 
 Written now while I still remember them. Revisit when research lands.
