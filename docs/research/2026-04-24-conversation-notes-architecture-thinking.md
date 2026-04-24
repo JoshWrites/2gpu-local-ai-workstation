@@ -243,6 +243,46 @@ Each phase is independently useful:
 - **V3:** Two-user time-slicing. Per-user session state; scheduler alternates turns.
 - **V4:** Registry + miss-logger + audit tool. The curation loop becomes real.
 
+## Reread cue (added after round-3 research landed, same session)
+
+**When rereading this doc, read it with an eye for soft spots.** Round-3 research
+(`2026-04-24-session-as-artifact-and-temporal-retrieval-prior-art.md`) established
+several things that may change what still holds up in this document:
+
+- **Pattern 1 (session-as-retrievable-artifact) is NOT novel.** It is standard
+  and already deployed (Anthropic's Claude memory `conversation_search` /
+  `recent_chats` per Simon Willison's 2025-09-12 analysis; Letta/MemGPT's
+  `recall memory`; LangChain `VectorStoreRetrieverMemory`). My earlier claim
+  that this was new territory was wrong.
+- **Verbatim retrieval outperforms summary extraction by +12.4 R@5 on
+  LongMemEval.** The industry's summary-based systems (Mem0, ChatGPT Memory)
+  appear to have shipped the measurably-worse option. Homelab context makes
+  the constraints that drove them to summaries (scale, privacy-by-distance,
+  low latency budget) mostly not apply.
+- **Temporal-aware retrieval routing** — routing retrieval on whether the query
+  wants current state vs. decision history — is where the actual research gap
+  lives. Every ingredient exists in separate papers (SelRoute, LongMemEval,
+  Zep/Graphiti, Generative Agents recency decay, change-point detection). No
+  named combination.
+- **The portfolio framing updates:** not "invented X" but "built the
+  measurably-better thing industry overlooked, with temporal awareness added,
+  on local hardware, end-to-end." Stronger and defensible with citations.
+
+Soft spots to watch for when rereading:
+- Anywhere this doc implies the Pattern 1 mechanism is itself new.
+- Anywhere the three-layer Fabric/Council/Primaries model assumes *state
+  transfer* between models is the hard problem. Retrieval-on-demand against
+  a durable transcript subsumes much of that. The Council's "handoff-spec
+  writer" may not need to exist at all.
+- The "possibly novel" section needs narrowing. The only clearly-novel piece
+  is the specific *integration* (verbatim transcript + temporal query routing
+  + homelab-hardware specifics + slot-save-restore time-slicing), not any
+  single component.
+- The phased build (V0-V4) may want restructuring around retrieval-first
+  rather than coordinator-first. V0 = "verbatim retrieval with pre-compaction
+  recall working in a single session." That's the minimum viable win per the
+  user's own framing in the session this doc was written from.
+
 ## Erratum (added after round-2 research landed, same session)
 
 In Reframing 4's discussion of the transient-specialist swap mechanism (Step 2
