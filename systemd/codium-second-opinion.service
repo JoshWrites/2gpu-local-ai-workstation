@@ -1,9 +1,0 @@
-[Unit]
-Description=VSCodium (Second Opinion) — isolated Roo Code editor
-After=llama-second-opinion.service
-
-[Service]
-Type=exec
-ExecStart=%h/Documents/Repos/Workstation/second-opinion/scripts/codium-second-opinion.sh --wait
-KillMode=process
-Restart=no
