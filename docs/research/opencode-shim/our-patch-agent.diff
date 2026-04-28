@@ -1,0 +1,42 @@
+diff --git a/packages/opencode/src/acp/agent.ts b/packages/opencode/src/acp/agent.ts
+index aff523a7e..f89718d02 100644
+--- a/packages/opencode/src/acp/agent.ts
++++ b/packages/opencode/src/acp/agent.ts
+@@ -199,6 +199,25 @@ export class Agent implements ACPAgent {
+           .then(async () => {
+             const directory = session.cwd
+ 
++            const toolInput = await (async () => {
++              if (!permission.tool) return permission.metadata
++              const message = await this.sdk.session
++                .message(
++                  {
++                    sessionID: permission.sessionID,
++                    messageID: permission.tool.messageID,
++                    directory,
++                  },
++                  { throwOnError: true },
++                )
++                .then((x) => x.data)
++                .catch(() => undefined)
++              if (!message) return permission.metadata
++              const part = message.parts.find((p) => p.type === "tool" && p.callID === permission.tool!.callID)
++              if (!part || part.type !== "tool") return permission.metadata
++              return part.state.input
++            })()
++
+             const res = await this.connection
+               .requestPermission({
+                 sessionId: permission.sessionID,
+@@ -206,9 +225,9 @@ export class Agent implements ACPAgent {
+                   toolCallId: permission.tool?.callID ?? permission.id,
+                   status: "pending",
+                   title: permission.permission,
+-                  rawInput: permission.metadata,
++                  rawInput: toolInput,
+                   kind: toToolKind(permission.permission),
+-                  locations: toLocations(permission.permission, permission.metadata),
++                  locations: toLocations(permission.permission, toolInput),
+                 },
+                 options: this.permissionOptions,
+               })

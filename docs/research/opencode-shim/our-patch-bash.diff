@@ -1,0 +1,44 @@
+diff --git a/packages/opencode/src/tool/bash.ts b/packages/opencode/src/tool/bash.ts
+index 2b72e58b9..39c183dce 100644
+--- a/packages/opencode/src/tool/bash.ts
++++ b/packages/opencode/src/tool/bash.ts
+@@ -255,7 +255,11 @@ const parse = Effect.fn("BashTool.parse")(function* (command: string, ps: boolea
+   return tree.rootNode
+ })
+ 
+-const ask = Effect.fn("BashTool.ask")(function* (ctx: Tool.Context, scan: Scan) {
++const ask = Effect.fn("BashTool.ask")(function* (
++  ctx: Tool.Context,
++  scan: Scan,
++  meta: { command: string; description?: string },
++) {
+   if (scan.dirs.size > 0) {
+     const globs = Array.from(scan.dirs).map((dir) => {
+       if (process.platform === "win32") return AppFileSystem.normalizePathPattern(path.join(dir, "*"))
+@@ -265,7 +269,7 @@ const ask = Effect.fn("BashTool.ask")(function* (ctx: Tool.Context, scan: Scan)
+       permission: "external_directory",
+       patterns: globs,
+       always: globs,
+-      metadata: {},
++      metadata: { command: meta.command, description: meta.description },
+     })
+   }
+ 
+@@ -274,7 +278,7 @@ const ask = Effect.fn("BashTool.ask")(function* (ctx: Tool.Context, scan: Scan)
+     permission: "bash",
+     patterns: Array.from(scan.patterns),
+     always: Array.from(scan.always),
+-    metadata: {},
++    metadata: { command: meta.command, description: meta.description },
+   })
+ })
+ 
+@@ -599,7 +603,7 @@ export const BashTool = Tool.define(
+               const root = yield* parse(params.command, ps)
+               const scan = yield* collect(root, cwd, ps, shell)
+               if (!Instance.containsPath(cwd)) scan.dirs.add(cwd)
+-              yield* ask(ctx, scan)
++              yield* ask(ctx, scan, { command: params.command, description: params.description })
+ 
+               return yield* run(
+                 {
