@@ -1,0 +1,390 @@
+diff --git a/packages/opencode/src/acp/agent.ts b/packages/opencode/src/acp/agent.ts
+index aff523a7e..242466725 100644
+--- a/packages/opencode/src/acp/agent.ts
++++ b/packages/opencode/src/acp/agent.ts
+@@ -147,6 +147,8 @@ export class Agent implements ACPAgent {
+   private bashSnapshots = new Map<string, string>()
+   private toolStarts = new Set<string>()
+   private permissionQueues = new Map<string, Promise<void>>()
++  private clientSupportsTerminalOutput = false
++  private terminalOutputBuffers = new Map<string, string>()
+   private permissionOptions: PermissionOption[] = [
+     { optionId: "once", kind: "allow_once", name: "Allow once" },
+     { optionId: "always", kind: "allow_always", name: "Always allow" },
+@@ -199,16 +201,51 @@ export class Agent implements ACPAgent {
+           .then(async () => {
+             const directory = session.cwd
+ 
++            const toolInput = await (async () => {
++              if (!permission.tool) return permission.metadata
++              const message = await this.sdk.session
++                .message(
++                  {
++                    sessionID: permission.sessionID,
++                    messageID: permission.tool.messageID,
++                    directory,
++                  },
++                  { throwOnError: true },
++                )
++                .then((x) => x.data)
++                .catch(() => undefined)
++              if (!message) return permission.metadata
++              const part = message.parts.find((p) => p.type === "tool" && p.callID === permission.tool!.callID)
++              if (!part || part.type !== "tool") return permission.metadata
++              return part.state.input
++            })()
++
++            const permissionKind = toToolKind(permission.permission)
++            const promptTitle = (() => {
++              const md = (toolInput ?? {}) as Record<string, unknown>
++              const desc = typeof md["description"] === "string" ? (md["description"] as string) : undefined
++              const cmd = typeof md["command"] === "string" ? (md["command"] as string) : undefined
++              // For execute (bash) tools, show the verbatim command on line 1
++              // and the description on line 2. Zed's terminal-card label is
++              // plain text (Markdown is not processed) but \n is honored as
++              // a line break. For other tools, the description alone is
++              // sufficient; a verbatim version of the input is rarely useful.
++              if (permissionKind === "execute" && cmd) {
++                return desc ? `${cmd}\n${desc}` : cmd
++              }
++              return desc || cmd || permission.permission
++            })()
++
+             const res = await this.connection
+               .requestPermission({
+                 sessionId: permission.sessionID,
+                 toolCall: {
+                   toolCallId: permission.tool?.callID ?? permission.id,
+                   status: "pending",
+-                  title: permission.permission,
+-                  rawInput: permission.metadata,
++                  title: promptTitle,
++                  rawInput: toolInput,
+                   kind: toToolKind(permission.permission),
+-                  locations: toLocations(permission.permission, permission.metadata),
++                  locations: toLocations(permission.permission, toolInput),
+                 },
+                 options: this.permissionOptions,
+               })
+@@ -279,7 +316,7 @@ export class Agent implements ACPAgent {
+         const sessionId = session.id
+ 
+         if (part.type === "tool") {
+-          await this.toolStart(sessionId, part)
++          await this.toolStart(sessionId, part, session.cwd)
+ 
+           switch (part.state.status) {
+             case "pending":
+@@ -301,7 +338,7 @@ export class Agent implements ACPAgent {
+                           toolCallId: part.callID,
+                           status: "in_progress",
+                           kind: toToolKind(part.tool),
+-                          title: part.tool,
++                          title: this.deriveTitle(part),
+                           locations: toLocations(part.tool, part.state.input),
+                           rawInput: part.state.input,
+                         },
+@@ -312,6 +349,42 @@ export class Agent implements ACPAgent {
+                     return
+                   }
+                   this.bashSnapshots.set(part.callID, hash)
++
++                  // Zed-specific: stream deltas as terminal_output chunks.
++                  if (this.clientSupportsTerminalOutput) {
++                    const previous = this.terminalOutputBuffers.get(part.callID) ?? ""
++                    if (output.startsWith(previous) && output.length > previous.length) {
++                      const delta = output.slice(previous.length)
++                      this.terminalOutputBuffers.set(part.callID, output)
++                      await this.connection
++                        .sessionUpdate({
++                          sessionId,
++                          update: {
++                            sessionUpdate: "tool_call_update",
++                            toolCallId: part.callID,
++                            _meta: { terminal_output: { terminal_id: part.callID, data: delta } },
++                          } as any,
++                        })
++                        .catch((error) => {
++                          log.error("failed to send terminal_output delta to ACP", { error })
++                        })
++                    } else if (output !== previous) {
++                      // Output rewrote (rare); send the full buffer as one chunk.
++                      this.terminalOutputBuffers.set(part.callID, output)
++                      await this.connection
++                        .sessionUpdate({
++                          sessionId,
++                          update: {
++                            sessionUpdate: "tool_call_update",
++                            toolCallId: part.callID,
++                            _meta: { terminal_output: { terminal_id: part.callID, data: output } },
++                          } as any,
++                        })
++                        .catch((error) => {
++                          log.error("failed to send terminal_output replay to ACP", { error })
++                        })
++                    }
++                  }
+                 }
+                 content.push({
+                   type: "content",
+@@ -329,7 +402,7 @@ export class Agent implements ACPAgent {
+                     toolCallId: part.callID,
+                     status: "in_progress",
+                     kind: toToolKind(part.tool),
+-                    title: part.tool,
++                    title: this.deriveTitle(part),
+                     locations: toLocations(part.tool, part.state.input),
+                     rawInput: part.state.input,
+                     ...(content.length > 0 && { content }),
+@@ -399,31 +472,59 @@ export class Agent implements ACPAgent {
+                 }
+               }
+ 
+-              await this.connection
+-                .sessionUpdate({
+-                  sessionId,
+-                  update: {
+-                    sessionUpdate: "tool_call_update",
+-                    toolCallId: part.callID,
+-                    status: "completed",
+-                    kind,
+-                    content,
+-                    title: part.state.title,
+-                    rawInput: part.state.input,
+-                    rawOutput: {
+-                      output: part.state.output,
+-                      metadata: part.state.metadata,
+-                    },
++              {
++                const completedUpdate: Record<string, unknown> = {
++                  sessionUpdate: "tool_call_update",
++                  toolCallId: part.callID,
++                  status: "completed",
++                  kind,
++                  content,
++                  title: this.deriveTitle(part),
++                  rawInput: part.state.input,
++                  rawOutput: {
++                    output: part.state.output,
++                    metadata: part.state.metadata,
+                   },
+-                })
+-                .catch((error) => {
+-                  log.error("failed to send tool completed to ACP", { error })
+-                })
++                }
++                if (kind === "execute" && this.clientSupportsTerminalOutput) {
++                  // Flush any tail of output that hasn't been streamed yet.
++                  const fullOutput = (part.state.metadata as Record<string, unknown> | undefined)?.["output"]
++                  const finalOutput = typeof fullOutput === "string" ? fullOutput : part.state.output
++                  const previous = this.terminalOutputBuffers.get(part.callID) ?? ""
++                  if (typeof finalOutput === "string" && finalOutput.length > previous.length && finalOutput.startsWith(previous)) {
++                    await this.connection
++                      .sessionUpdate({
++                        sessionId,
++                        update: {
++                          sessionUpdate: "tool_call_update",
++                          toolCallId: part.callID,
++                          _meta: { terminal_output: { terminal_id: part.callID, data: finalOutput.slice(previous.length) } },
++                        } as any,
++                      })
++                      .catch(() => {})
++                  }
++                  const exitCode = (part.state.metadata as Record<string, unknown> | undefined)?.["exit"]
++                  completedUpdate["_meta"] = {
++                    terminal_exit: {
++                      terminal_id: part.callID,
++                      exit_code: typeof exitCode === "number" ? exitCode : 0,
++                      signal: null,
++                    },
++                  }
++                  this.terminalOutputBuffers.delete(part.callID)
++                }
++                await this.connection
++                  .sessionUpdate({ sessionId, update: completedUpdate as any })
++                  .catch((error) => {
++                    log.error("failed to send tool completed to ACP", { error })
++                  })
++              }
+               return
+             }
+             case "error":
+               this.toolStarts.delete(part.callID)
+               this.bashSnapshots.delete(part.callID)
++              this.terminalOutputBuffers.delete(part.callID)
+               await this.connection
+                 .sessionUpdate({
+                   sessionId,
+@@ -432,7 +533,7 @@ export class Agent implements ACPAgent {
+                     toolCallId: part.callID,
+                     status: "failed",
+                     kind: toToolKind(part.tool),
+-                    title: part.tool,
++                    title: this.deriveTitle(part),
+                     rawInput: part.state.input,
+                     content: [
+                       {
+@@ -534,6 +635,12 @@ export class Agent implements ACPAgent {
+   async initialize(params: InitializeRequest): Promise<InitializeResponse> {
+     log.info("initialize", { protocolVersion: params.protocolVersion })
+ 
++    // Detect Zed's terminal_output capability for rich permission/tool cards.
++    // When advertised, we emit _meta.terminal_info / terminal_output / terminal_exit
++    // so Zed renders bash tool calls as expandable terminal cards. See Zed
++    // crates/agent_servers/src/acp.rs:3340-3450 for the decoder.
++    this.clientSupportsTerminalOutput = params.clientCapabilities?._meta?.["terminal_output"] === true
++
+     const authMethod: AuthMethod = {
+       description: "Run `opencode auth login` in the terminal",
+       name: "Login with opencode",
+@@ -669,7 +776,7 @@ export class Agent implements ACPAgent {
+ 
+       for (const msg of messages ?? []) {
+         log.debug("replay message", msg)
+-        await this.processMessage(msg)
++        await this.processMessage(msg, directory)
+       }
+ 
+       await sendUsageUpdate(this.connection, this.sdk, sessionId, directory)
+@@ -779,7 +886,7 @@ export class Agent implements ACPAgent {
+ 
+       for (const msg of messages ?? []) {
+         log.debug("replay message", msg)
+-        await this.processMessage(msg)
++        await this.processMessage(msg, directory)
+       }
+ 
+       await sendUsageUpdate(this.connection, this.sdk, sessionId, directory)
+@@ -827,14 +934,14 @@ export class Agent implements ACPAgent {
+     }
+   }
+ 
+-  private async processMessage(message: SessionMessageResponse) {
++  private async processMessage(message: SessionMessageResponse, cwd?: string) {
+     log.debug("process message", message)
+     if (message.info.role !== "assistant" && message.info.role !== "user") return
+     const sessionId = message.info.sessionID
+ 
+     for (const part of message.parts) {
+       if (part.type === "tool") {
+-        await this.toolStart(sessionId, part)
++        await this.toolStart(sessionId, part, cwd)
+         switch (part.state.status) {
+           case "pending":
+             this.bashSnapshots.delete(part.callID)
+@@ -859,7 +966,7 @@ export class Agent implements ACPAgent {
+                   toolCallId: part.callID,
+                   status: "in_progress",
+                   kind: toToolKind(part.tool),
+-                  title: part.tool,
++                  title: this.deriveTitle(part),
+                   locations: toLocations(part.tool, part.state.input),
+                   rawInput: part.state.input,
+                   ...(runningContent.length > 0 && { content: runningContent }),
+@@ -937,7 +1044,7 @@ export class Agent implements ACPAgent {
+                   status: "completed",
+                   kind,
+                   content,
+-                  title: part.state.title,
++                  title: this.deriveTitle(part),
+                   rawInput: part.state.input,
+                   rawOutput: {
+                     output: part.state.output,
+@@ -960,7 +1067,7 @@ export class Agent implements ACPAgent {
+                   toolCallId: part.callID,
+                   status: "failed",
+                   kind: toToolKind(part.tool),
+-                  title: part.tool,
++                  title: this.deriveTitle(part),
+                   rawInput: part.state.input,
+                   content: [
+                     {
+@@ -1113,22 +1220,75 @@ export class Agent implements ACPAgent {
+     return output
+   }
+ 
+-  private async toolStart(sessionId: string, part: ToolPart) {
++  // Derive the user-facing title for a tool call. For execute-kind tools we
++  // emit a two-line title — the verbatim command on line 1 and the
++  // description on line 2. Zed's terminal-card label is plain text (no
++  // Markdown processing) but does honor \n. Falls back through layers when
++  // fields are missing. Used consistently across tool_call and
++  // tool_call_update emissions so the card label doesn't flip between
++  // description and command across status changes.
++  private deriveTitle(part: ToolPart): string {
++    const kind = toToolKind(part.tool)
++    const input = (part.state.input ?? {}) as Record<string, unknown>
++    const command = typeof input["command"] === "string" ? (input["command"] as string) : undefined
++    const description = typeof input["description"] === "string" ? (input["description"] as string) : undefined
++    if (kind === "execute" && command) {
++      // Two-line title: command on line 1, description on line 2. Confirmed
++      // by experiment that Zed's terminal-card label is verbatim text — no
++      // Markdown of any kind (code fences, inline code, italics all appear
++      // literal). Only \n is honored as a line break.
++      return description ? `${command}\n${description}` : command
++    }
++    if (description) return description
++    if ("title" in part.state && typeof part.state.title === "string") return part.state.title
++    return part.tool
++  }
++
++  private async toolStart(sessionId: string, part: ToolPart, sessionCwd?: string) {
+     if (this.toolStarts.has(part.callID)) return
++
++    const kind = toToolKind(part.tool)
++    const input = (part.state.input ?? {}) as Record<string, unknown>
++    const command = typeof input["command"] === "string" ? (input["command"] as string) : undefined
++    const description = typeof input["description"] === "string" ? (input["description"] as string) : undefined
++
++    // Defer the first tool_call announce until input is populated. Zed's
++    // permission card and terminal card both read fields off the FIRST
++    // tool_call message, not subsequent updates (per opencode#7370). For
++    // execute-kind tools we wait for `command`; for others we wait for any
++    // non-empty input. If the tool genuinely has no input, fall through.
++    if (kind === "execute" && !command) return
++    if (Object.keys(input).length === 0 && part.state.status === "pending") return
++
+     this.toolStarts.add(part.callID)
+-    await this.connection
+-      .sessionUpdate({
+-        sessionId,
+-        update: {
+-          sessionUpdate: "tool_call",
+-          toolCallId: part.callID,
+-          title: part.tool,
+-          kind: toToolKind(part.tool),
+-          status: "pending",
+-          locations: [],
+-          rawInput: {},
++
++    const title = this.deriveTitle(part)
++
++    const update: Record<string, unknown> = {
++      sessionUpdate: "tool_call",
++      toolCallId: part.callID,
++      title,
++      kind,
++      status: "pending",
++      locations: toLocations(part.tool, part.state.input),
++      rawInput: part.state.input ?? {},
++    }
++
++    // Zed-specific: emit terminal_info on the first tool_call for execute-kind
++    // tools so Zed renders an expandable terminal card. Gated on the
++    // terminal_output capability advertised in initialize.
++    if (kind === "execute" && this.clientSupportsTerminalOutput) {
++      update["content"] = [{ type: "terminal", terminalId: part.callID }]
++      update["_meta"] = {
++        terminal_info: {
++          terminal_id: part.callID,
++          ...(sessionCwd ? { cwd: sessionCwd } : {}),
+         },
+-      })
++      }
++    }
++
++    await this.connection
++      .sessionUpdate({ sessionId, update: update as any })
+       .catch((error) => {
+         log.error("failed to send tool pending to ACP", { error })
+       })
