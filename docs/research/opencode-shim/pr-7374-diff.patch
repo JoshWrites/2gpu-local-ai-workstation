@@ -1,0 +1,42 @@
+diff --git a/packages/opencode/src/acp/agent.ts b/packages/opencode/src/acp/agent.ts
+index 6d8a64b7d026..0235955844d0 100644
+--- a/packages/opencode/src/acp/agent.ts
++++ b/packages/opencode/src/acp/agent.ts
+@@ -70,6 +70,25 @@ export namespace ACP {
+             case "permission.asked":
+               try {
+                 const permission = event.properties
++                // Fetch the actual tool input from the message part if available
++                const toolInput = await (async () => {
++                  if (!permission.tool) return permission.metadata
++                  const message = await this.config.sdk.session
++                    .message(
++                      {
++                        sessionID: permission.sessionID,
++                        messageID: permission.tool.messageID,
++                        directory,
++                      },
++                      { throwOnError: true },
++                    )
++                    .then((x) => x.data)
++                    .catch(() => undefined)
++                  if (!message) return permission.metadata
++                  const part = message.parts.find((p) => p.type === "tool" && p.callID === permission.tool!.callID)
++                  if (!part || part.type !== "tool") return permission.metadata
++                  return part.state.input
++                })()
+                 const res = await this.connection
+                   .requestPermission({
+                     sessionId,
+@@ -77,9 +96,9 @@ export namespace ACP {
+                       toolCallId: permission.tool?.callID ?? permission.id,
+                       status: "pending",
+                       title: permission.permission,
+-                      rawInput: permission.metadata,
++                      rawInput: toolInput,
+                       kind: toToolKind(permission.permission),
+-                      locations: toLocations(permission.permission, permission.metadata),
++                      locations: toLocations(permission.permission, toolInput),
+                     },
+                     options,
+                   })
