@@ -15,9 +15,16 @@ How the patched opencode is built, installed, and connected to Zed on this machi
 
 ## How the build is launched
 
-Zed's `~/.config/zed/settings.json`:
+**Important:** the second-opinion launcher uses an isolated Zed profile.
+The Zed config that matters is **NOT** `~/.config/zed/settings.json` —
+it's `~/.local/share/zed-second-opinion/config/settings.json`, because
+`scripts/second-opinion-launch.sh` calls Zed with
+`--user-data-dir ~/.local/share/zed-second-opinion`.
+
+Edit the right file:
 
 ```jsonc
+// ~/.local/share/zed-second-opinion/config/settings.json
 "agent_servers": {
   "opencode": {
     "command": "/home/levine/Documents/Repos/Workstation/second-opinion/scripts/opencode-session.sh",
@@ -28,6 +35,10 @@ Zed's `~/.config/zed/settings.json`:
   }
 }
 ```
+
+(Previous default in this file was `"opencode": { "type": "registry" }`,
+which downloads stock opencode v1.14.25 from the agent registry. Replacing
+that block with the explicit command + env points Zed at our patched build.)
 
 This routes through the existing `opencode-session.sh` wrapper, which:
 1. Brings up the `llama-primary` / `llama-secondary` / `llama-embed` systemd services if not already running.
@@ -85,9 +96,11 @@ Binary size: ~147 MB (Bun-compiled single binary, all deps embedded).
 If anything goes wrong:
 
 ```bash
-# Revert Zed config — remove the agent_servers block from
-# ~/.config/zed/settings.json. Zed falls back to its registered opencode
-# (registry entry: anomalyco/opencode v1.14.25, downloaded on demand).
+# Revert Zed config — restore the agent_servers block in
+# ~/.local/share/zed-second-opinion/config/settings.json to:
+#   "agent_servers": { "opencode": { "type": "registry" } }
+# Zed falls back to the registered opencode (registry entry:
+# anomalyco/opencode v1.14.25, downloaded on demand).
 
 # Or just delete the patched binary; Zed will fail to launch the agent
 # until the config is also fixed.
