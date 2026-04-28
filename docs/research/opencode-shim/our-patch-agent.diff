@@ -1,8 +1,8 @@
 diff --git a/packages/opencode/src/acp/agent.ts b/packages/opencode/src/acp/agent.ts
-index aff523a7e..f89718d02 100644
+index aff523a7e..38c73dc80 100644
 --- a/packages/opencode/src/acp/agent.ts
 +++ b/packages/opencode/src/acp/agent.ts
-@@ -199,6 +199,25 @@ export class Agent implements ACPAgent {
+@@ -199,16 +199,42 @@ export class Agent implements ACPAgent {
            .then(async () => {
              const directory = session.cwd
  
@@ -25,14 +25,22 @@ index aff523a7e..f89718d02 100644
 +              return part.state.input
 +            })()
 +
++            const promptTitle = (() => {
++              const md = (toolInput ?? {}) as Record<string, unknown>
++              const desc = typeof md["description"] === "string" ? (md["description"] as string) : undefined
++              const cmd = typeof md["command"] === "string" ? (md["command"] as string) : undefined
++              return desc || cmd || permission.permission
++            })()
++
              const res = await this.connection
                .requestPermission({
                  sessionId: permission.sessionID,
-@@ -206,9 +225,9 @@ export class Agent implements ACPAgent {
+                 toolCall: {
                    toolCallId: permission.tool?.callID ?? permission.id,
                    status: "pending",
-                   title: permission.permission,
+-                  title: permission.permission,
 -                  rawInput: permission.metadata,
++                  title: promptTitle,
 +                  rawInput: toolInput,
                    kind: toToolKind(permission.permission),
 -                  locations: toLocations(permission.permission, permission.metadata),
