@@ -1,5 +1,5 @@
 diff --git a/packages/opencode/src/acp/agent.ts b/packages/opencode/src/acp/agent.ts
-index aff523a7e..9548986e3 100644
+index aff523a7e..242466725 100644
 --- a/packages/opencode/src/acp/agent.ts
 +++ b/packages/opencode/src/acp/agent.ts
 @@ -147,6 +147,8 @@ export class Agent implements ACPAgent {
@@ -11,7 +11,7 @@ index aff523a7e..9548986e3 100644
    private permissionOptions: PermissionOption[] = [
      { optionId: "once", kind: "allow_once", name: "Allow once" },
      { optionId: "always", kind: "allow_always", name: "Always allow" },
-@@ -199,16 +201,49 @@ export class Agent implements ACPAgent {
+@@ -199,16 +201,51 @@ export class Agent implements ACPAgent {
            .then(async () => {
              const directory = session.cwd
  
@@ -39,11 +39,13 @@ index aff523a7e..9548986e3 100644
 +              const md = (toolInput ?? {}) as Record<string, unknown>
 +              const desc = typeof md["description"] === "string" ? (md["description"] as string) : undefined
 +              const cmd = typeof md["command"] === "string" ? (md["command"] as string) : undefined
-+              // For execute (bash) tools, show the verbatim command in inline
-+              // code (monospace via Markdown) followed by the description.
-+              // For other tools, the description alone is more user-friendly.
++              // For execute (bash) tools, show the verbatim command on line 1
++              // and the description on line 2. Zed's terminal-card label is
++              // plain text (Markdown is not processed) but \n is honored as
++              // a line break. For other tools, the description alone is
++              // sufficient; a verbatim version of the input is rarely useful.
 +              if (permissionKind === "execute" && cmd) {
-+                return desc ? `${cmd} ∴ ${desc}` : cmd
++                return desc ? `${cmd}\n${desc}` : cmd
 +              }
 +              return desc || cmd || permission.permission
 +            })()
@@ -64,7 +66,7 @@ index aff523a7e..9548986e3 100644
                  },
                  options: this.permissionOptions,
                })
-@@ -279,7 +314,7 @@ export class Agent implements ACPAgent {
+@@ -279,7 +316,7 @@ export class Agent implements ACPAgent {
          const sessionId = session.id
  
          if (part.type === "tool") {
@@ -73,7 +75,7 @@ index aff523a7e..9548986e3 100644
  
            switch (part.state.status) {
              case "pending":
-@@ -301,7 +336,7 @@ export class Agent implements ACPAgent {
+@@ -301,7 +338,7 @@ export class Agent implements ACPAgent {
                            toolCallId: part.callID,
                            status: "in_progress",
                            kind: toToolKind(part.tool),
@@ -82,7 +84,7 @@ index aff523a7e..9548986e3 100644
                            locations: toLocations(part.tool, part.state.input),
                            rawInput: part.state.input,
                          },
-@@ -312,6 +347,42 @@ export class Agent implements ACPAgent {
+@@ -312,6 +349,42 @@ export class Agent implements ACPAgent {
                      return
                    }
                    this.bashSnapshots.set(part.callID, hash)
@@ -125,7 +127,7 @@ index aff523a7e..9548986e3 100644
                  }
                  content.push({
                    type: "content",
-@@ -329,7 +400,7 @@ export class Agent implements ACPAgent {
+@@ -329,7 +402,7 @@ export class Agent implements ACPAgent {
                      toolCallId: part.callID,
                      status: "in_progress",
                      kind: toToolKind(part.tool),
@@ -134,7 +136,7 @@ index aff523a7e..9548986e3 100644
                      locations: toLocations(part.tool, part.state.input),
                      rawInput: part.state.input,
                      ...(content.length > 0 && { content }),
-@@ -399,31 +470,59 @@ export class Agent implements ACPAgent {
+@@ -399,31 +472,59 @@ export class Agent implements ACPAgent {
                  }
                }
  
@@ -213,7 +215,7 @@ index aff523a7e..9548986e3 100644
                await this.connection
                  .sessionUpdate({
                    sessionId,
-@@ -432,7 +531,7 @@ export class Agent implements ACPAgent {
+@@ -432,7 +533,7 @@ export class Agent implements ACPAgent {
                      toolCallId: part.callID,
                      status: "failed",
                      kind: toToolKind(part.tool),
@@ -222,7 +224,7 @@ index aff523a7e..9548986e3 100644
                      rawInput: part.state.input,
                      content: [
                        {
-@@ -534,6 +633,12 @@ export class Agent implements ACPAgent {
+@@ -534,6 +635,12 @@ export class Agent implements ACPAgent {
    async initialize(params: InitializeRequest): Promise<InitializeResponse> {
      log.info("initialize", { protocolVersion: params.protocolVersion })
  
@@ -235,7 +237,7 @@ index aff523a7e..9548986e3 100644
      const authMethod: AuthMethod = {
        description: "Run `opencode auth login` in the terminal",
        name: "Login with opencode",
-@@ -669,7 +774,7 @@ export class Agent implements ACPAgent {
+@@ -669,7 +776,7 @@ export class Agent implements ACPAgent {
  
        for (const msg of messages ?? []) {
          log.debug("replay message", msg)
@@ -244,7 +246,7 @@ index aff523a7e..9548986e3 100644
        }
  
        await sendUsageUpdate(this.connection, this.sdk, sessionId, directory)
-@@ -779,7 +884,7 @@ export class Agent implements ACPAgent {
+@@ -779,7 +886,7 @@ export class Agent implements ACPAgent {
  
        for (const msg of messages ?? []) {
          log.debug("replay message", msg)
@@ -253,7 +255,7 @@ index aff523a7e..9548986e3 100644
        }
  
        await sendUsageUpdate(this.connection, this.sdk, sessionId, directory)
-@@ -827,14 +932,14 @@ export class Agent implements ACPAgent {
+@@ -827,14 +934,14 @@ export class Agent implements ACPAgent {
      }
    }
  
@@ -270,7 +272,7 @@ index aff523a7e..9548986e3 100644
          switch (part.state.status) {
            case "pending":
              this.bashSnapshots.delete(part.callID)
-@@ -859,7 +964,7 @@ export class Agent implements ACPAgent {
+@@ -859,7 +966,7 @@ export class Agent implements ACPAgent {
                    toolCallId: part.callID,
                    status: "in_progress",
                    kind: toToolKind(part.tool),
@@ -279,7 +281,7 @@ index aff523a7e..9548986e3 100644
                    locations: toLocations(part.tool, part.state.input),
                    rawInput: part.state.input,
                    ...(runningContent.length > 0 && { content: runningContent }),
-@@ -937,7 +1042,7 @@ export class Agent implements ACPAgent {
+@@ -937,7 +1044,7 @@ export class Agent implements ACPAgent {
                    status: "completed",
                    kind,
                    content,
@@ -288,7 +290,7 @@ index aff523a7e..9548986e3 100644
                    rawInput: part.state.input,
                    rawOutput: {
                      output: part.state.output,
-@@ -960,7 +1065,7 @@ export class Agent implements ACPAgent {
+@@ -960,7 +1067,7 @@ export class Agent implements ACPAgent {
                    toolCallId: part.callID,
                    status: "failed",
                    kind: toToolKind(part.tool),
@@ -297,28 +299,29 @@ index aff523a7e..9548986e3 100644
                    rawInput: part.state.input,
                    content: [
                      {
-@@ -1113,22 +1218,74 @@ export class Agent implements ACPAgent {
+@@ -1113,22 +1220,75 @@ export class Agent implements ACPAgent {
      return output
    }
  
 -  private async toolStart(sessionId: string, part: ToolPart) {
 +  // Derive the user-facing title for a tool call. For execute-kind tools we
-+  // want the verbatim command in monospace (so it renders as inline code in
-+  // Zed's Markdown label) followed by the description as prose. Falls back
-+  // through the layers when fields are missing. Used consistently across
-+  // tool_call and tool_call_update emissions so the card label doesn't flip
-+  // between description and command across status changes.
++  // emit a two-line title — the verbatim command on line 1 and the
++  // description on line 2. Zed's terminal-card label is plain text (no
++  // Markdown processing) but does honor \n. Falls back through layers when
++  // fields are missing. Used consistently across tool_call and
++  // tool_call_update emissions so the card label doesn't flip between
++  // description and command across status changes.
 +  private deriveTitle(part: ToolPart): string {
 +    const kind = toToolKind(part.tool)
 +    const input = (part.state.input ?? {}) as Record<string, unknown>
 +    const command = typeof input["command"] === "string" ? (input["command"] as string) : undefined
 +    const description = typeof input["description"] === "string" ? (input["description"] as string) : undefined
 +    if (kind === "execute" && command) {
-+      // Zed's terminal-card label renders verbatim text (not Markdown), so
-+      // we use a visible separator. ∴ (U+2234, "therefore") doesn't appear
-+      // in any common shell syntax, reads as "command therefore description",
-+      // and has a narrower footprint than an em dash.
-+      return description ? `${command} ∴ ${description}` : command
++      // Two-line title: command on line 1, description on line 2. Confirmed
++      // by experiment that Zed's terminal-card label is verbatim text — no
++      // Markdown of any kind (code fences, inline code, italics all appear
++      // literal). Only \n is honored as a line break.
++      return description ? `${command}\n${description}` : command
 +    }
 +    if (description) return description
 +    if ("title" in part.state && typeof part.state.title === "string") return part.state.title
