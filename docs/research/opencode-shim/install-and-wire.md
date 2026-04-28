@@ -4,14 +4,16 @@ How the patched opencode is built, installed, and connected to Zed on this machi
 
 ## What's installed where
 
-| What | Path | Purpose |
-|---|---|---|
-| Stock opencode binary | `~/.opencode/bin/opencode` | Untouched. The TUI continues to use this. |
-| Patched opencode binary | `~/.local/bin/opencode-patched` | Our build. v1.14.28 source + the rawInput fix. Used by Zed only. |
-| Build tree | `/tmp/opencode-build/opencode/` | Sparse clone for rebuilding. Disposable; recreate as needed. |
-| Isolated bun 1.3.13 | `/tmp/bun-1313/bin/bun` | Required to build (stock bun on this machine is 1.3.11). Disposable. |
-| Source patch | `docs/research/opencode-shim/pr-7374-diff.patch` | The original PR #7374 diff. Reference only — does not apply cleanly to v1.14.28. |
-| Adapted patch | inlined in `the-fix.md` | The same logic re-applied against v1.14.28's drifted line numbers. |
+| What | Path | Owner | Purpose |
+|---|---|---|---|
+| Stock opencode (levine) | `~/.opencode/bin/opencode` | levine | Untouched. TUI continues to use this. |
+| Stock opencode (anny) | `/home/anny/.opencode/bin/opencode` | anny | Untouched. anny's TUI / `work-opencode` use this. |
+| **Patched opencode (system-shared)** | `/usr/local/bin/opencode-patched` | root, 0755 | Our build. v1.14.28 source + both patches. World-readable. Used by Zed and (optionally) anny. |
+| Build artifact (levine's local) | `~/.local/bin/opencode-patched` | levine | Build output before system-install. Kept as a fallback / build staging area. |
+| Build tree | `/tmp/opencode-build/opencode/` | levine | Sparse clone for rebuilding. Disposable; recreate as needed. |
+| Isolated bun 1.3.13 | `/tmp/bun-1313/bin/bun` | levine | Required to build (stock bun on this machine is 1.3.11). Disposable. |
+| Source patch | `docs/research/opencode-shim/pr-7374-diff.patch` | repo | The original PR #7374 diff. Reference only — does not apply cleanly to v1.14.28. |
+| Adapted patch | inlined in `the-fix.md` | repo | The same logic re-applied against v1.14.28's drifted line numbers. |
 
 ## How the build is launched
 
@@ -30,7 +32,8 @@ Edit the right file:
     "command": "/home/levine/Documents/Repos/Workstation/second-opinion/scripts/opencode-session.sh",
     "args": ["acp"],
     "env": {
-      "OPENCODE_BIN": "/home/levine/.local/bin/opencode-patched"
+      "OPENCODE_BIN": "/usr/local/bin/opencode-patched",
+      "OPENCODE_DISABLE_CHANNEL_DB": "1"
     }
   }
 }
@@ -76,10 +79,21 @@ bun run typecheck
 cd packages/opencode
 PATH="/tmp/bun-1313/bin:$PATH" /tmp/bun-1313/bin/bun run script/build.ts --single
 
-# 7. Install
+# 7. Install (per-user staging copy)
 cp dist/opencode-linux-x64/bin/opencode ~/.local/bin/opencode-patched
 chmod +x ~/.local/bin/opencode-patched
+
+# 8. System-install (shared between users; safe to run while sessions are live)
+sudo install -m 0755 -o root -g root \
+  ~/.local/bin/opencode-patched /usr/local/bin/opencode-patched.new
+sudo mv /usr/local/bin/opencode-patched.new /usr/local/bin/opencode-patched
 ```
+
+The `install` + `mv` dance is atomic. Step 8 swaps the inode under
+`/usr/local/bin/opencode-patched`, so any process anny has running keeps
+using the old inode until she restarts her session. Doing a plain
+`cp` over the file would fail with "Text file busy" if either user
+has a copy running.
 
 Build time: ~3 minutes on this machine for `--single` (current platform only).
 Binary size: ~147 MB (Bun-compiled single binary, all deps embedded).
@@ -90,6 +104,19 @@ Binary size: ~147 MB (Bun-compiled single binary, all deps embedded).
 - **Bun version gate** is hard-coded in `packages/script/src/index.ts`. Don't bypass — the gate exists because the build relies on Bun runtime features that landed in 1.3.13.
 - **`bun run typecheck` from the workspace root** runs all 13 packages via Turbo. That's fine; ~5s with cache cold. Per-package typecheck is faster but only proves one package.
 - **The `--single` flag** is essential. Without it, the build cross-compiles for darwin-x64, darwin-arm64, linux-arm64, windows-x64, etc. — that's slow (10+ minutes) and produces binaries you won't use.
+
+## anny's opt-in (optional, no rush)
+
+anny's `work-opencode-launch` defaults to `$HOME/.opencode/bin/opencode` — her own stock install. To pick up the patched binary, set `OPENCODE_BIN` in her launcher invocation:
+
+```bash
+# from anny's laptop
+ssh -t anny@levine-positron OPENCODE_BIN=/usr/local/bin/opencode-patched work-opencode-launch
+```
+
+Or, if she wants it permanent, add `export OPENCODE_BIN=/usr/local/bin/opencode-patched` to her `~/.profile` on the workstation. The launcher's existing `${OPENCODE_BIN:-...}` default-or-override pattern (line 22 of the script) means no script change is needed.
+
+She doesn't need this for the TUI — the bug is specific to ACP-via-Zed and doesn't affect terminal sessions. Only worth opting in if she ever tries opencode through Zed.
 
 ## How to revert
 
@@ -102,9 +129,12 @@ If anything goes wrong:
 # Zed falls back to the registered opencode (registry entry:
 # anomalyco/opencode v1.14.25, downloaded on demand).
 
-# Or just delete the patched binary; Zed will fail to launch the agent
-# until the config is also fixed.
+# To uninstall the system-shared binary:
+sudo rm /usr/local/bin/opencode-patched
+
+# To remove the per-user staging copy:
 rm ~/.local/bin/opencode-patched
 ```
 
-Stock opencode and the TUI flow are completely unaffected by any of this.
+Stock opencode and the TUI flow for both users are completely unaffected
+by any of this.
