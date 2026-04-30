@@ -1,19 +1,31 @@
 #!/usr/bin/env bash
 # Second Opinion launcher: starts the system-scoped llama services and
-# Zed in an isolated profile, with a yad progress splash. Politely
-# shuts llama down when Zed exits.
+# opens Zed in an isolated profile, with a yad progress splash.
 #
 # Lifecycle:
-#   1. If llama is already up (terminal opencode, anny, an earlier launch),
-#      skip the splash and go straight to Zed.
-#   2. Otherwise: start llama-primary/secondary/embed/coder (system units;
-#      polkit grants levine and anny passwordless), show a yad splash that
-#      tails the journal, poll /v1/models on each port until ready.
-#   3. Run zed --wait in the foreground with the second-opinion isolated
-#      profile.
-#   4. On Zed exit: call llama-shutdown. It refuses if anyone (the other
-#      user, or a still-alive opencode/zed process under the holder check)
-#      is still using llama, leaving services up.
+#   1. If llama is already up (a terminal opencode, a second user, an
+#      earlier launch), skip the splash and go straight to Zed.
+#   2. Otherwise: start llama-primary/secondary/embed/coder (system
+#      units; polkit grants the local users passwordless start), show
+#      a yad splash that tails the journal, poll /v1/models on each
+#      port until ready.
+#   3. Open Zed.
+#   4. If invoked with one or more path arguments, run Zed under
+#      `--wait`, block until the editor closes, then call
+#      `llama-shutdown` for polite GPU release. The shutdown refuses
+#      if any other user or process is still using llama.
+#   5. If invoked with no path arguments, run Zed detached. Polite
+#      shutdown is the user's responsibility (run `llama-shutdown`
+#      when done to free VRAM, important for gaming after coding).
+#
+# Zed's `--wait` flag requires at least one path argument. The split
+# in step 4 vs 5 accommodates that requirement.
+#
+# TODO: graceful shutdown on Zed close currently almost never fires
+# even with --wait, because llama-shutdown's holder-detection regex
+# matches Zed's dying child processes and refuses. Fix planned in
+# Phase 1 (replace regex with a recent-activity window check). Until
+# then, the manual fallback is `llama-shutdown` from a terminal.
 #
 # yad thresholds are tuned for ~60s expected ready (universal; terminal
 # opencode launches have always cleared this). Warn at 75s, 180s ceiling.
@@ -42,8 +54,15 @@ while [[ $# -gt 0 ]]; do
 Usage: second-opinion-launch.sh [-- zed args...]
 
 Starts llama-primary/secondary/embed/coder, shows a yad splash until
-ready, then opens Zed in the second-opinion isolated profile. Polite
-llama shutdown on Zed exit.
+ready, then opens Zed in the second-opinion isolated profile.
+
+If invoked with one or more path arguments after a literal --,
+Zed runs under --wait and the script blocks until the editor closes,
+then calls llama-shutdown for polite GPU release.
+
+If invoked with no path arguments (the normal desktop-launcher path),
+Zed runs detached. Run llama-shutdown manually when done to free
+GPU memory.
 EOF
       exit 0
       ;;
@@ -95,20 +114,41 @@ poll_until_ready() {
 
 launch_editor() {
   mkdir -p "$ZED_DATA_DIR"
-  # --wait keeps zed foregrounded until the window closes, so the script
-  # blocks here and we can shut llama down on return.
-  /home/levine/.local/bin/zed \
-    --user-data-dir "$ZED_DATA_DIR" \
-    --wait \
-    "$@"
+  # Zed's --wait flag requires at least one path argument. With a path,
+  # the script blocks until the window closes and we can run polite
+  # shutdown on return. Without a path, Zed prints a usage error and
+  # exits, so we drop --wait and let Zed run detached. Polite shutdown
+  # then has to be invoked manually after a no-path launch.
+  if [[ $# -gt 0 ]]; then
+    /home/levine/.local/bin/zed \
+      --user-data-dir "$ZED_DATA_DIR" \
+      --wait \
+      "$@"
+  else
+    /home/levine/.local/bin/zed \
+      --user-data-dir "$ZED_DATA_DIR" \
+      "$@"
+  fi
+}
+
+editor_will_block() {
+  # Tells the calling code whether launch_editor will block until Zed
+  # closes (true) or return immediately (false). The polite-shutdown
+  # call only makes sense when launch_editor blocks.
+  [[ $# -gt 0 ]]
 }
 
 # ── Fast path: llama already up ─────────────────────────────────────────────
 
 if llama_all_up; then
   notify "Second Opinion" "llama already running. Opening Zed."
-  launch_editor "$@"
-  llama-shutdown || notify "Second Opinion" "llama-shutdown declined to stop (someone still using it)."
+  if editor_will_block "$@"; then
+    launch_editor "$@"
+    llama-shutdown || notify "Second Opinion" "llama-shutdown declined to stop (someone still using it)."
+  else
+    launch_editor "$@"
+    notify "Second Opinion" "Zed launched detached. Run llama-shutdown when finished to free GPU memory."
+  fi
   exit 0
 fi
 
@@ -185,12 +225,16 @@ case "$RC" in
     ;;
 esac
 
-# ── Run editor in foreground; politely shut down on exit ────────────────────
+# ── Run editor; politely shut down on exit when blocking ────────────────────
 
 launch_editor "$@"
 
-if llama-shutdown; then
-  notify "Second Opinion - stopped" "llama stopped, VRAM released."
+if editor_will_block "$@"; then
+  if llama-shutdown; then
+    notify "Second Opinion - stopped" "llama stopped, VRAM released."
+  else
+    notify "Second Opinion" "llama still in use by another session. Services left running."
+  fi
 else
-  notify "Second Opinion" "llama still in use by another session. Services left running."
+  notify "Second Opinion" "Zed launched detached. Run llama-shutdown when finished to free GPU memory."
 fi
