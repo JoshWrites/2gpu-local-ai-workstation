@@ -1,0 +1,3 @@
+[submodule "opencode-zed-patches"]
+	path = opencode-zed-patches
+	url = file:///home/levine/staging/opencode-zed-patches
