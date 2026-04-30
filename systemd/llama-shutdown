@@ -47,7 +47,6 @@ UNITS=(
   llama-secondary.service
   llama-embed.service
   llama-primary-moe.service
-  llama-second-opinion.service
   llama-coder.service
 )
 
@@ -60,7 +59,6 @@ declare -A PORTS=(
   [llama-primary-moe.service]=$WS_PORT_PRIMARY
   [llama-secondary.service]=$WS_PORT_SECONDARY
   [llama-embed.service]=$WS_PORT_EMBED
-  [llama-second-opinion.service]=$WS_PORT_PRIMARY
   [llama-coder.service]=$WS_PORT_CODER
 )
 

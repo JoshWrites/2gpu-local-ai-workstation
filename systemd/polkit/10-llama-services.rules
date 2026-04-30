@@ -25,7 +25,6 @@ polkit.addRule(function(action, subject) {
         "llama-primary-moe.service",
         "llama-secondary.service",
         "llama-embed.service",
-        "llama-second-opinion.service",
         "llama-coder.service",
     ];
     if (allowedUnits.indexOf(unit) === -1) {

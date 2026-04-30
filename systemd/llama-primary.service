@@ -10,7 +10,6 @@ Description=llama-server primary (GLM-4.7-Flash on 7900 XTX / Vulkan0, port 1143
 # lives at /usr/local/lib/llama.cpp/llama-server (system-shared, Vulkan
 # build). Updating it means editing each llama-* unit by hand. All
 # other paths and values come from /etc/workstation/system.env.
-Conflicts=llama-second-opinion.service
 
 [Service]
 Type=simple

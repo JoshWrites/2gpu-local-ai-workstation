@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# Second Opinion launcher: starts the system-scoped llama services and
+# 2GPU launcher: starts the system-scoped llama services and
 # opens Zed in an isolated profile, with a yad progress splash.
 #
 # Lifecycle:
@@ -78,10 +78,10 @@ while [[ $# -gt 0 ]]; do
   case "$1" in
     -h|--help)
       cat <<EOF
-Usage: second-opinion-launch.sh [-- zed args...]
+Usage: 2gpu-launch.sh [-- zed args...]
 
 Starts llama-primary/secondary/embed/coder, shows a yad splash until
-ready, then opens Zed in the second-opinion isolated profile.
+ready, then opens Zed in the isolated Zed profile.
 
 If invoked with one or more path arguments after a literal --,
 Zed runs under --wait and the script blocks until the editor closes,
@@ -101,7 +101,7 @@ done
 # ── Helpers ─────────────────────────────────────────────────────────────────
 
 notify() {
-  notify-send --app-name="Second Opinion" "$1" "${2:-}" || true
+  notify-send --app-name="2GPU Workstation" "$1" "${2:-}" || true
 }
 
 have_yad() { command -v yad >/dev/null 2>&1; }
@@ -168,13 +168,13 @@ editor_will_block() {
 # ── Fast path: llama already up ─────────────────────────────────────────────
 
 if llama_all_up; then
-  notify "Second Opinion" "llama already running. Opening Zed."
+  notify "2GPU" "llama already running. Opening Zed."
   if editor_will_block "$@"; then
     launch_editor "$@"
-    llama-shutdown || notify "Second Opinion" "llama-shutdown declined to stop (someone still using it)."
+    llama-shutdown || notify "2GPU" "llama-shutdown declined to stop (someone still using it)."
   else
     launch_editor "$@"
-    notify "Second Opinion" "Zed launched detached. Run llama-shutdown when finished to free GPU memory."
+    notify "2GPU" "Zed launched detached. Run llama-shutdown when finished to free GPU memory."
   fi
   exit 0
 fi
@@ -201,7 +201,7 @@ if have_yad; then
     > "$SPLASH_FIFO" &
   TAIL_PID=$!
 
-  yad --title="Second Opinion - starting" \
+  yad --title="2GPU - starting" \
       --text="<b>Loading models onto 7900 XTX + 5700 XT</b>\nExpected ready: ~${EXPECTED_READY}s. Warning if &gt; ${WARN_READY}s.\n\nLive log (llama-primary):" \
       --text-info \
       --tail \
@@ -216,12 +216,12 @@ if have_yad; then
   (
     sleep "$WARN_READY"
     if ! llama_all_up; then
-      notify "Second Opinion - slow start" "Past ${WARN_READY}s. Check the splash log for the hung phase."
+      notify "2GPU - slow start" "Past ${WARN_READY}s. Check the splash log for the hung phase."
     fi
   ) &
   WATCHDOG_PID=$!
 else
-  notify "Second Opinion" "Starting llama (yad not installed; no splash)."
+  notify "2GPU" "Starting llama (yad not installed; no splash)."
 fi
 
 set +e
@@ -237,16 +237,16 @@ set -e
 
 case "$RC" in
   0)
-    notify "Second Opinion - ready" "Up in ${ELAPSED}s. Opening Zed."
+    notify "2GPU - ready" "Up in ${ELAPSED}s. Opening Zed."
     ;;
   2)
     # User clicked Cancel on the yad splash. Stop what we started.
     llama-shutdown -f >/dev/null 2>&1 || true
-    notify "Second Opinion" "Launch cancelled."
+    notify "2GPU" "Launch cancelled."
     exit 1
     ;;
   *)
-    notify "Second Opinion - failed" \
+    notify "2GPU - failed" \
       "llama did not become healthy within ${HARD_TIMEOUT}s. journalctl -u ${PRIMARY_UNIT}"
     exit 1
     ;;
@@ -258,10 +258,10 @@ launch_editor "$@"
 
 if editor_will_block "$@"; then
   if llama-shutdown; then
-    notify "Second Opinion - stopped" "llama stopped, VRAM released."
+    notify "2GPU - stopped" "llama stopped, VRAM released."
   else
-    notify "Second Opinion" "llama still in use by another session. Services left running."
+    notify "2GPU" "llama still in use by another session. Services left running."
   fi
 else
-  notify "Second Opinion" "Zed launched detached. Run llama-shutdown when finished to free GPU memory."
+  notify "2GPU" "Zed launched detached. Run llama-shutdown when finished to free GPU memory."
 fi

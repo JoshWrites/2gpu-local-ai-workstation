@@ -1,0 +1,18 @@
+[Unit]
+Description=Ollama (GPU0 - 5700 XT) — delta embeds and query embeds
+After=network.target
+# Do NOT enable this service — managed by ai-session (session manager)
+
+[Service]
+User=ollama
+Group=ollama
+ExecStart=/usr/local/bin/ollama serve
+Environment="OLLAMA_HOST=0.0.0.0:11435"
+Environment="OLLAMA_MODELS=/opt/ollama/models"
+Environment="ROCR_VISIBLE_DEVICES=0"
+Environment="OLLAMA_KEEP_ALIVE=1h"
+Restart=on-failure
+RestartSec=5
+
+[Install]
+WantedBy=multi-user.target

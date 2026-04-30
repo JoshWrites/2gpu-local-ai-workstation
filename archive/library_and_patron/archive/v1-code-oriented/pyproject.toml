@@ -1,0 +1,20 @@
+[project]
+name = "library-and-patron"
+version = "0.1.0"
+requires-python = ">=3.10"
+dependencies = [
+    "mcp[cli]",
+    "lancedb",
+    "ollama",
+    "numpy",
+    "pyarrow",
+    "pathspec",
+    "watchdog",
+    "inotify-simple",
+    "pyyaml",
+]
+
+[project.optional-dependencies]
+dev = [
+    "pytest",
+]

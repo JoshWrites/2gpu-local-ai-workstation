@@ -1,0 +1,11 @@
+{
+  "version": 1,
+  "hooks": {
+    "preToolUse": [
+      {
+        "type": "command",
+        "bash": ".reinicorn/hooks/enforce-doc-templates.sh"
+      }
+    ]
+  }
+}

@@ -1,0 +1,11 @@
+# Sudoers drop-in for AI session manager
+# Install to: /etc/sudoers.d/ai-session
+# Allows the session manager to start/stop GPU services without a password prompt.
+# Add a line here for each service added to ~/.config/ai-session/services.yaml
+
+levine ALL=(ALL) NOPASSWD: /usr/bin/systemctl start ollama-gpu1
+levine ALL=(ALL) NOPASSWD: /usr/bin/systemctl stop ollama-gpu1
+levine ALL=(ALL) NOPASSWD: /usr/bin/systemctl start ollama-gpu0
+levine ALL=(ALL) NOPASSWD: /usr/bin/systemctl stop ollama-gpu0
+levine ALL=(ALL) NOPASSWD: /usr/bin/systemctl start librarian
+levine ALL=(ALL) NOPASSWD: /usr/bin/systemctl stop librarian

@@ -264,7 +264,7 @@ wait_for_endpoints() {
 
 # ── Main ─────────────────────────────────────────────────────────────────────
 #
-# Service lifecycle is owned by the launcher (second-opinion-launch.sh) and
+# Service lifecycle is owned by the launcher (2gpu-launch.sh) and
 # by the manual `llama-shutdown` command. This wrapper only brings llama up
 # if it isn't already and then runs opencode. On exit we leave services
 # running — terminal opencode and Zed-spawned opencode share endpoints, and

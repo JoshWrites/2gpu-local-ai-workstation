@@ -1,0 +1,15 @@
+[Unit]
+Description=AI Session Manager — starts/stops GPU services with AI apps
+After=graphical-session.target
+
+[Service]
+Type=simple
+WorkingDirectory=/home/levine/Documents/Repos/Workstation/library_and_patron
+ExecStart=/home/levine/Documents/Repos/Workstation/library_and_patron/.venv/bin/python -m session_manager.manager
+Restart=always
+RestartSec=5
+StandardOutput=journal
+StandardError=journal
+
+[Install]
+WantedBy=default.target

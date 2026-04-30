@@ -58,7 +58,7 @@ REQUIRED_TOOLS=(curl jq python3 systemctl ss)
 LLAMA_BIN_DEFAULT="/usr/local/lib/llama.cpp/llama-server"
 OPENCODE_PATCHED="/usr/local/bin/opencode-patched"
 LLAMA_SHUTDOWN="/usr/local/bin/llama-shutdown"
-LAUNCHER="$REPO_ROOT/scripts/second-opinion-launch.sh"
+LAUNCHER="$REPO_ROOT/scripts/2gpu-launch.sh"
 OPENCODE_CONFIG="$HOME/.config/opencode/opencode.json"
 ZED_ISO_CONFIG="$HOME/.local/share/zed-second-opinion/config/settings.json"
 
