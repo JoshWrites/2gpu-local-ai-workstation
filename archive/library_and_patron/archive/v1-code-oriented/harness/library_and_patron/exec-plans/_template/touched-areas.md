@@ -1,1 +1,0 @@
-# Touched Areas

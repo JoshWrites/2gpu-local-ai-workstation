@@ -115,7 +115,8 @@ llama_all_up() {
 }
 
 start_llama() {
-  # System-scoped units; polkit rule grants levine+anny passwordless start.
+  # System-scoped units; polkit rule grants the configured local users
+  # passwordless start (see systemd/polkit/10-llama-services.rules).
   systemctl start "${LLAMA_UNITS[@]/%/.service}"
 }
 

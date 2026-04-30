@@ -190,7 +190,7 @@ Listed by Josh explicitly:
    model — this is what the curation-not-runtime reframing solves.
 5. **Action-severity gating.** Reads are free. Writes need polite confirmation.
    Deletes need typed confirmation (already built: `confirm_destructive.py`).
-6. **Two-user concurrency by time-slicing.** Anny and Josh share the stack.
+6. **Two-user concurrency by time-slicing.** Two users share the stack.
    Sessions serialize at turn granularity. Each user perceives full use of the
    system; the penalty is time, not quality.
 
@@ -322,10 +322,10 @@ Written now while I still remember them. Revisit when research lands.
    first operation? Commit-message keyword buckets? File-extension distribution +
    diff sizes? Both? Needs a prototype.
 
-4. **Anonymization in logs.** Between Josh and Anny it's fine today, but logs
-   outlive memory of context. Light auto-scrub (strip absolute paths, redact
-   secrets by pattern, placeholder hostnames) as default. Full anon as a switch for
-   later.
+4. **Anonymization in logs.** Between the current users it is fine today,
+   but logs outlive memory of context. Light auto-scrub (strip absolute
+   paths, redact secrets by pattern, placeholder hostnames) as default.
+   Full anon as a switch for later.
 
 5. **Audit time budget.** 10 prompts × 10 use cases × ~2 min each = 3.5 hours. Too
    long to sustain quarterly. Sampling tiers + single-keystroke UI brings it to an

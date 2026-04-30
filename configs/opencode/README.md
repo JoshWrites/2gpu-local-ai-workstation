@@ -48,7 +48,7 @@ time, except for whatever the user has changed in `model`.
 After cloning the umbrella repo:
 
 ```
-cd ~/Documents/Repos/Workstation/second-opinion/configs/opencode
+cd <umbrella-checkout>/configs/opencode
 ln -sf "$(pwd)/AGENTS.md" ~/.config/opencode/AGENTS.md
 ```
 

@@ -1,11 +1,17 @@
-// Allow the local users to start/stop/restart llama-* services without sudo.
+// Allow specific local users to start/stop/restart llama-* services
+// without sudo.
 //
-// Scope: only the six llama-server units listed below. Other systemd
+// Scope: only the llama-server units listed below. Other systemd
 // actions still require sudo as normal.
 //
-// Rationale: both users need to start these services on demand (they
-// are not enabled at boot). Without this rule, each start/stop would
-// prompt for a sudo password, which is bad UX for a per-session launcher.
+// Rationale: the listed users need to start these services on demand
+// (they are not enabled at boot). Without this rule, each start/stop
+// would prompt for a sudo password, which is bad UX for a per-session
+// launcher.
+//
+// Customize before install: edit the allowedUsers array below to list
+// the local accounts that should have passwordless control. The default
+// lists a single placeholder; replace with your own username(s).
 //
 // Install location: /etc/polkit-1/rules.d/10-llama-services.rules
 // Owned by: root, mode 0644.
@@ -30,7 +36,11 @@ polkit.addRule(function(action, subject) {
     if (allowedUnits.indexOf(unit) === -1) {
         return;
     }
-    if (subject.user === "levine" || subject.user === "anny") {
+    // EDIT THIS: list the local usernames that should have passwordless
+    // start/stop/restart for the llama services. Add or remove entries
+    // as needed for your machine.
+    var allowedUsers = ["your-username-here"];
+    if (allowedUsers.indexOf(subject.user) !== -1) {
         return polkit.Result.YES;
     }
 });

@@ -55,7 +55,7 @@ The asymmetric nesting is historical. `library_and_patron` grew up inside `Works
 
 ## Why this shape
 
-- **Each MCP is independently clonable.** anny (or anyone else) can clone just `distiller` without pulling in `sysmon` or `watcher`. Reduces cognitive load on consumers.
+- **Each MCP is independently clonable.** anyone (the second user, you) can clone just `distiller` without pulling in `sysmon` or `watcher`. Reduces cognitive load on consumers.
 - **Per-MCP pyproject + lockfile** means dep updates don't cross-contaminate. If distiller bumps a dep, watcher doesn't risk it.
 - **`local-mcp-servers/` becomes a coherent container** — "all my workstation MCPs live here" — without being a single monolith repo.
 - **Workstation is the project root,** symlinked from `Repos/` for habit. The `Repos/` dir becomes just "a convenient flat view of clonable projects."
@@ -63,17 +63,17 @@ The asymmetric nesting is historical. `library_and_patron` grew up inside `Works
 
 ## Phased execution (what we've done, what remains)
 
-### ✅ Phase 1 — unblock anny (2026-04-23)
+### ✅ Phase 1 — unblock the second user (2026-04-23)
 
 - Commit pending local-mcp-servers changes (confirm_destructive.py + tests + pyproject/lock bumps)
 - Create private GitHub repo `JoshWrites/local-mcp-servers`
 - Push main
-- Clone local-mcp-servers + library_and_patron into `/home/anny/Documents/Repos/`
-- Run `uv sync` in both as anny
+- Clone local-mcp-servers + library_and_patron into `/home/<second-user>/Documents/Repos/`
+- Run `uv sync` in both as that user
 - Update her opencode.json to point at her own clones
 - Revert `/home/levine` back to 750 (she no longer needs to reach into your home)
 
-**Net result of phase 1:** anny's MCPs work without her touching anything in your home. Filesystem structure remains as-is for you. The shape above is target; today's state is unchanged except for the new remote + her clones.
+**Net result of phase 1:** the second user's MCPs work without her touching anything in your home. Filesystem structure remains as-is for you. The shape above is target; today's state is unchanged except for the new remote + her clones.
 
 ### Phase 2 — lift Workstation one level (not started)
 
@@ -143,7 +143,7 @@ From `grep -rl 'Documents/Repos/Workstation' ~` on 2026-04-23:
 
 **Live config (must update for real or rely on symlinks):**
 - `/home/levine/.config/opencode/opencode.json` — MCP paths
-- `/home/anny/.config/opencode/opencode.json` — MCP paths
+- `/home/<second-user>/.config/opencode/opencode.json` — MCP paths
 - `/home/levine/.config/VSCodium-second-opinion/User/settings.json`
 - `/home/levine/.config/VSCodium-second-opinion/User/globalStorage/storage.json`
 - `/home/levine/.config/systemd/user/more-than-pretty-lights.service`
@@ -163,7 +163,7 @@ From `grep -rl 'Documents/Repos/Workstation' ~` on 2026-04-23:
 
 ## Why we're deferring phases 2-5
 
-User decision 2026-04-23: do phase 1 only now. Unblocks anny tonight. Phases 2-4 are aesthetic/developer-ergonomic improvements, not functional requirements; they can be done in a focused session without pressure. Phase 5 (review) depends on having phases 2-4 done.
+User decision 2026-04-23: do phase 1 only now. Unblocks the second user tonight. Phases 2-4 are aesthetic/developer-ergonomic improvements, not functional requirements; they can be done in a focused session without pressure. Phase 5 (review) depends on having phases 2-4 done.
 
 ## When to pick this up
 

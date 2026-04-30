@@ -228,8 +228,9 @@ ensure_units_loaded() {
 start_services() {
   log "starting: ${LLAMA_UNITS[*]}"
   # System-scoped units; polkit rule at /etc/polkit-1/rules.d/10-llama-services.rules
-  # grants this without password for levine and anny. If the rule is missing
-  # or you're running as a different user, systemctl will prompt or fail.
+  # grants this without password for the users listed in that rule's
+  # allowedUsers array. If the rule is missing or you are running as a
+  # different user, systemctl will prompt or fail.
   systemctl start "${LLAMA_UNITS[@]/%/.service}"
 }
 

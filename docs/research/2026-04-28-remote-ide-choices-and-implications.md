@@ -6,7 +6,7 @@ status: pre-decision write-up; we decide and build tomorrow
 
 # Remote IDE — choices and implications
 
-Goal: Anny runs Zed on her laptop while opencode runs on the workstation, with the agent reading and editing **her laptop's files**, not the workstation's. Same plumbing should later extend to Josh-on-laptop talking to opencode on the workstation but editing **the workstation's files**.
+Goal: the second user runs Zed on her laptop while opencode runs on the workstation, with the agent reading and editing **her laptop's files**, not the workstation's. Same plumbing should later extend to owner-on-laptop talking to opencode on the workstation but editing **the workstation's files**.
 
 This document captures the design choices we surfaced during today's brainstorm, the prior-art research that followed, and the implications of each choice. We decide tomorrow.
 
@@ -32,7 +32,7 @@ We have to make four decisions, in this order. Each constrains the next.
 1. **Architecture (Choice A)** — co-tenant-via-shared-FS, or co-tenant-via-remote-IDE? This is the biggest fork.
 2. **File-bridge mechanism (Choice B)** — assuming we go shared-FS, what tech bridges the laptop's files to the workstation? SSHFS, Mutagen, or other?
 3. **Path-translation strategy (Choice C)** — assuming we go shared-FS, how do laptop-Zed and workstation-opencode agree on path strings?
-4. **Zed entry-point UX (Choice D)** — assuming we go shared-FS, how does Anny launch Zed and have it land in a project directory whose path is workstation-translated?
+4. **Zed entry-point UX (Choice D)** — assuming we go shared-FS, how does the second user launch Zed and have it land in a project directory whose path is workstation-translated?
 
 A single alternative architecture (Choice E) eliminates 2–4 entirely.
 
@@ -46,7 +46,7 @@ opencode runs on the workstation. The laptop's files are made visible to the wor
 
 This is what we've been designing. It's the SSHFS-today architecture extended to the ACP/Zed world.
 
-**Pros:** Anny keeps using her laptop's editor with its own files. Familiar mental model. Local-first ownership of files-of-record. The architecture we already partly have.
+**Pros:** the second user keeps using her laptop's editor with its own files. Familiar mental model. Local-first ownership of files-of-record. The architecture we already partly have.
 
 **Cons:** Path translation is a real and unsolved problem at the ACP layer. We will be writing the first community shim/proxy/whatever for this.
 
@@ -58,7 +58,7 @@ Reference: https://zed.dev/docs/remote-development and https://zed.dev/blog/remo
 
 **Pros:** No path translation problem. No FS bridge to maintain. Zed's own roadmap supports this; the agent panel is documented as working in remote sessions. Far simpler operationally.
 
-**Cons:** Files-of-record live on the **workstation**, not the laptop. Anny would be editing files in `/home/anny/projects/blog` *on the workstation*, with no copy on her laptop. If she's offline (no workstation reachable), she can't work. If the workstation dies, her in-progress work is on the workstation, not on her laptop. She'd need a separate sync (rsync/git/Mutagen) to keep a laptop-local copy as backup.
+**Cons:** Files-of-record live on the **workstation**, not the laptop. the second user would be editing files in `/home/second-user/projects/blog` *on the workstation*, with no copy on her laptop. If she's offline (no workstation reachable), she can't work. If the workstation dies, her in-progress work is on the workstation, not on her laptop. She'd need a separate sync (rsync/git/Mutagen) to keep a laptop-local copy as backup.
 
 This is the architecture you said you didn't want during the brainstorm — file ownership flipped. But the research strongly suggests it's the only architecture that doesn't fight the protocol. It deserves a re-evaluation now that we know:
 - ACP has no remote-namespace concept.
@@ -67,7 +67,7 @@ This is the architecture you said you didn't want during the brainstorm — file
 
 ### A3. Choice E in disguise (workstation-as-source, but laptop-mirrored)
 
-A pragmatic hybrid: use A2 (Zed Remote Development), but add a **separate** laptop ↔ workstation Mutagen sync of the project directory. Files-of-record are on the workstation (source of truth from ACP's POV); a continuous sync gives Anny a laptop copy too. If the workstation is unreachable, she opens her laptop copy in standalone Zed and edits there; later, sync resolves.
+A pragmatic hybrid: use A2 (Zed Remote Development), but add a **separate** laptop ↔ workstation Mutagen sync of the project directory. Files-of-record are on the workstation (source of truth from ACP's POV); a continuous sync gives the second user a laptop copy too. If the workstation is unreachable, she opens her laptop copy in standalone Zed and edits there; later, sync resolves.
 
 This is the kitchen-sink option. Adds complexity (two systems, conflict semantics) but preserves both Zed-remote's clean ACP story *and* a laptop-local fallback. Worth flagging as a possibility, probably not worth building for V1.
 
@@ -75,7 +75,7 @@ This is the kitchen-sink option. Adds complexity (two systems, conflict semantic
 
 The honest read of the research, after the why-unsolved second pass: **A2 is the strongly-recommended path.** The "small targeted proxy" framing for A1+C3 was optimism the second research pass deflated. A1 with C1 (symlink) is viable for V1 but inherits the structural ACP-vs-remote mismatch — when edges appear, the only fixes are (a) build a multi-week proxy, (b) accept the edges, or (c) migrate to A2 anyway.
 
-**Tomorrow's decision question: Is "files of record live on the workstation" acceptable for Anny's primary workflow?**
+**Tomorrow's decision question: Is "files of record live on the workstation" acceptable for the second user's primary workflow?**
 
 If yes → A2 (or A3 with Mutagen mirror), ignore Choices B–D, do this in 1–2 days. The path forward is well-trodden by VS Code Remote and JetBrains Gateway; Zed has it built in; the agent panel works; opencode-patched stays exactly where it is on the workstation.
 
@@ -105,7 +105,7 @@ Source: https://mutagen.io/documentation/synchronization/, https://news.ycombina
 
 **Pros:** Near-native read performance for the agent. Conflict-tolerant modes (`two-way-safe`, `two-way-resolved`). No FUSE.
 
-**Cons:** Two paths exist on two filesystems — Mutagen does not give you a single canonical path; it gives you two real paths with synchronized contents. **This actually exposes the ACP path-translation problem more sharply** (the workstation sees `/home/anny/work/...`, the laptop sees `/home/anny/work-laptop/...` or wherever you sync to). The single-path illusion of SSHFS goes away; you need the proxy from Choice C either way under shared-FS, but the path mapping becomes more visible.
+**Cons:** Two paths exist on two filesystems — Mutagen does not give you a single canonical path; it gives you two real paths with synchronized contents. **This actually exposes the ACP path-translation problem more sharply** (the workstation sees `/home/second-user/work/...`, the laptop sees `/home/second-user/work-laptop/...` or wherever you sync to). The single-path illusion of SSHFS goes away; you need the proxy from Choice C either way under shared-FS, but the path mapping becomes more visible.
 
 Initial sync is slow on big trees (one-time cost). Conflict resolution semantics need understanding.
 
@@ -149,11 +149,11 @@ This is the choice that turned out hardest. Today's brainstorm walked through th
 
 ### C1. Single-namespace-via-symlink (T1, "the symlink trick")
 
-On the laptop: `ln -s /home/anny /home/anny/laptop-home`. On the workstation: SSHFS mount at `/home/anny/laptop-home`. The path string `/home/anny/laptop-home/projects/blog` is real on both machines and refers to the same files. Zed sends that path in `session/new.cwd`; opencode receives it; everyone agrees.
+On the laptop: `ln -s /home/second-user /home/second-user/laptop-home`. On the workstation: SSHFS mount at `/home/second-user/laptop-home`. The path string `/home/second-user/laptop-home/projects/blog` is real on both machines and refers to the same files. Zed sends that path in `session/new.cwd`; opencode receives it; everyone agrees.
 
 **Pros:** No translation logic anywhere. Cwd contract is satisfied by construction. opencode's `pathToFileURL()` calls (which we now know happen at `acp/agent.ts:1159, 1169`) emit URIs that resolve correctly on the laptop because the path exists there too via the symlink.
 
-**Cons:** Cosmetic — Zed shows "laptop-home/" in breadcrumbs. Anny has to remember to launch Zed from `~/laptop-home/foo` rather than `~/foo` (or use the launcher to do the translation for her). The "wandering out of the mount" concern you raised earlier doesn't apply — the symlink is a self-reference; there's no escape to the workstation's real filesystem.
+**Cons:** Cosmetic — Zed shows "laptop-home/" in breadcrumbs. the second user has to remember to launch Zed from `~/laptop-home/foo` rather than `~/foo` (or use the launcher to do the translation for her). The "wandering out of the mount" concern you raised earlier doesn't apply — the symlink is a self-reference; there's no escape to the workstation's real filesystem.
 
 ### C2. Translate `$PWD` once at launch, no symlink (T2)
 
@@ -186,11 +186,11 @@ A process that sits in the laptop ↔ workstation pipe, parses ACP messages, and
 
 ### C4. Symlink + skinny proxy (hybrid)
 
-Use C1 as the primary mechanism, *plus* a 10-line proxy that rewrites `session/new.cwd` only — as a safety net for the case where Zed is launched via the GUI Open-Folder picker and the user navigates into `/home/anny/foo` instead of `/home/anny/laptop-home/foo`. Idempotent: if the path is already mount-translated, leave it alone; if it's laptop-native, rewrite it.
+Use C1 as the primary mechanism, *plus* a 10-line proxy that rewrites `session/new.cwd` only — as a safety net for the case where Zed is launched via the GUI Open-Folder picker and the user navigates into `/home/second-user/foo` instead of `/home/second-user/laptop-home/foo`. Idempotent: if the path is already mount-translated, leave it alone; if it's laptop-native, rewrite it.
 
 **Pros:** Most paths handled by the symlink (no logic). Edge case (GUI navigation outside laptop-home) handled by tiny rewrite. Lowest total complexity.
 
-**Cons:** Two mechanisms instead of one. Outgoing-from-opencode `pathToFileURL` URIs still need handling (the symlink covers this — they resolve on the laptop because the path exists there too via symlink — but only if Anny stays under `~/laptop-home`).
+**Cons:** Two mechanisms instead of one. Outgoing-from-opencode `pathToFileURL` URIs still need handling (the symlink covers this — they resolve on the laptop because the path exists there too via symlink — but only if the second user stays under `~/laptop-home`).
 
 ### Recommendation for Choice C
 
@@ -204,22 +204,22 @@ If C1 hits real edges, the cheapest move is to step back and ask whether A2 (Zed
 
 ## Choice D — Zed entry-point UX (only if A1)
 
-Anny needs two entry points to work:
+the second user needs two entry points to work:
 
 1. CLI: `cd ~/projects/blog && zed-second-opinion` and have Zed open at the right place
 2. GUI: click the desktop entry, then File → Open Folder, navigate to the project
 
 ### D1. Symlink + CLI launcher does translation; GUI requires user navigates via `~/laptop-home/`
 
-With C1 (symlink) in place: the CLI launcher script translates `$PWD` from `/home/anny/projects/blog` to `/home/anny/laptop-home/projects/blog` and passes that to Zed. The GUI flow requires Anny to navigate via the `~/laptop-home/` symlink path in the file picker.
+With C1 (symlink) in place: the CLI launcher script translates `$PWD` from `/home/second-user/projects/blog` to `/home/second-user/laptop-home/projects/blog` and passes that to Zed. The GUI flow requires the second user to navigate via the `~/laptop-home/` symlink path in the file picker.
 
 **Pros:** Simple. CLI launcher is one shell script; GUI requires only user habit.
 
-**Cons:** GUI requires habit. If she opens `/home/anny/projects/blog` directly via the picker, opencode breaks (path doesn't exist on workstation).
+**Cons:** GUI requires habit. If she opens `/home/second-user/projects/blog` directly via the picker, opencode breaks (path doesn't exist on workstation).
 
 ### D2. Symlink + CLI launcher + skinny proxy (C4) handles GUI
 
-CLI as in D1. GUI: the proxy normalizes `session/new.cwd`, so even if she opens `/home/anny/projects/blog` from the picker, the proxy rewrites to `/home/anny/laptop-home/projects/blog` before opencode sees it.
+CLI as in D1. GUI: the proxy normalizes `session/new.cwd`, so even if she opens `/home/second-user/projects/blog` from the picker, the proxy rewrites to `/home/second-user/laptop-home/projects/blog` before opencode sees it.
 
 **Pros:** Works regardless of how she opens the project. No user habit required.
 
@@ -256,12 +256,12 @@ This is the architecture-level alternative that came out of the research. Quick 
 - Solves all the open issues in the research (zed#47910, zed#48240, zed#52254, zed#37011, etc.) because they don't apply.
 
 **Cons:**
-- Files-of-record live on the workstation. If Anny is at home with no workstation, she can't work on her files in the same way.
+- Files-of-record live on the workstation. If the second user is at home with no workstation, she can't work on her files in the same way.
 - Inverts the laptop-is-source-of-truth invariant we set up the multi-user setup to protect.
 - If the workstation dies, in-progress work is gone unless mirrored.
 
 **Mitigations for the cons:**
-- Add a Mutagen sync between workstation `/home/anny/projects` and laptop `/home/anny/projects-mirror` running in the background. Provides a second copy for offline/disaster cases without affecting the primary work surface. (This is the A3 hybrid.)
+- Add a Mutagen sync between workstation `/home/second-user/projects` and laptop `/home/second-user/projects-mirror` running in the background. Provides a second copy for offline/disaster cases without affecting the primary work surface. (This is the A3 hybrid.)
 - Or accept that "you can only work when the workstation is on" is true (it already is, for the GLM model — without llama-primary running on the workstation, she has no agent anyway).
 
 ### Recommendation for Choice E
@@ -269,7 +269,7 @@ This is the architecture-level alternative that came out of the research. Quick 
 **Strongly worth a serious second look before tomorrow's build.** The honest answer is: A2/E gives us 90% of what we want with 10% of the complexity. The 10% we'd give up (laptop as canonical file home) may be less load-bearing than we thought when the alternative requires us to write a community-first ACP proxy.
 
 The questions to answer tomorrow:
-1. Is "Anny can only work on her code when the workstation is on" acceptable? (It already is for AI work — without GLM, she has no agent.)
+1. Is "the second user can only work on her code when the workstation is on" acceptable? (It already is for AI work — without GLM, she has no agent.)
 2. Is laptop-as-canonical-file-home a hard requirement, or is it a habit we built up that we could update?
 3. If we add a Mutagen mirror back to the laptop (Choice A3), does that resolve the offline-resilience concern?
 
@@ -279,14 +279,14 @@ The questions to answer tomorrow:
 
 Today we walked through:
 - T1 vs T2 vs T3 path translation → you picked T2 for safety reasons
-- WORK_TARGET env var for Anny vs Josh divergence
-- Two-Zed vs one-Zed — Anny gets only second-opinion Zed
+- WORK_TARGET env var for second-user vs owner divergence
+- Two-Zed vs one-Zed — the second user gets only second-opinion Zed
 - Cwd contract: Zed and opencode must agree
 
 The research changes most of these:
 - **T2 is broken at the protocol level.** It can't work because opencode honors `session/new.cwd`, not process cwd. T1 (symlink) is the V1 pick if we go A1; T3 (proxy) is the V2 destination.
 - **WORK_TARGET still makes sense** as a forward-compatibility flag in either A1 or A2; nothing about the architecture decision invalidates it.
-- **One-Zed (second-opinion only) on Anny's laptop** is right regardless of A1 vs A2. The `agent_servers` config differs, but the Zed flavor is the same.
+- **One-Zed (second-opinion only) on the second user's laptop** is right regardless of A1 vs A2. The `agent_servers` config differs, but the Zed flavor is the same.
 - **Cwd contract:** in A1, the path string in `session/new.cwd` must resolve identically on both machines (C1 via symlink does this by construction). In A2, it's automatic because there's only one machine.
 
 ---
@@ -296,17 +296,17 @@ The research changes most of these:
 ### If we pick A2 (Zed Remote Development)
 
 1. Install `zed-remote-server` on the workstation (Zed binary supports this natively).
-2. On Anny's laptop second-opinion Zed: configure SSH connection to `levine-positron`.
-3. Open a project at `/home/anny/projects/...` *on the workstation*; Zed transparently runs the agent there.
+2. On the second user's laptop second-opinion Zed: configure SSH connection to the workstation host.
+3. Open a project at `/home/second-user/projects/...` *on the workstation*; Zed transparently runs the agent there.
 4. Configure opencode in the workstation's Zed-remote profile to use `/usr/local/bin/opencode-patched`.
-5. Optionally add Mutagen sync of `/home/anny/projects` ↔ laptop mirror as A3 hybrid.
+5. Optionally add Mutagen sync of `/home/second-user/projects` ↔ laptop mirror as A3 hybrid.
 
 Estimated effort: 0.5–1 day.
 
 ### If we pick A1 + B1 + C1 + D1 (SSHFS + symlink + CLI launcher)
 
 1. Create `remote-ide` branch.
-2. On Anny's laptop: `ln -s /home/anny /home/anny/laptop-home`.
+2. On the second user's laptop: `ln -s /home/second-user /home/second-user/laptop-home`.
 3. Write `~/.local/bin/work-zed-acp` (laptop wrapper: WoL, translate `$PWD`, exec ssh into workstation).
 4. Write `~/.local/bin/remote-ide-launch` (workstation launcher: idempotent llama startup, idempotent SSHFS mount, exec opencode-patched acp). Use `wait $!` pattern + signal trap to fix the orphan-leak bug on this new launcher.
 5. Write `~/.local/bin/zed-second-opinion-laptop` (laptop equivalent of `second-opinion-launch.sh`, sets `--user-data-dir`).
@@ -376,7 +376,7 @@ This is what makes A2 (Zed Remote Development) the recommended path. Not because
 
 - Brainstorming session 2026-04-28 (this document captures the conclusions)
 - opencode source: `/tmp/opencode-build/opencode/packages/opencode/src/acp/agent.ts`, `session.ts`, `cli/cmd/acp.ts`
-- Existing memory: `project_multi_user_opencode.md`, `project_opencode_patch.md`, `project_wol_todo.md`, `project_anny_launcher_hygiene_todo.md`
+- Existing memory: `project_multi_user_opencode.md`, `project_opencode_patch.md`, `project_wol_todo.md`, `project_second-user_launcher_hygiene_todo.md`
 
 ### From the parallel research and the why-unsolved follow-up
 

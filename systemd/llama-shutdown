@@ -23,9 +23,10 @@
 #   1  — refused: another session is active
 #   2  — unexpected error
 #
-# Requires: polkit rule that allows levine and anny to `systemctl stop`
-# these units without password (already installed at
-# /etc/polkit-1/rules.d/10-llama-services.rules).
+# Requires: polkit rule that allows the configured local users to
+# `systemctl stop` these units without password (installed at
+# /etc/polkit-1/rules.d/10-llama-services.rules; see that file's
+# allowedUsers array for the user list).
 
 set -euo pipefail
 
@@ -147,7 +148,10 @@ total_active_connections() {
 # `ps -o etimes=` reports elapsed time as a single integer in seconds.
 # Failing to read it is a hard error: we would rather refuse to run
 # than silently regress to the buggy regex-only behavior.
-HOLDER_USERS="levine,anny"
+# Comma-separated list of local users whose opencode/zed processes
+# count as session-holders. Keep in sync with the allowedUsers array
+# in /etc/polkit-1/rules.d/10-llama-services.rules.
+HOLDER_USERS="${LLAMA_SHUTDOWN_HOLDER_USERS:-$USER}"
 HOLDER_PATTERN='(^|/)(opencode|zed|zed-editor)( |$)'
 
 # Verify ps supports -o etimes= once at startup. procps-ng on every

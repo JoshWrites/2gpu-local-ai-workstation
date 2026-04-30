@@ -12,14 +12,20 @@
 #   - llama-primary.service running on :11434 (GLM-4.7-Flash)
 #   - llama-secondary.service running on :11435 (Qwen3-4B)
 #   - llama-embed.service running on :11437 (mxbai)
-#   - ~/Documents/Repos/LevineLabsServer1/docs/security-plan.md accessible
-#     (real long-doc example; configurable below)
+#   - A long-form markdown file (~40 KB or more) supplied as the first
+#     positional argument; the script reads its full contents into the
+#     primary's prompt to exercise long-context reasoning under load.
 #
-# Usage: ./stress-test-stage2-both-cards.sh [long-doc-path]
+# Usage: ./stress-test-stage2-both-cards.sh <long-doc-path>
 
 set -euo pipefail
 
-LONG_DOC="${1:-/home/levine/Documents/Repos/LevineLabsServer1/docs/security-plan.md}"
+if [[ $# -lt 1 ]]; then
+  echo "ERROR: provide a long-form markdown file path as the first arg." >&2
+  echo "       (40+ KB recommended; exercises primary's long-context path.)" >&2
+  exit 2
+fi
+LONG_DOC="$1"
 PRIMARY_URL="http://127.0.0.1:11434/v1/chat/completions"
 SECONDARY_URL="http://127.0.0.1:11435/v1/chat/completions"
 EMBED_URL="http://127.0.0.1:11437/v1/embeddings"

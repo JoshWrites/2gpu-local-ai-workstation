@@ -117,7 +117,7 @@ If any Tier A or B test fails, the feature is not shipping.
 
 ## Known limitations of this test plan
 
-- **No test for large files.** The fixtures are small (~2 KB). Behavior on multi-MB files (chunking time, embed batch throughput, cache memory pressure) is not exercised. Recommended follow-up: run `mine_file` against `LevineLabsServer1/docs/security-plan.md` (43 KB, 981 lines) as a real-world benchmark.
+- **No test for large files.** The fixtures are small (~2 KB). Behavior on multi-MB files (chunking time, embed batch throughput, cache memory pressure) is not exercised. Recommended follow-up: run `mine_file` against a real-world long-form markdown file (40+ KB, 900+ lines) as a benchmark.
 - **No test for retrieval quality across languages.** Only English fixtures. mxbai is multilingual; behavior on non-English text is untested.
 - **No adversarial query test.** We don't test what happens when the query has nothing to do with the file. Expected behavior: top score is low, but the tool still returns something. Low-score thresholding is future work (safety-net extension).
 
