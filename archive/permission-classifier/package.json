@@ -1,0 +1,12 @@
+{
+  "name": "permission-classifier",
+  "version": "0.1.0",
+  "type": "module",
+  "description": "Opencode plugin that classifies bash commands into read/write/remove tiers (SSH-transport-independent) and routes remove-tier commands through the confirm_destructive MCP tool.",
+  "main": "index.js",
+  "private": true,
+  "peerDependencies": {
+    "@opencode-ai/plugin": "*",
+    "@opencode-ai/sdk": "*"
+  }
+}

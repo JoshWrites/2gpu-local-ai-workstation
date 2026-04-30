@@ -12,6 +12,14 @@ follow-up todo list. The Roo-era stack is documented in
 `../docs/lessons-from-the-roo-era.md`; the artifacts here are the raw
 material that distilled into that doc.
 
+`permission-classifier/` is a working opencode plugin that never
+shipped to production. It classifies bash commands into read/write/
+remove tiers and routes destructive ones through a typed-confirmation
+MCP. The same protection became achievable through opencode's native
+`permission.bash` config patterns (in `configs/opencode/opencode.json.template`),
+so the plugin sits here as reference code rather than running
+infrastructure. Its README describes when you might want it anyway.
+
 ## Why keep it
 
 Two reasons.
