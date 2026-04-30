@@ -413,18 +413,22 @@ by retrieving the original span
 
 ### 4.3 Role/persona drift
 
-Kenneth Li et al., **"Measuring and Controlling Persona Drift in Language
+Kenneth Li et al., **"Measuring and Controlling Instruction (In)Stability in Language
 Model Dialogs"** (arxiv:2402.10962,
 https://arxiv.org/html/2402.10962v1 and
 https://github.com/likenneth/persona_drift) define three automatic metrics
 (prompt-to-line consistency, line-to-line consistency, Q&A consistency) and
-demonstrate that chatbot personas degrade measurably over long dialogs even
-*without* a model swap. Synthetic multi-turn runs on Gemma 2, Qwen 3, and
+demonstrate that chatbot *instruction stability* — how consistently the model
+follows its system prompt over the course of a dialog — degrades measurably
+even *without* a model swap. Synthetic multi-turn runs on Gemma 2, Qwen 3, and
 Llama 3.3 show 20-40% turn-by-turn drops in Assistant-Axis projection over
 10-15 turns in therapy/philosophy domains (https://www.emergentmind.com/topics/persona-drift).
+Note: the paper is about instruction/prompt drift, not persona consistency per se —
+"persona drift" is a colloquial shorthand for what the paper formally measures as
+instruction instability.
 For the swap case, inference: the new model was never conditioned by the
-drifted persona's trajectory - it starts fresh from the system prompt. That
-can be either a bug (user noticed a personality change) or a feature
+drifted instruction trajectory - it starts fresh from the system prompt. That
+can be either a bug (user noticed a behavioural change) or a feature
 (drift gets reset).
 
 The Consistently-Simulating-Human-Personas work (openreview
@@ -511,8 +515,10 @@ literature documents them:
    re-litigation of decided facts.
 2. **Multi-turn unreliability of the receiving model** - "Lost in Multi-Turn"
    confirms this even without a swap; a swap adds another perturbation.
-3. **Persona drift** - Li et al. 2024 measured within-model; cross-model
-   effects unmeasured but probably sharper.
+3. **Instruction instability / behavioural drift** - Li et al. 2024 (arxiv:2402.10962)
+   measured within-model instruction drift; cross-model effects unmeasured but
+   probably sharper (the new model has no conditioning on the prior model's drift
+   trajectory).
 4. **Silent capability regression** - Gemini CLI issue, inferable from
    routing literature but not cleanly measured.
 5. **Sycophancy inherited from the summary author** - inferred, not
