@@ -4,6 +4,16 @@ A private, local-first agentic coding environment built around the idea that a
 small support model watching a large primary model produces better outcomes
 than either one alone — a second opinion, always on.
 
+> **Status (2026-04-30): this README describes the original design intent. The
+> built stack diverged.** The active environment is opencode running in Zed,
+> with a four-service llama trio on the workstation (primary on the 7900 XTX,
+> plus summarize, embed, and coder all co-resident on the 5700 XT). Roo Code
+> and VSCodium are no longer in use. The "Phi-4 Mini observer" phase was never
+> built. A full as-built description is in progress; see `docs/reference-guide.md`
+> for the same divergence note and `Workstation/docs/tries-and-takeaways.md`
+> for the current as-built service map. This README will be rewritten before
+> the repo goes public.
+
 **Status:** pre-alpha, private. Will eventually be public; until then, treat the
 repo as personal workspace.
 
