@@ -1,0 +1,301 @@
+#!/usr/bin/env bash
+#
+# llama-shutdown — polite shutdown for the llama-* services.
+#
+# Default behavior: check for active client connections. If anyone has
+# an open session, refuse to stop (prints who's connected, exit 1).
+# If idle, wait a grace period to confirm idleness, then stop all services.
+#
+# This is meant to be run at end-of-session by either user without
+# accidentally nuking the other's active work.
+#
+# Options:
+#   --force, -f    Skip idle check, stop everything now. (Use when you
+#                  know the other user is done — or when you need to
+#                  recover from a stuck state.)
+#   --grace=N      Grace period in seconds (default: 30). Services will
+#                  not be stopped unless they've been idle continuously
+#                  for this long.
+#   --help, -h     Show this help.
+#
+# Exit codes:
+#   0  — services stopped (or were already stopped)
+#   1  — refused: another session is active
+#   2  — unexpected error
+#
+# Requires: polkit rule that allows levine and anny to `systemctl stop`
+# these units without password (already installed at
+# /etc/polkit-1/rules.d/10-llama-services.rules).
+
+set -euo pipefail
+
+# ── Env file ────────────────────────────────────────────────────────────
+
+# Port assignments come from /etc/workstation/system.env. The unit list
+# stays literal (it includes alternate primary units that are not in the
+# four-port set the env file describes).
+if [[ ! -r /etc/workstation/system.env ]]; then
+  echo "ERROR: /etc/workstation/system.env not readable. Cannot resolve ports." >&2
+  exit 2
+fi
+. /etc/workstation/system.env
+
+# ── Config ──────────────────────────────────────────────────────────────
+
+UNITS=(
+  llama-primary.service
+  llama-secondary.service
+  llama-embed.service
+  llama-primary-moe.service
+  llama-second-opinion.service
+  llama-coder.service
+)
+
+# Service to port map (for connection counting). The four core units
+# read from system.env. The two alternate primary units share the
+# primary port by design (only one runs at a time, enforced via
+# Conflicts= in the unit files).
+declare -A PORTS=(
+  [llama-primary.service]=$WS_PORT_PRIMARY
+  [llama-primary-moe.service]=$WS_PORT_PRIMARY
+  [llama-secondary.service]=$WS_PORT_SECONDARY
+  [llama-embed.service]=$WS_PORT_EMBED
+  [llama-second-opinion.service]=$WS_PORT_PRIMARY
+  [llama-coder.service]=$WS_PORT_CODER
+)
+
+GRACE_SEC=30
+FORCE=0
+
+# Minimum process age (seconds) for a holder match. Processes younger
+# than this are likely teardown children of an editor that just closed,
+# not real session-holders. 30s comfortably exceeds typical Zed and
+# opencode teardown windows (5-10s) without excluding genuine sessions
+# that just started.
+HOLDER_MIN_AGE_SEC=30
+
+# ── Helpers ─────────────────────────────────────────────────────────────
+
+log()  { printf "\e[36m[llama-shutdown]\e[0m %s\n" "$*"; }
+warn() { printf "\e[33m[llama-shutdown]\e[0m WARN: %s\n" "$*" >&2; }
+err()  { printf "\e[31m[llama-shutdown]\e[0m ERROR: %s\n" "$*" >&2; }
+
+usage() {
+  cat <<EOF
+Usage: llama-shutdown [--force] [--grace=SECONDS]
+
+Stops llama-* services only if no sessions are currently active.
+
+  --force, -f         Skip idle check; stop unconditionally.
+  --grace=N           Grace period in seconds before stopping (default 30).
+  --help, -h          Show this help.
+EOF
+}
+
+# Count TCP connections to a port.
+count_clients_on_port() {
+  local port="$1"
+  ss -tn state established "( sport = :${port} )" 2>/dev/null | tail -n +2 | wc -l
+}
+
+# Print active (established) connections on all ports we care about, with
+# peer addresses, so the user can see who's connected.
+list_active_clients() {
+  local any=0
+  for unit in "${UNITS[@]}"; do
+    local port="${PORTS[$unit]}"
+    local state
+    state=$(systemctl is-active "$unit" 2>/dev/null || true)
+    [[ "$state" == "active" ]] || continue
+    local conns
+    conns=$(ss -tn state established "( sport = :${port} )" 2>/dev/null | tail -n +2)
+    if [[ -n "$conns" ]]; then
+      any=1
+      echo ""
+      echo "  $unit (port $port):"
+      echo "$conns" | awk '{printf "    peer: %s  local: %s\n", $5, $4}'
+    fi
+  done
+  return $((! any))
+}
+
+# Check all listed units and sum up active connection counts.
+total_active_connections() {
+  local total=0
+  for unit in "${UNITS[@]}"; do
+    local state
+    state=$(systemctl is-active "$unit" 2>/dev/null || true)
+    [[ "$state" == "active" ]] || continue
+    local port="${PORTS[$unit]}"
+    local n
+    n=$(count_clients_on_port "$port")
+    total=$((total + n))
+  done
+  echo "$total"
+}
+
+# Process-holder check. opencode and zed only hold a TCP connection
+# during active inference; the connection count goes to zero between
+# turns and may stay zero for many minutes while the user reads or
+# thinks. To avoid tearing services down out from under a still-alive
+# session, we treat any opencode or zed process owned by an interactive
+# user as a holder.
+#
+# The age filter (HOLDER_MIN_AGE_SEC) excludes very-recently-spawned
+# processes that are likely editor teardown children, not real session
+# holders. A process older than the threshold is committed to running
+# and counts as a real holder regardless of how long it has been idle.
+#
+# `ps -o etimes=` reports elapsed time as a single integer in seconds.
+# Failing to read it is a hard error: we would rather refuse to run
+# than silently regress to the buggy regex-only behavior.
+HOLDER_USERS="levine,anny"
+HOLDER_PATTERN='(^|/)(opencode|zed|zed-editor)( |$)'
+
+# Verify ps supports -o etimes= once at startup. procps-ng on every
+# modern Linux supports it; this catches strange ps replacements.
+if ! ps -o etimes= -p $$ >/dev/null 2>&1; then
+  err "ps does not support -o etimes=. Cannot reliably detect holder ages."
+  err "Install procps-ng or run with --force to bypass holder detection."
+  exit 2
+fi
+
+list_holder_processes() {
+  # pgrep -a prints "PID command line". Filter against the pattern,
+  # exclude ourselves and our parent shell, then exclude processes
+  # younger than HOLDER_MIN_AGE_SEC seconds.
+  pgrep -a -u "$HOLDER_USERS" 2>/dev/null \
+    | grep -E "$HOLDER_PATTERN" \
+    | awk -v me="$$" -v ppid="$PPID" '$1 != me && $1 != ppid' \
+    | while read -r pid rest; do
+        local etime_s
+        etime_s=$(ps -o etimes= -p "$pid" 2>/dev/null | tr -d ' ')
+        if [[ -n "$etime_s" ]] && (( etime_s >= HOLDER_MIN_AGE_SEC )); then
+          echo "$pid $rest"
+        fi
+      done \
+    || true
+}
+
+count_holder_processes() {
+  local n
+  n=$(list_holder_processes | grep -c . || true)
+  echo "${n:-0}"
+}
+
+# ── Parse args ──────────────────────────────────────────────────────────
+
+while [[ $# -gt 0 ]]; do
+  case "$1" in
+    -f|--force)    FORCE=1; shift ;;
+    --grace=*)     GRACE_SEC="${1#*=}"; shift ;;
+    --grace)       GRACE_SEC="$2"; shift 2 ;;
+    -h|--help)     usage; exit 0 ;;
+    *)             err "unknown arg: $1"; usage; exit 2 ;;
+  esac
+done
+
+if ! [[ "$GRACE_SEC" =~ ^[0-9]+$ ]]; then
+  err "--grace must be a non-negative integer, got: $GRACE_SEC"
+  exit 2
+fi
+
+# ── Already-stopped short-circuit ───────────────────────────────────────
+
+any_active=0
+for unit in "${UNITS[@]}"; do
+  state=$(systemctl is-active "$unit" 2>/dev/null || true)
+  if [[ "$state" == "active" ]]; then
+    any_active=1
+    break
+  fi
+done
+
+if (( ! any_active )); then
+  log "all llama-* services are already inactive — nothing to do"
+  exit 0
+fi
+
+# ── Force path ──────────────────────────────────────────────────────────
+
+if (( FORCE )); then
+  log "force mode: stopping all llama-* services without idle check"
+  for unit in "${UNITS[@]}"; do
+    systemctl stop "$unit" 2>/dev/null || true
+  done
+  log "done"
+  exit 0
+fi
+
+# ── Polite path: check holders, then idleness ──────────────────────────
+
+holders=$(count_holder_processes)
+if (( holders > 0 )); then
+  err ""
+  err "refusing to stop — ${holders} opencode/zed process(es) still alive."
+  err ""
+  err "holders:"
+  list_holder_processes | awk '{printf "    pid %s: %s\n", $1, substr($0, index($0,$2))}' >&2
+  err ""
+  err "close those sessions, or use --force to stop anyway."
+  exit 1
+fi
+
+initial=$(total_active_connections)
+log "current client connections across all llama services: $initial"
+
+if (( initial > 0 )); then
+  err ""
+  err "refusing to stop — there are ${initial} active client connections."
+  err ""
+  err "active clients:"
+  list_active_clients || true
+  err ""
+  err "try again when idle, or use --force to stop anyway."
+  exit 1
+fi
+
+# Connection count is zero right now. But sessions can be briefly idle
+# between turns. Watch for grace period; abort if a connection appears.
+log "no active connections — watching for ${GRACE_SEC}s to confirm idleness"
+for i in $(seq 1 "$GRACE_SEC"); do
+  sleep 1
+  current=$(total_active_connections)
+  if (( current > 0 )); then
+    err ""
+    err "someone started using a service during the grace period."
+    err "not stopping. try again later, or use --force."
+    err ""
+    err "active clients:"
+    list_active_clients || true
+    exit 1
+  fi
+  current_holders=$(count_holder_processes)
+  if (( current_holders > 0 )); then
+    err ""
+    err "an opencode/zed process started during the grace period."
+    err "not stopping. try again later, or use --force."
+    err ""
+    err "holders:"
+    list_holder_processes | awk '{printf "    pid %s: %s\n", $1, substr($0, index($0,$2))}' >&2
+    exit 1
+  fi
+  # Optional dot progress; comment out if too noisy
+  if (( i % 5 == 0 )); then
+    printf "."
+  fi
+done
+echo ""
+
+# ── Stop ────────────────────────────────────────────────────────────────
+
+log "idle for ${GRACE_SEC}s — stopping llama-* services"
+for unit in "${UNITS[@]}"; do
+  state=$(systemctl is-active "$unit" 2>/dev/null || true)
+  if [[ "$state" == "active" ]]; then
+    log "  stopping $unit"
+    systemctl stop "$unit" 2>/dev/null || warn "    failed to stop $unit (continuing)"
+  fi
+done
+
+log "done"

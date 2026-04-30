@@ -1,0 +1,37 @@
+// Allow the local users to start/stop/restart llama-* services without sudo.
+//
+// Scope: only the six llama-server units listed below. Other systemd
+// actions still require sudo as normal.
+//
+// Rationale: both users need to start these services on demand (they
+// are not enabled at boot). Without this rule, each start/stop would
+// prompt for a sudo password, which is bad UX for a per-session launcher.
+//
+// Install location: /etc/polkit-1/rules.d/10-llama-services.rules
+// Owned by: root, mode 0644.
+// Sourced from: this file in the umbrella repo. The install script in
+// scripts/install-systemd-units.sh installs it via sudo.
+
+polkit.addRule(function(action, subject) {
+    if (action.id !== "org.freedesktop.systemd1.manage-units") {
+        return;
+    }
+    var unit = action.lookup("unit");
+    if (unit === null) {
+        return;
+    }
+    var allowedUnits = [
+        "llama-primary.service",
+        "llama-primary-moe.service",
+        "llama-secondary.service",
+        "llama-embed.service",
+        "llama-second-opinion.service",
+        "llama-coder.service",
+    ];
+    if (allowedUnits.indexOf(unit) === -1) {
+        return;
+    }
+    if (subject.user === "levine" || subject.user === "anny") {
+        return polkit.Result.YES;
+    }
+});
