@@ -1,0 +1,29 @@
+[Unit]
+Description=llama-server embed (multilingual-e5-large on 5700 XT / Vulkan1, port 11437)
+# Description is literal text; systemd does not interpolate env-file vars
+# here. If env values change, the labels above may drift.
+#
+# The llama-server binary path is hardcoded below; see llama-primary.service
+# for why. All other paths and values come from /etc/workstation/system.env.
+#
+# Runs concurrently with llama-secondary.service on the same card.
+# VRAM envelope check before trusting: aya-expanse-8b (~5 GB) +
+# multilingual-e5-large (~0.6 GB) + driver overhead (~0.3 GB) ~= 5.9 GB
+# in 8 GB envelope. See docs/ports-registry.md for canonical port.
+
+[Service]
+Type=simple
+EnvironmentFile=/etc/workstation/system.env
+ExecStart=/home/levine/src/llama.cpp/llama-b8799-vulkan/llama-server \
+  -m ${WS_MODELS_DIR}/multilingual-e5-large/multilingual-e5-large-Q8_0.gguf \
+  --device ${WS_GPU_SECONDARY_DEVICE} -ngl 99 \
+  --embedding \
+  --pooling mean \
+  -c ${WS_EMBED_CONTEXT} -ub ${WS_EMBED_CONTEXT} \
+  --host 127.0.0.1 --port ${WS_PORT_EMBED}
+Restart=on-failure
+RestartSec=5s
+KillSignal=SIGTERM
+TimeoutStopSec=15
+StandardOutput=journal
+StandardError=journal

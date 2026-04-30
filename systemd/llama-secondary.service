@@ -1,0 +1,22 @@
+[Unit]
+Description=llama-server secondary (Qwen3-4B-Instruct-2507 on 5700 XT / Vulkan1, port 11435)
+# Description is literal text; systemd does not interpolate env-file vars
+# here. If env values change, the labels above may drift.
+#
+# The llama-server binary path is hardcoded below; see llama-primary.service
+# for why. All other paths and values come from /etc/workstation/system.env.
+
+[Service]
+Type=simple
+EnvironmentFile=/etc/workstation/system.env
+ExecStart=/home/levine/src/llama.cpp/llama-b8799-vulkan/llama-server \
+  -m ${WS_MODELS_DIR}/qwen3-4b-instruct-2507/Qwen3-4B-Instruct-2507-Q4_K_M.gguf \
+  --device ${WS_GPU_SECONDARY_DEVICE} -ngl 99 -c ${WS_SECONDARY_CONTEXT} --flash-attn on \
+  -ctk q8_0 -ctv q8_0 --jinja \
+  --host 127.0.0.1 --port ${WS_PORT_SECONDARY}
+Restart=on-failure
+RestartSec=5s
+KillSignal=SIGTERM
+TimeoutStopSec=15
+StandardOutput=journal
+StandardError=journal

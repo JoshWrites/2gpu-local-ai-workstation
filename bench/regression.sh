@@ -62,9 +62,10 @@ LAUNCHER="$REPO_ROOT/scripts/second-opinion-launch.sh"
 OPENCODE_CONFIG="$HOME/.config/opencode/opencode.json"
 ZED_ISO_CONFIG="$HOME/.local/share/zed-second-opinion/config/settings.json"
 
-# Phase 0 invariant: the env directory does NOT exist yet. If it does,
-# we have started Phase 1 already and should not be running the
-# freeze-point regression.
+# Phase 1 invariant: the env file exists and is readable. Phase 1
+# introduces /etc/workstation/system.env as the source of truth for
+# systemd unit ExecStart values; if it disappears, the units will fail
+# to start with unbound variables.
 PHASE_1_MARKER="/etc/workstation/system.env"
 
 # Default flags.
@@ -149,11 +150,18 @@ fi
 
 # ── Section 3: phase marker ────────────────────────────────────────────
 
-section 3 "phase invariant (we are still at the freeze point)"
-if [[ -e "$PHASE_1_MARKER" ]]; then
-  fail "phase invariant broken: $PHASE_1_MARKER exists; Phase 1 has started"
+section 3 "phase invariant (env file present and readable)"
+if [[ ! -e "$PHASE_1_MARKER" ]]; then
+  fail "phase invariant broken: $PHASE_1_MARKER does not exist"
+elif [[ ! -r "$PHASE_1_MARKER" ]]; then
+  fail "phase invariant broken: $PHASE_1_MARKER exists but is not readable"
 else
-  ok "phase invariant holds: $PHASE_1_MARKER does not exist"
+  # Spot-check that a known var is set; catches a corrupted env file.
+  if grep -q "^WS_PORT_PRIMARY=" "$PHASE_1_MARKER"; then
+    ok "phase invariant holds: $PHASE_1_MARKER exists and parses"
+  else
+    fail "phase invariant broken: $PHASE_1_MARKER exists but is missing WS_PORT_PRIMARY"
+  fi
 fi
 
 # ── Section 4: systemd unit state ──────────────────────────────────────
