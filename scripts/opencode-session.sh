@@ -1,30 +1,51 @@
 #!/usr/bin/env bash
-# opencode-session — preflight the local AI stack, then launch opencode.
+# opencode-session: preflight the local AI stack, then launch opencode.
 #
 # What this does on every invocation:
-#   1. pkill any rogue llama-server / ollama processes not under systemd
-#   2. systemctl start llama-primary, llama-secondary, llama-embed
-#      (system-scoped units, polkit grants permission to levine & anny)
-#   3. Wait for all three endpoints (:11434, :11435, :11437) to respond
-#   4. exec opencode with the invoking args
+#   1. Source /etc/workstation/system.env and ~/.config/workstation/user.env
+#   2. pkill any rogue llama-server or ollama processes not under systemd
+#   3. systemctl start llama-primary, llama-secondary, llama-embed,
+#      llama-coder (system-scoped units; polkit grants both local users)
+#   4. Wait for all four endpoints to respond
+#   5. exec opencode with the invoking args
 #
-# On exit (clean or signalled): calls `llama-shutdown`, which refuses to
-# stop services if anny (or anyone else) has active connections. Services
-# stay up as long as someone is using them. See llama-shutdown --help.
+# On exit, this script does NOT call llama-shutdown. The launcher
+# owns service lifecycle. Terminal opencode and Zed-spawned opencode
+# share endpoints; tearing down here would yank them from under a
+# still-active session.
 #
-# Aliased to `opencode` in zsh; invoke the raw binary directly at
-# ~/.opencode/bin/opencode if you ever want to bypass this.
+# Aliased to `opencode` in zsh. Invoke the raw binary directly at
+# ~/.opencode/bin/opencode to bypass this wrapper.
 
 set -euo pipefail
 
-# ── Paths ────────────────────────────────────────────────────────────────────
+REPO="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
+
+# ── Env files ────────────────────────────────────────────────────────────────
+
+if [[ ! -r /etc/workstation/system.env ]]; then
+  echo "ERROR: /etc/workstation/system.env not readable." >&2
+  echo "       See $REPO/configs/workstation/README.md for install steps." >&2
+  exit 1
+fi
+. /etc/workstation/system.env
+
+# user.env is optional here. opencode-session uses only system.env values
+# at the moment; sourcing user.env if present so future per-user overrides
+# do not need a script change.
+if [[ -r "$HOME/.config/workstation/user.env" ]]; then
+  . "$HOME/.config/workstation/user.env"
+fi
+
+# ── Paths and config derived from env ────────────────────────────────────────
 
 OPENCODE_BIN="${OPENCODE_BIN:-$HOME/.opencode/bin/opencode}"
-LLAMA_UNITS=(llama-primary llama-secondary llama-embed)
+LLAMA_UNITS=(llama-primary llama-secondary llama-embed llama-coder)
 ENDPOINTS=(
-  "11434"   # llama-primary
-  "11435"   # llama-secondary
-  "11437"   # llama-embed
+  "$WS_PORT_PRIMARY"
+  "$WS_PORT_SECONDARY"
+  "$WS_PORT_EMBED"
+  "$WS_PORT_CODER"
 )
 WAIT_TIMEOUT_SEC=60
 

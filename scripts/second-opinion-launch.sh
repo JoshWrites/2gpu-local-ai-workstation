@@ -34,16 +34,43 @@ set -euo pipefail
 
 REPO="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 
-# ── Config ──────────────────────────────────────────────────────────────────
+# ── Env files ───────────────────────────────────────────────────────────────
+
+# Hardware identity, port assignments, and other system-wide values come
+# from /etc/workstation/system.env. Per-user paths come from
+# ~/.config/workstation/user.env. Both must exist; see
+# configs/workstation/README.md for the install steps.
+
+if [[ ! -r /etc/workstation/system.env ]]; then
+  echo "ERROR: /etc/workstation/system.env not readable." >&2
+  echo "       See $REPO/configs/workstation/README.md for install steps." >&2
+  exit 1
+fi
+. /etc/workstation/system.env
+
+if [[ ! -r "$HOME/.config/workstation/user.env" ]]; then
+  echo "ERROR: ~/.config/workstation/user.env not readable." >&2
+  echo "       See $REPO/configs/workstation/README.md for install steps." >&2
+  exit 1
+fi
+. "$HOME/.config/workstation/user.env"
+
+# ── Config derived from env ─────────────────────────────────────────────────
 
 LLAMA_UNITS=(llama-primary llama-secondary llama-embed llama-coder)
-ENDPOINTS=(11434 11435 11437 11438)
+ENDPOINTS=(
+  "$WS_PORT_PRIMARY"
+  "$WS_PORT_SECONDARY"
+  "$WS_PORT_EMBED"
+  "$WS_PORT_CODER"
+)
 PRIMARY_UNIT="llama-primary.service"   # the one whose journal we tail in the splash
 EXPECTED_READY=60
 WARN_READY=75
 HARD_TIMEOUT=180
 
-ZED_DATA_DIR="${HOME}/.local/share/zed-second-opinion"
+ZED_DATA_DIR="$WS_ZED_PROFILE_DIR"
+ZED_BIN="$HOME/.local/bin/zed"
 
 # ── Args ────────────────────────────────────────────────────────────────────
 
@@ -120,12 +147,12 @@ launch_editor() {
   # exits, so we drop --wait and let Zed run detached. Polite shutdown
   # then has to be invoked manually after a no-path launch.
   if [[ $# -gt 0 ]]; then
-    /home/levine/.local/bin/zed \
+    "$ZED_BIN" \
       --user-data-dir "$ZED_DATA_DIR" \
       --wait \
       "$@"
   else
-    /home/levine/.local/bin/zed \
+    "$ZED_BIN" \
       --user-data-dir "$ZED_DATA_DIR" \
       "$@"
   fi
