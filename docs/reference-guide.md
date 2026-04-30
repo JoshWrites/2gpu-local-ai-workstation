@@ -5,6 +5,21 @@
 
 ---
 
+> **Status (2026-04-29): this guide describes the original design intent
+> for the secondary GPU. The actual built stack diverged.** The 5700 XT
+> does not run a Phi-4-Mini observer / aspect classifier / voice
+> pipeline. It runs three llama-server sidecars: Qwen3-4B (Library
+> summarize, :11435), multilingual-e5-large (Library embed, :11437), and
+> Qwen2.5-Coder-3B (Zed edit prediction, :11438). All three on Vulkan,
+> co-resident, validated under 2-hour load on 2026-04-29. For the
+> as-built service map see `Workstation/docs/ports-registry.md` and
+> `Workstation/docs/tries-and-takeaways.md` (2026-04-29 entry). The
+> "support intelligence" framing below — observer, aspect classifier,
+> voice — was never built; treat those phases as archived design intent,
+> not a current roadmap.
+
+---
+
 ## Executive summary
 
 ### What problems this solves
