@@ -9,7 +9,7 @@ Description=llama-server secondary (Qwen3-4B-Instruct-2507 on 5700 XT / Vulkan1,
 [Service]
 Type=simple
 EnvironmentFile=/etc/workstation/system.env
-ExecStart=/home/levine/src/llama.cpp/llama-b8799-vulkan/llama-server \
+ExecStart=/usr/local/lib/llama.cpp/llama-server \
   -m ${WS_MODELS_DIR}/qwen3-4b-instruct-2507/Qwen3-4B-Instruct-2507-Q4_K_M.gguf \
   --device ${WS_GPU_SECONDARY_DEVICE} -ngl 99 -c ${WS_SECONDARY_CONTEXT} --flash-attn on \
   -ctk q8_0 -ctv q8_0 --jinja \

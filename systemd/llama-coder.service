@@ -9,7 +9,7 @@ Description=llama-server coder (Qwen2.5-Coder-3B-Instruct on 5700 XT / Vulkan1, 
 [Service]
 Type=simple
 EnvironmentFile=/etc/workstation/system.env
-ExecStart=/home/levine/src/llama.cpp/llama-b8799-vulkan/llama-server \
+ExecStart=/usr/local/lib/llama.cpp/llama-server \
   -m ${WS_MODELS_DIR}/qwen2.5-coder-3b/qwen2.5-coder-3b-instruct-q4_k_m.gguf \
   --device ${WS_GPU_SECONDARY_DEVICE} -ngl 99 -c ${WS_CODER_CONTEXT} \
   --host 127.0.0.1 --port ${WS_PORT_CODER}

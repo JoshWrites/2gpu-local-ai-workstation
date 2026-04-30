@@ -14,7 +14,7 @@ Description=llama-server embed (multilingual-e5-large on 5700 XT / Vulkan1, port
 [Service]
 Type=simple
 EnvironmentFile=/etc/workstation/system.env
-ExecStart=/home/levine/src/llama.cpp/llama-b8799-vulkan/llama-server \
+ExecStart=/usr/local/lib/llama.cpp/llama-server \
   -m ${WS_MODELS_DIR}/multilingual-e5-large/multilingual-e5-large-Q8_0.gguf \
   --device ${WS_GPU_SECONDARY_DEVICE} -ngl 99 \
   --embedding \

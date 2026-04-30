@@ -55,7 +55,7 @@ VRAM_PRIMARY_CEILING=$(( 22 * 1024 * 1024 * 1024 ))   # 22 GB (card is 25.75 GB)
 REQUIRED_TOOLS=(curl jq python3 systemctl ss)
 
 # Required system files.
-LLAMA_BIN_DEFAULT="/home/levine/src/llama.cpp/llama-b8799-vulkan/llama-server"
+LLAMA_BIN_DEFAULT="/usr/local/lib/llama.cpp/llama-server"
 OPENCODE_PATCHED="/usr/local/bin/opencode-patched"
 LLAMA_SHUTDOWN="/usr/local/bin/llama-shutdown"
 LAUNCHER="$REPO_ROOT/scripts/second-opinion-launch.sh"
