@@ -1,3 +1,6 @@
 [submodule "opencode-zed-patches"]
 	path = opencode-zed-patches
 	url = file:///home/levine/staging/opencode-zed-patches
+[submodule "opencode-plugins/permission-classifier"]
+	path = opencode-plugins/permission-classifier
+	url = file:///home/levine/staging/permission-classifier
