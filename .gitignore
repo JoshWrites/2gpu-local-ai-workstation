@@ -43,3 +43,8 @@ logs/
 
 # Claude Code local state
 .claude/
+
+# Live working memory. Personal context that should not commit.
+# memory-bank-template/ stays tracked as the empty starting point a fresh
+# clone copies into memory-bank/ on first run.
+memory-bank/
