@@ -4,3 +4,6 @@
 [submodule "opencode-plugins/permission-classifier"]
 	path = opencode-plugins/permission-classifier
 	url = file:///home/levine/staging/permission-classifier
+[submodule "Library"]
+	path = Library
+	url = file:///home/levine/Documents/Repos/Library
