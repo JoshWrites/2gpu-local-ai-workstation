@@ -15,7 +15,7 @@ when Roo is in **Code** mode.
   (default: `feat: …` / `fix: …` / `chore: …`).
 - Prefer the standard library. If a dependency is necessary, prefer a
   well-maintained package and record the choice in
-  `memory-bank/decisionLog.md`.
+  `private/memory-bank/decisionLog.md`.
 - Python: type hints on public signatures; docstrings on public functions.
 - No comments that merely restate the code. Comments are for non-obvious
   *why*, not *what*.

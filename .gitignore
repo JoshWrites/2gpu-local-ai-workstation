@@ -44,7 +44,10 @@ logs/
 # Claude Code local state
 .claude/
 
-# Live working memory. Personal context that should not commit.
-# memory-bank-template/ stays tracked as the empty starting point a fresh
-# clone copies into memory-bank/ on first run.
-memory-bank/
+# Per-user private workspace. Personal context, working notes, anything
+# the user does not want public. memory-bank/ lives under private/ as the
+# canonical "live working memory" location; the empty starting point is
+# at memory-bank-template/ at the repo root and stays tracked.
+private/*
+!private/README.md
+!private/.gitignore

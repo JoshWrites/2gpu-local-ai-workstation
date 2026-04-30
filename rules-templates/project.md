@@ -15,7 +15,7 @@ modes within the project.
 
 ## Hard constraints
 - Dependencies to prefer or avoid (e.g. "prefer stdlib; justify new deps
-  in `memory-bank/decisionLog.md`").
+  in `private/memory-bank/decisionLog.md`").
 - Things never to do (e.g. "never commit secrets", "never disable TLS verify",
   "never `systemctl enable` an Ollama unit on this box").
 
