@@ -116,10 +116,15 @@ render_opencode_config() {
   # Always remove the temp file on exit, even on signal interrupt.
   trap "rm -f '$tmp'" EXIT
 
-  # envsubst expands ${VAR} references in the template. Without an
-  # explicit var list it expands every ${...} it sees, which is the
-  # behavior we want here.
-  if ! envsubst < "$OPENCODE_TEMPLATE" > "$tmp" 2>/dev/null; then
+  # envsubst expands every ${...} and $NAME by default, including ones
+  # we did not intend to template. opencode.json contains "$schema" as a
+  # JSON key, which a default envsubst would rewrite to "" (empty key).
+  # Restrict to a named list so only our WS_* and HOME placeholders get
+  # substituted; literal $names are left alone.
+  local vars='${WS_PORT_PRIMARY} ${WS_PORT_SECONDARY} ${WS_PORT_EMBED} ${WS_PORT_CODER}'
+  vars+=' ${WS_LIBRARY_ROOT} ${WS_PROXMOX_USER} ${WS_PROXMOX_HOST} ${HOME}'
+
+  if ! envsubst "$vars" < "$OPENCODE_TEMPLATE" > "$tmp" 2>/dev/null; then
     err "envsubst failed rendering $OPENCODE_TEMPLATE"
     return 1
   fi
