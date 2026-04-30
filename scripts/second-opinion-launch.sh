@@ -26,8 +26,8 @@ REPO="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 
 # ── Config ──────────────────────────────────────────────────────────────────
 
-LLAMA_UNITS=(llama-primary llama-secondary llama-embed)
-ENDPOINTS=(11434 11435 11437)
+LLAMA_UNITS=(llama-primary llama-secondary llama-embed llama-coder)
+ENDPOINTS=(11434 11435 11437 11438)
 PRIMARY_UNIT="llama-primary.service"   # the one whose journal we tail in the splash
 EXPECTED_READY=60
 WARN_READY=75
