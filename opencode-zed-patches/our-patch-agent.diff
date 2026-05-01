@@ -1,5 +1,5 @@
 diff --git a/packages/opencode/src/acp/agent.ts b/packages/opencode/src/acp/agent.ts
-index aff523a7e..242466725 100644
+index aff523a7e..63f3fb699 100644
 --- a/packages/opencode/src/acp/agent.ts
 +++ b/packages/opencode/src/acp/agent.ts
 @@ -147,6 +147,8 @@ export class Agent implements ACPAgent {
@@ -11,7 +11,7 @@ index aff523a7e..242466725 100644
    private permissionOptions: PermissionOption[] = [
      { optionId: "once", kind: "allow_once", name: "Allow once" },
      { optionId: "always", kind: "allow_always", name: "Always allow" },
-@@ -199,16 +201,51 @@ export class Agent implements ACPAgent {
+@@ -199,16 +201,130 @@ export class Agent implements ACPAgent {
            .then(async () => {
              const directory = session.cwd
  
@@ -35,20 +35,98 @@ index aff523a7e..242466725 100644
 +            })()
 +
 +            const permissionKind = toToolKind(permission.permission)
++            const md = (toolInput ?? {}) as Record<string, unknown>
++            const promptDescription =
++              typeof md["description"] === "string" ? (md["description"] as string) : undefined
++            const promptCommand =
++              typeof md["command"] === "string" ? (md["command"] as string) : undefined
++            const promptPath = typeof md["filePath"] === "string" ? (md["filePath"] as string)
++                             : typeof md["path"] === "string" ? (md["path"] as string)
++                             : typeof md["file_path"] === "string" ? (md["file_path"] as string)
++                             : undefined
++
++            // Title scheme:
++            //   execute (bash): "<command>" on line 1, description on line 2 via \n.
++            //     Bash gets a separate visual treatment via _meta.terminal_info
++            //     downstream, so the \n title is the small-render fallback that
++            //     also works for clients without terminal_info support.
++            //   file (write/edit): "<tool> <path>" as the title (single line).
++            //     Zed's permission-card title flattens \n for non-execute kinds,
++            //     so we put the description in a separate content block instead
++            //     of embedding it in the title with \n.
++            //   other: description-or-command-or-bare-name (single line).
 +            const promptTitle = (() => {
-+              const md = (toolInput ?? {}) as Record<string, unknown>
-+              const desc = typeof md["description"] === "string" ? (md["description"] as string) : undefined
-+              const cmd = typeof md["command"] === "string" ? (md["command"] as string) : undefined
-+              // For execute (bash) tools, show the verbatim command on line 1
-+              // and the description on line 2. Zed's terminal-card label is
-+              // plain text (Markdown is not processed) but \n is honored as
-+              // a line break. For other tools, the description alone is
-+              // sufficient; a verbatim version of the input is rarely useful.
-+              if (permissionKind === "execute" && cmd) {
-+                return desc ? `${cmd}\n${desc}` : cmd
++              if (permissionKind === "execute" && promptCommand) {
++                return promptDescription ? `${promptCommand}\n${promptDescription}` : promptCommand
 +              }
-+              return desc || cmd || permission.permission
++              if (promptPath) return `${permission.permission} ${promptPath}`
++              if (promptDescription) return promptDescription
++              if (promptCommand) return promptCommand
++              return permission.permission
 +            })()
++
++            // For non-execute file tools, send the description as a content
++            // block, then a capped text preview of what is about to change.
++            // We use a text content block (not type: "diff") because Zed's
++            // diff renderer on the approval card does not collapse - a full
++            // file write expands the prompt to the file's height. A capped
++            // text preview keeps approval cards compact while still letting
++            // the user see what they are approving. Bash already has its
++            // own visual treatment so we leave its content untouched here.
++            const promptContent: ToolCallContent[] = []
++            if (permissionKind !== "execute" && promptPath && promptDescription) {
++              const newText = typeof md["newString"] === "string"
++                ? (md["newString"] as string)
++                : typeof md["content"] === "string"
++                  ? (md["content"] as string)
++                  : ""
++              const PREVIEW_LINES = 15
++              const lines = newText ? newText.split("\n") : []
++              const truncated = lines.length > PREVIEW_LINES
++              const remaining = truncated ? lines.length - PREVIEW_LINES : 0
++              // Headline block: description, plus a truncation note on a
++              // second line if applicable. Putting the note above the code
++              // preview keeps the code block visually clean - no stray
++              // trailer line that breaks the rendering.
++              const headlineLines = [promptDescription]
++              if (truncated) {
++                headlineLines.push(
++                  `(showing first ${PREVIEW_LINES} of ${lines.length} lines; ${remaining} more line${remaining === 1 ? "" : "s"} truncated)`,
++                )
++              }
++              promptContent.push({
++                type: "content",
++                content: { type: "text", text: headlineLines.join("\n") },
++              })
++              if (newText) {
++                const body = truncated ? lines.slice(0, PREVIEW_LINES).join("\n") : newText
++                // Wrap the preview in a fenced code block so Zed's markdown
++                // renderer treats it as preformatted code (line breaks
++                // preserved, indentation kept, syntax-highlighted when the
++                // language tag is recognized). Without the fence, indented
++                // source like Python collapses into paragraphs and 4-space
++                // blocks render as nested cards. Tag derived from the file
++                // extension; unknown extensions get an untagged fence,
++                // which still preserves whitespace and line breaks.
++                const ext = promptPath.split(".").pop()?.toLowerCase() ?? ""
++                const langByExt: Record<string, string> = {
++                  py: "python", js: "javascript", ts: "typescript",
++                  tsx: "tsx", jsx: "jsx", go: "go", rs: "rust",
++                  rb: "ruby", java: "java", c: "c", cpp: "cpp", h: "c",
++                  hpp: "cpp", cs: "csharp", sh: "bash", bash: "bash",
++                  zsh: "bash", json: "json", yaml: "yaml", yml: "yaml",
++                  toml: "toml", md: "markdown", html: "html", css: "css",
++                  sql: "sql", lua: "lua", php: "php", swift: "swift",
++                  kt: "kotlin", scala: "scala", r: "r", dart: "dart",
++                }
++                const lang = langByExt[ext] ?? ""
++                const fenced = "```" + lang + "\n" + body + "\n```"
++                promptContent.push({
++                  type: "content",
++                  content: { type: "text", text: fenced },
++                })
++              }
++            }
 +
              const res = await this.connection
                .requestPermission({
@@ -63,10 +141,11 @@ index aff523a7e..242466725 100644
                    kind: toToolKind(permission.permission),
 -                  locations: toLocations(permission.permission, permission.metadata),
 +                  locations: toLocations(permission.permission, toolInput),
++                  ...(promptContent.length > 0 && { content: promptContent }),
                  },
                  options: this.permissionOptions,
                })
-@@ -279,7 +316,7 @@ export class Agent implements ACPAgent {
+@@ -279,7 +395,7 @@ export class Agent implements ACPAgent {
          const sessionId = session.id
  
          if (part.type === "tool") {
@@ -75,7 +154,7 @@ index aff523a7e..242466725 100644
  
            switch (part.state.status) {
              case "pending":
-@@ -301,7 +338,7 @@ export class Agent implements ACPAgent {
+@@ -301,9 +417,12 @@ export class Agent implements ACPAgent {
                            toolCallId: part.callID,
                            status: "in_progress",
                            kind: toToolKind(part.tool),
@@ -83,8 +162,13 @@ index aff523a7e..242466725 100644
 +                          title: this.deriveTitle(part),
                            locations: toLocations(part.tool, part.state.input),
                            rawInput: part.state.input,
++                          ...(this.deriveContentExtras(part).length > 0 && {
++                            content: this.deriveContentExtras(part),
++                          }),
                          },
-@@ -312,6 +349,42 @@ export class Agent implements ACPAgent {
+                       })
+                       .catch((error) => {
+@@ -312,6 +431,42 @@ export class Agent implements ACPAgent {
                      return
                    }
                    this.bashSnapshots.set(part.callID, hash)
@@ -127,7 +211,15 @@ index aff523a7e..242466725 100644
                  }
                  content.push({
                    type: "content",
-@@ -329,7 +402,7 @@ export class Agent implements ACPAgent {
+@@ -321,6 +476,7 @@ export class Agent implements ACPAgent {
+                   },
+                 })
+               }
++              const runningContent = [...this.deriveContentExtras(part), ...content]
+               await this.connection
+                 .sessionUpdate({
+                   sessionId,
+@@ -329,10 +485,10 @@ export class Agent implements ACPAgent {
                      toolCallId: part.callID,
                      status: "in_progress",
                      kind: toToolKind(part.tool),
@@ -135,8 +227,20 @@ index aff523a7e..242466725 100644
 +                    title: this.deriveTitle(part),
                      locations: toLocations(part.tool, part.state.input),
                      rawInput: part.state.input,
-                     ...(content.length > 0 && { content }),
-@@ -399,31 +472,59 @@ export class Agent implements ACPAgent {
+-                    ...(content.length > 0 && { content }),
++                    ...(runningContent.length > 0 && { content: runningContent }),
+                   },
+                 })
+                 .catch((error) => {
+@@ -345,6 +501,7 @@ export class Agent implements ACPAgent {
+               this.bashSnapshots.delete(part.callID)
+               const kind = toToolKind(part.tool)
+               const content: ToolCallContent[] = [
++                ...this.deriveContentExtras(part),
+                 {
+                   type: "content",
+                   content: {
+@@ -399,31 +556,59 @@ export class Agent implements ACPAgent {
                  }
                }
  
@@ -215,7 +319,7 @@ index aff523a7e..242466725 100644
                await this.connection
                  .sessionUpdate({
                    sessionId,
-@@ -432,7 +533,7 @@ export class Agent implements ACPAgent {
+@@ -432,9 +617,10 @@ export class Agent implements ACPAgent {
                      toolCallId: part.callID,
                      status: "failed",
                      kind: toToolKind(part.tool),
@@ -223,8 +327,11 @@ index aff523a7e..242466725 100644
 +                    title: this.deriveTitle(part),
                      rawInput: part.state.input,
                      content: [
++                      ...this.deriveContentExtras(part),
                        {
-@@ -534,6 +635,12 @@ export class Agent implements ACPAgent {
+                         type: "content",
+                         content: {
+@@ -534,6 +720,12 @@ export class Agent implements ACPAgent {
    async initialize(params: InitializeRequest): Promise<InitializeResponse> {
      log.info("initialize", { protocolVersion: params.protocolVersion })
  
@@ -237,7 +344,7 @@ index aff523a7e..242466725 100644
      const authMethod: AuthMethod = {
        description: "Run `opencode auth login` in the terminal",
        name: "Login with opencode",
-@@ -669,7 +776,7 @@ export class Agent implements ACPAgent {
+@@ -669,7 +861,7 @@ export class Agent implements ACPAgent {
  
        for (const msg of messages ?? []) {
          log.debug("replay message", msg)
@@ -246,7 +353,7 @@ index aff523a7e..242466725 100644
        }
  
        await sendUsageUpdate(this.connection, this.sdk, sessionId, directory)
-@@ -779,7 +886,7 @@ export class Agent implements ACPAgent {
+@@ -779,7 +971,7 @@ export class Agent implements ACPAgent {
  
        for (const msg of messages ?? []) {
          log.debug("replay message", msg)
@@ -255,7 +362,7 @@ index aff523a7e..242466725 100644
        }
  
        await sendUsageUpdate(this.connection, this.sdk, sessionId, directory)
-@@ -827,14 +934,14 @@ export class Agent implements ACPAgent {
+@@ -827,21 +1019,21 @@ export class Agent implements ACPAgent {
      }
    }
  
@@ -272,7 +379,15 @@ index aff523a7e..242466725 100644
          switch (part.state.status) {
            case "pending":
              this.bashSnapshots.delete(part.callID)
-@@ -859,7 +966,7 @@ export class Agent implements ACPAgent {
+             break
+           case "running":
+             const output = this.bashOutput(part)
+-            const runningContent: ToolCallContent[] = []
++            const runningContent: ToolCallContent[] = [...this.deriveContentExtras(part)]
+             if (output) {
+               runningContent.push({
+                 type: "content",
+@@ -859,7 +1051,7 @@ export class Agent implements ACPAgent {
                    toolCallId: part.callID,
                    status: "in_progress",
                    kind: toToolKind(part.tool),
@@ -281,7 +396,15 @@ index aff523a7e..242466725 100644
                    locations: toLocations(part.tool, part.state.input),
                    rawInput: part.state.input,
                    ...(runningContent.length > 0 && { content: runningContent }),
-@@ -937,7 +1044,7 @@ export class Agent implements ACPAgent {
+@@ -874,6 +1066,7 @@ export class Agent implements ACPAgent {
+             this.bashSnapshots.delete(part.callID)
+             const kind = toToolKind(part.tool)
+             const content: ToolCallContent[] = [
++              ...this.deriveContentExtras(part),
+               {
+                 type: "content",
+                 content: {
+@@ -937,7 +1130,7 @@ export class Agent implements ACPAgent {
                    status: "completed",
                    kind,
                    content,
@@ -290,7 +413,7 @@ index aff523a7e..242466725 100644
                    rawInput: part.state.input,
                    rawOutput: {
                      output: part.state.output,
-@@ -960,7 +1067,7 @@ export class Agent implements ACPAgent {
+@@ -960,9 +1153,10 @@ export class Agent implements ACPAgent {
                    toolCallId: part.callID,
                    status: "failed",
                    kind: toToolKind(part.tool),
@@ -298,34 +421,68 @@ index aff523a7e..242466725 100644
 +                  title: this.deriveTitle(part),
                    rawInput: part.state.input,
                    content: [
++                    ...this.deriveContentExtras(part),
                      {
-@@ -1113,22 +1220,75 @@ export class Agent implements ACPAgent {
+                       type: "content",
+                       content: {
+@@ -1113,22 +1307,112 @@ export class Agent implements ACPAgent {
      return output
    }
  
 -  private async toolStart(sessionId: string, part: ToolPart) {
-+  // Derive the user-facing title for a tool call. For execute-kind tools we
-+  // emit a two-line title - the verbatim command on line 1 and the
-+  // description on line 2. Zed's terminal-card label is plain text (no
-+  // Markdown processing) but does honor \n. Falls back through layers when
-+  // fields are missing. Used consistently across tool_call and
-+  // tool_call_update emissions so the card label doesn't flip between
-+  // description and command across status changes.
++  // Derive the user-facing title for a tool call. Single-line for
++  // non-execute kinds because Zed's tool-card title flattens \n; the
++  // description for non-execute file tools is conveyed via a separate
++  // content block (see deriveContentExtras). For bash we keep the
++  // two-line "command\ndescription" form because bash gets a terminal
++  // card treatment via _meta.terminal_info that honors the newline.
++  //
++  //   execute:        <command>\n<description>
++  //   file (path):    <tool> <path>             (description in content)
++  //   other (desc):   <description>
++  //   fallback:       <tool>
++  //
++  // Used consistently across tool_call and tool_call_update emissions
++  // so the card label does not flip between fields across status
++  // changes.
 +  private deriveTitle(part: ToolPart): string {
 +    const kind = toToolKind(part.tool)
 +    const input = (part.state.input ?? {}) as Record<string, unknown>
 +    const command = typeof input["command"] === "string" ? (input["command"] as string) : undefined
 +    const description = typeof input["description"] === "string" ? (input["description"] as string) : undefined
++    const path = typeof input["filePath"] === "string" ? (input["filePath"] as string)
++               : typeof input["path"] === "string" ? (input["path"] as string)
++               : typeof input["file_path"] === "string" ? (input["file_path"] as string)
++               : undefined
 +    if (kind === "execute" && command) {
-+      // Two-line title: command on line 1, description on line 2. Confirmed
-+      // by experiment that Zed's terminal-card label is verbatim text - no
-+      // Markdown of any kind (code fences, inline code, italics all appear
-+      // literal). Only \n is honored as a line break.
 +      return description ? `${command}\n${description}` : command
 +    }
++    if (path) return `${part.tool} ${path}`
 +    if (description) return description
 +    if ("title" in part.state && typeof part.state.title === "string") return part.state.title
 +    return part.tool
++  }
++
++  // For non-execute file tools that have both a path and a description,
++  // return a content block carrying the description. The card renderer
++  // displays content blocks below the title; bash is excluded because
++  // its content is already populated with terminal output.
++  private deriveContentExtras(part: ToolPart): ToolCallContent[] {
++    const kind = toToolKind(part.tool)
++    if (kind === "execute") return []
++    const input = (part.state.input ?? {}) as Record<string, unknown>
++    const description = typeof input["description"] === "string" ? (input["description"] as string) : undefined
++    const path = typeof input["filePath"] === "string" ? (input["filePath"] as string)
++               : typeof input["path"] === "string" ? (input["path"] as string)
++               : typeof input["file_path"] === "string" ? (input["file_path"] as string)
++               : undefined
++    if (!description || !path) return []
++    return [
++      {
++        type: "content",
++        content: { type: "text", text: description },
++      },
++    ]
 +  }
 +
 +  private async toolStart(sessionId: string, part: ToolPart, sessionCwd?: string) {
@@ -338,9 +495,11 @@ index aff523a7e..242466725 100644
 +
 +    // Defer the first tool_call announce until input is populated. Zed's
 +    // permission card and terminal card both read fields off the FIRST
-+    // tool_call message, not subsequent updates (per opencode#7370). For
-+    // execute-kind tools we wait for `command`; for others we wait for any
-+    // non-empty input. If the tool genuinely has no input, fall through.
++    // tool_call message, not subsequent updates (per opencode#7370), so a
++    // premature announce locks the title to the bare tool name. For
++    // execute-kind tools we wait for `command`; for others we wait for
++    // any non-empty input - deriveTitle then picks the best available
++    // field (description, then path-based fallback, then bare name).
 +    if (kind === "execute" && !command) return
 +    if (Object.keys(input).length === 0 && part.state.status === "pending") return
 +
@@ -358,6 +517,7 @@ index aff523a7e..242466725 100644
 -          rawInput: {},
 +
 +    const title = this.deriveTitle(part)
++    const contentExtras = this.deriveContentExtras(part)
 +
 +    const update: Record<string, unknown> = {
 +      sessionUpdate: "tool_call",
@@ -367,11 +527,14 @@ index aff523a7e..242466725 100644
 +      status: "pending",
 +      locations: toLocations(part.tool, part.state.input),
 +      rawInput: part.state.input ?? {},
++      ...(contentExtras.length > 0 && { content: contentExtras }),
 +    }
 +
 +    // Zed-specific: emit terminal_info on the first tool_call for execute-kind
 +    // tools so Zed renders an expandable terminal card. Gated on the
-+    // terminal_output capability advertised in initialize.
++    // terminal_output capability advertised in initialize. This overrides
++    // any contentExtras above because contentExtras only fires for
++    // non-execute kinds (deriveContentExtras returns [] for execute).
 +    if (kind === "execute" && this.clientSupportsTerminalOutput) {
 +      update["content"] = [{ type: "terminal", terminalId: part.callID }]
 +      update["_meta"] = {

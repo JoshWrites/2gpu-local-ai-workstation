@@ -1,24 +1,36 @@
 # opencode-zed-patches
 
 Source patches and an installer for a small fork of opencode that fixes
-the bash-tool permission UX in Zed.
+the tool-call permission UX in Zed.
 
 ## What this does
 
-Stock opencode in a Zed agent panel asks for permission to run a bash
-command but does not show the command to the user. Zed's permission
-card displays an empty box. The user has no way to approve or deny
-informedly, and Zed silently rejects.
+Stock opencode in a Zed agent panel asks for permission to run a tool
+but does not always show what the tool will do. For bash this means an
+empty box where the command should be. For file-write/edit/read it
+means a bare tool name with no path - especially when the model
+(typical for small local models like GLM-4.7-Flash) skips the optional
+`description` argument. Either way the user has no way to approve or
+deny informedly.
 
-Two patches in this repo fix that:
+Three patches in this repo fix that:
 
-- **agent.ts patch.** Looks up the actual bash command from the message
-  store before sending the permission request. The Zed permission card
-  now shows the command that would run.
+- **agent.ts patch.** Looks up the actual tool input from the message
+  store before sending the permission request, then derives a two-line
+  title: the verbatim subject (command for bash, `<tool> <path>` for
+  write/edit) on line 1 and the model-supplied `description` on
+  line 2. The Zed permission card now shows what is about to happen
+  in concrete terms.
 - **bash.ts patch.** Renders working-directory and command text on the
   permission card via the ACP `_meta.terminal_info` convention, plus
   streams terminal output back to Zed during execution. The card looks
   and behaves like a real terminal.
+- **tools.ts patch.** Adds a required `description` parameter to the
+  `write` and `edit` tool schemas (mirroring `bash`). With `--jinja`
+  on, llama.cpp's grammar-constrained sampling forces the model to
+  emit a description on every call, so the second line of the
+  permission title is reliable - not a request the model can skip on
+  a tight turn.
 
 Apply the patches, rebuild opencode from source, install the resulting
 binary alongside the upstream one, and point Zed at the patched binary.
@@ -75,12 +87,21 @@ A few real failure modes:
 
 ## What this repo holds
 
-- `our-patch-agent.diff`: the agent.ts patch (around 60 lines).
-- `our-patch-bash.diff`: the bash.ts patch (around 30 lines).
+- `our-patch-agent.diff`: the agent.ts patch.
+- `our-patch-bash.diff`: the bash.ts patch.
+- `our-patch-tools.diff`: the write/edit schema patch (and matching
+  test fixtures).
 - `the-fix.md`: a plain-language description of the agent.ts patch and
   why it works.
-- `fix-2-shipped.md`: the production state after both patches landed,
-  including the `_meta.terminal_*` synthesis details.
+- `fix-2-shipped.md`: the production state after the bash polish landed
+  (cwd header, literal-command title, terminal streaming).
+- `fix-3-shipped.md`: the file-tool fallback that landed when GLM
+  sampler tuning exposed a missing path-based title path.
+- `fix-4-shipped.md`: the schema-required `description` for write and
+  edit, plus a two-line `<tool> <path>` + description card title.
+- `fix-5-shipped.md`: 15-line code preview on the approval card,
+  rendered via fenced markdown with language-tagged syntax
+  highlighting.
 - `install-and-wire.md`: full install procedure.
 - `test-the-fix.sh`: smoke test against a captured fixture.
 
@@ -109,9 +130,10 @@ why; the files in this repo are the what.
 ## Status
 
 Both patches are in production on the author's workstation as of
-2026-04-30. Stock opencode v1.14.28 plus the two diffs, built and
-installed at `/usr/local/bin/opencode-patched`. Zed in a per-project
-isolated profile points at it via `OPENCODE_BIN`.
+2026-05-01. Stock opencode v1.14.28 plus the two diffs (agent.ts now
+including the fix-3 file-tool fallback), built and installed at
+`/usr/local/bin/opencode-patched`. Zed in a per-project isolated
+profile points at it via `OPENCODE_BIN`.
 
 These patches are not submitted upstream. PR #7374 covered roughly the
 same ground earlier and was closed without comment; the upstream path
