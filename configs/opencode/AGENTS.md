@@ -44,28 +44,14 @@ section is the routing decision only.
   context: docs, current events, error messages, third-party
   APIs. Prefer over `webfetch`, which floods context with raw
   HTML.
-- **`library_get_skill(name)` / `library_get_skill(name, load=True)`** --
-  for on-demand instruction sets. Two-step contract: never load a
-  skill without the user's permission.
-    1. Decide a skill applies. Call `library_get_skill(name)` --
-       this returns metadata only (description, token estimate,
-       helper-file list). The skill's content does not enter
-       your context.
-    2. Tell the user, in one sentence: which skill, what its
-       description says, the token cost, and *why it would help
-       with the current task*. Example: "I'd like to use the
-       `brainstorming` skill (~2,600 tokens) before we design
-       this feature -- it walks through user-intent and
-       requirements questions before I start. OK?"
-    3. Wait for explicit approval. If the user declines, do not
-       load the skill and proceed without it.
-    4. On approval, call `library_get_skill(name, load=True)` to
-       get the full content, then follow the instructions in it.
-  Call with no name (or any unknown name) to discover what is
-  available. Skills come from both the Library's bundled set and
-  the user's configured directories (`WS_SKILLS_DIRS` in
-  `user.env`); treat every listed name as legitimate regardless
-  of source.
+- **`library_get_skill(name)`** -- for on-demand instruction
+  sets. Call with no name (or any unknown name) to discover what
+  is available across the user's configured skill directories
+  plus the Library's bundled set. The user can add their own
+  skill directories via `WS_SKILLS_DIRS` in `user.env`, so the
+  available list is not just what the Library ships -- treat
+  every listed skill as legitimately available regardless of
+  source.
 - **`library_convert(src_path, ...)`** -- for converting a
   binary doc (PDF, DOCX, image, etc.) to text on disk. Returns
   metadata only; the converted content does not enter context.
