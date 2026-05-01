@@ -426,6 +426,9 @@ Minimum content:
       "prompt_format": "qwen",
       "max_output_tokens": 64
     }
+  },
+  "feature_flags": {
+    "acp-beta": "on"
   }
 }
 ```
@@ -436,6 +439,15 @@ The `agent_servers.opencode` block tells Zed to launch
 `opencode-session.sh` instead of the default registry-downloaded
 opencode. The `edit_predictions` block points Zed's edit-prediction
 feature at the local llama-coder endpoint.
+
+The `feature_flags.acp-beta` flag enables Zed's beta ACP UI surfaces.
+Most importantly, it turns on the live context-window indicator (a
+small ring with a percentage, rendered in the message-composer toolbar
+next to the model picker). Opencode already emits `usage_update`
+events on every turn; without the flag, Zed silently drops them and no
+indicator appears. The chip turns warning-colored at >=85% used. The
+flag is safe to leave on -- the variants it gates are additive and do
+not change existing behavior.
 
 For deeper context on the opencode-template flow, see
 `configs/opencode/README.md`. For deeper context on the patched

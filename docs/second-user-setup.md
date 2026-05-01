@@ -110,10 +110,16 @@ sudo -u newuser tee /home/newuser/.local/share/zed-second-opinion/config/setting
       "prompt_format": "qwen",
       "max_output_tokens": 64
     }
-  }
+  },
+  "feature_flags": { "acp-beta": "on" }
 }
 EOF
 ```
+
+The `feature_flags.acp-beta` flag turns on Zed's live context-window
+indicator (a ring with a percentage, next to the model picker). Opencode
+already emits the underlying `usage_update` events on every turn; the
+flag is what makes Zed render them.
 
 ### 7. Verify (install.md step 7 equivalent)
 

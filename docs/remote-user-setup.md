@@ -314,6 +314,8 @@ What it does:
 - Writes `~/.local/share/zed-2gpu-remote/config/settings.json`. The
   `edit_predictions` block points at `http://<workstation-ip>:11438/v1/completions`.
   The `agent_servers.opencode.command` points at `~/bin/opencode-remote-session`.
+  The `feature_flags.acp-beta` flag is set to `"on"` so Zed renders the
+  live context-window indicator opencode emits on every ACP turn.
 - Writes `~/.local/share/applications/zed-2gpu-remote.desktop` so the
   launcher appears in the application menu.
 
