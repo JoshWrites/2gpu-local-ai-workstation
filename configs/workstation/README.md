@@ -3,6 +3,11 @@
 Three env files split by scope. The umbrella tracks the example versions;
 the actual files live outside the repo and are sourced at runtime.
 
+If you are setting up the stack for the first time, the canonical
+order is in `docs/install.md` (step 4 covers env files). This file
+is the deeper reference for what each env file holds, why the split
+exists, and how the values flow.
+
 ## What each file holds
 
 **system.env** describes the workstation's hardware and service shape.

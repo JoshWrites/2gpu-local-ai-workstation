@@ -117,35 +117,44 @@ Knowledge:
 
 ## How to get it running
 
-The full procedure is in `docs/reference-guide.md` and the
-phase-tagged commits in this repo's history. The short version is
-five real steps:
+The full procedure with verification at each step is in
+`docs/install.md`. It walks you from a fresh clone through the
+first launch, with prerequisites named explicitly so you can
+spot-check what your machine has before starting.
 
-1. Clone this repo recursively (`git clone --recurse-submodules ...`)
-   so Library is included.
-2. Install the env files. Copy `configs/workstation/system.env.example`
-   to `/etc/workstation/system.env`, edit values to match your machine,
-   and the same for `user.env` and `secrets.env` under
-   `~/.config/workstation/`. The `configs/workstation/README.md` has
-   the full install steps.
-3. Pull the model GGUFs. Default models and their expected paths
-   come from `system.env`'s `WS_MODELS_DIR` value.
-4. Run `scripts/install-systemd-units.sh`. It installs the four
-   `llama-*` system units, the `llama-shutdown` helper, and the
-   polkit rule that lets local users start and stop services
-   without sudo.
-5. Build the patched opencode binary. The procedure is in
-   `opencode-zed-patches/install-and-wire.md`. The patches fix
-   bash permission rendering in Zed.
+The shape of the install:
 
-Then the launcher script at `scripts/2gpu-launch.sh` starts the
-services, shows a yad splash while they load, and opens Zed in an
-isolated profile when ready. Set up the desktop entry to point at
-that script, click the icon, and the stack comes up.
+1. Clone this repo (with `--recurse-submodules` so Library
+   submodule comes along).
+2. Build llama.cpp with Vulkan and install at
+   `/usr/local/lib/llama.cpp/llama-server`.
+3. Pull the four model GGUFs to `/var/lib/llama-models/`.
+4. Install the three env files (system.env, user.env, secrets.env).
+5. Run `scripts/install-systemd-units.sh`. Installs the four
+   `llama-*` units, the polite-shutdown coordinator, and the
+   polkit rule.
+6. Edit the polkit rule to list your local username(s).
+7. Build the patched opencode binary.
+8. Bootstrap the Library MCP venv with `uv sync`.
+9. Set up Zed's isolated profile.
+10. Symlink AGENTS.md into the opencode config dir.
+11. Install the desktop entry.
+12. Run `bench/regression.sh` to verify everything is in place.
 
-Library, the MCP server submodule, gets registered in
-`opencode.json` automatically through the render-at-launch
-templating. opencode finds Library on first agent thread.
+Then click the desktop icon. The launcher brings the four llama
+services up with a progress splash, opens Zed in the isolated
+profile, and Library gets registered in opencode.json automatically
+through the render-at-launch templating.
+
+For the deeper context behind each piece:
+
+- Lifecycle and polite shutdown: `docs/lifecycle-management.md`.
+- The four llama services and how to swap models:
+  `docs/llama-services-reference.md`.
+- The env files: `configs/workstation/README.md`.
+- The opencode template: `configs/opencode/README.md`.
+- The Library MCP: `Library/README.md`.
+- The opencode patches: `opencode-zed-patches/README.md`.
 
 ## What to do when it does not work
 

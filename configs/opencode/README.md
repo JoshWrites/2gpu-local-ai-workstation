@@ -4,6 +4,12 @@ The agent rules and provider config that opencode reads at startup.
 Tracked here so they survive a machine rebuild and so changes are
 reviewable.
 
+If you are setting up the stack for the first time, the canonical
+order is in `docs/install.md` (step 10 covers symlinking AGENTS.md;
+the opencode.json render is automatic). This file is the deeper
+reference for how the render-at-launch templating works and what
+each file in this directory does.
+
 ## Files in this directory
 
 - `AGENTS.md` is the global agent rules. Tells the model how to use
@@ -77,13 +83,3 @@ runtime tweaks would get clobbered on next launch; if you find
 yourself wanting to preserve another field, add it to
 `PRESERVE_FIELDS` in `scripts/opencode-session.sh`.
 
-## Pre-publish work
-
-One organizational hold remains before this directory ships in a
-public repo: sweep `AGENTS.md` for non-ASCII characters and tighten
-prose to the project writing standards. Tracked for the language
-pass.
-
-The SSH-targets templating that was previously listed here is now
-done. Real values come from `~/.config/workstation/secrets.env`,
-which is private per-user and never tracked.

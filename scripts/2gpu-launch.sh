@@ -21,11 +21,11 @@
 # Zed's `--wait` flag requires at least one path argument. The split
 # in step 4 vs 5 accommodates that requirement.
 #
-# TODO: graceful shutdown on Zed close currently almost never fires
-# even with --wait, because llama-shutdown's holder-detection regex
-# matches Zed's dying child processes and refuses. Fix planned in
-# Phase 1 (replace regex with a recent-activity window check). Until
-# then, the manual fallback is `llama-shutdown` from a terminal.
+# Polite-shutdown holder detection (called in step 4) uses an age
+# filter: opencode/zed processes younger than 30 seconds are excluded
+# as likely teardown children of an editor that just closed, so
+# closing Zed and letting the launcher run llama-shutdown does the
+# right thing. See systemd/llama-shutdown for the implementation.
 #
 # yad thresholds are tuned for ~60s expected ready (universal; terminal
 # opencode launches have always cleared this). Warn at 75s, 180s ceiling.

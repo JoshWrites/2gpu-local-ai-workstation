@@ -1,106 +1,335 @@
-# Second-opinion lifecycle management
+# Lifecycle management
 
-How launching and closing the editor maps to llama-server state and VRAM.
+How the four llama services start, stay up, and stop -- without
+fighting each other when more than one client (the editor, a
+terminal session, a second user) wants them at the same time.
 
 ## The problem
 
-Earlier iterations had `scripts/codium-second-opinion.sh` starting just the
-editor and `scripts/primary-llama.sh` started separately in a terminal.
-That meant llama-server stayed resident (~23 GB VRAM on the 7900 XTX) until
-the user remembered to Ctrl+C it. Josh wanted the editor close to release
-the GPU automatically -- but also wanted honest progress feedback during the
-~35-second cold start, including visibility into which phase is running if
-something hangs.
+Local AI services have an inconvenient lifecycle shape. They take
+~60 seconds to load weights into VRAM, so you do not want them
+starting on every editor open. Once loaded, they hold ~21 GB of
+VRAM on the primary card and ~8 GB on the secondary card -- VRAM
+that gaming, video editing, and other GPU work cannot use. So you
+do not want them lingering after the work session ends.
 
-## The design
+The naive answers both fail:
 
-Two `systemd --user` units plus a launcher with a `yad` splash.
+- **Always-on at boot**: holds VRAM hostage for non-AI work, and
+  the boot sequence depends on services that the user may not
+  always want running.
+- **Started by the editor, killed when the editor closes**: works
+  for one client, breaks the moment a terminal opencode session
+  shares the same backend, breaks worse when a second user is
+  involved.
 
-### Units
+The actual shape needed: services start when the first client wants
+them, stay up across an entire work session even if the editor
+closes briefly, stop politely only when nobody is using them. That
+"nobody" check has to be reliable enough that one user can run a
+shutdown command without yanking the GPU out from under another
+user's still-active session.
 
-- **`llama-second-opinion.service`** -- wraps `scripts/primary-llama.sh`.
-  Never enabled. Started on demand only. Respects the boot-cleanup
-  baseline (all system-wide `ollama*` units stay disabled; this is
-  user-scoped).
-- **`codium-second-opinion.service`** -- wraps
-  `scripts/codium-second-opinion.sh --wait`, which blocks until the
-  editor window is closed. `Requires=llama-second-opinion.service` and
-  `BindsTo=llama-second-opinion.service`, so stopping either takes the
-  other with it.
+## What solving it gets you
 
-### Launcher -- `scripts/second-opinion-launch.sh`
+A two-piece lifecycle:
 
-1. **Cold vs warm detection.** A boot-marker file
-   `/tmp/second-opinion-launched-this-boot` is cleared on reboot (tmpfs).
-   First launch after boot -> cold; otherwise warm. Thresholds differ.
-2. **Start the llama unit.** Not the codium unit yet -- we want to know
-   llama is healthy before the editor opens so Roo has a live backend
-   the moment it asks.
-3. **yad splash.** A `--text-info --tail` window streams the filtered
-   llama journal: ROCm init, tensor load, KV cache alloc, warm-up,
-   server listening. Font monospace 9, on-top, 820x420. If you see
-   a phase frozen on one line, that's exactly where it's stuck.
-4. **Watchdog.** A backgrounded sleep fires `notify-send` if the
-   warn-threshold elapses without a health-ok. The splash stays up;
-   the toast is the louder signal.
-5. **Health poll.** Every second, `GET /health`. When `{"status":"ok"}`
-   returns, kill the splash, toast "Second Opinion -- ready".
-6. **Start codium unit.** Opens the repo in the isolated VSCodium
-   instance; the service blocks on `codium --wait`.
-7. **Wait on exit.** Poll `systemctl --user is-active` on the codium
-   unit. When the user closes the editor, it goes inactive; we
-   explicitly stop the llama unit, toast "stopped".
+- **A launcher** (`scripts/2gpu-launch.sh`) that is the desktop's
+  primary entry point. Idempotent: clicking the icon when services
+  are already up is fast (skips the splash, opens the editor); when
+  services are down it shows a yad progress splash, starts the four
+  units, polls each endpoint, and opens the editor only after all
+  four are ready.
+- **A polite-shutdown coordinator** (`/usr/local/bin/llama-shutdown`)
+  that decides whether stopping is safe right now. It refuses if
+  any TCP connection is established, refuses if any opencode or zed
+  process older than 30 seconds is alive (a session-holder), and
+  waits a grace period of confirmed idleness before stopping. A
+  `--force` flag skips the safety checks for cases where the user
+  knows the other side is done.
 
-### Thresholds
+The pair handles single-user work, terminal-and-editor work, and
+two-user work without per-case logic. The launcher does not own
+service lifetime beyond starting them; the coordinator owns
+stopping.
 
-Derived from `scripts/bench-llama-startup.sh` results (3 cold + 7 warm
-runs, 2026-04-15):
+## How I solved it
 
-| State | Expected ready | Warn at |
-|---|---|---|
-| Cold | ~36s | 55s |
-| Warm | ~3.3s | 10s |
+### The launcher's flow
 
-Variance was tight: +/-0.65s cold, +/-0.02s warm. Warn thresholds are 50%
-slack above the observed max, which is plenty of room for a degraded
-disk or a busy CPU without chasing false positives.
+`scripts/2gpu-launch.sh` is the desktop entry point. The flow is
+five branches off two questions: are services already up, and was
+the launcher invoked with a path argument?
 
-Post-tensor phases (KV alloc, warm-up) were sub-second and
-deterministic across both states. Not worth their own thresholds; they
-roll up into "total to ready".
+```
+                          launcher invoked
+                                 |
+                       services already up?
+                          /            \
+                       YES              NO
+                        |               |
+                        |        start the four units
+                        |               |
+                        |        show yad splash
+                        |               |
+                        |        poll /v1/models on each port
+                        |               |
+                        |        deadline: 60s expected,
+                        |        75s warn, 180s timeout
+                        |               |
+                        +-------+-------+
+                                |
+                       path argument given?
+                          /            \
+                       YES              NO
+                        |               |
+                  open Zed --wait       open Zed detached
+                  block until close     return immediately
+                        |               |
+                  llama-shutdown        (user runs llama-shutdown
+                  (refuses if          manually when done)
+                  someone else is
+                  using llama)
+```
 
-## Flow summary
+The fast path (services already up) skips the splash entirely. Two
+common cases hit it: a second launch in the same session, or a
+launcher invoked while a terminal opencode session is already using
+the services. In both cases, the launcher is functionally a Zed
+opener with a notification.
 
-- **Click "VSCodium (Second Opinion)"** -> launcher runs.
-- Splash appears with live phase log. Cold: ~35s. Warm: ~3s.
-- Toast "Second Opinion -- ready". Editor opens.
-- Work. Agent calls llama-server directly.
-- **Close VSCodium window** -> systemd stops codium unit -> BindsTo stops
-  llama unit -> VRAM released on GPU 1.
-- Toast "Second Opinion -- stopped".
+The cold path (services not yet up) takes ~60 seconds on this
+hardware: ~25 s for primary GLM-4.7-Flash to load tensors and KV
+cache, ~5 s each for the three secondary-card services. The yad
+splash tails the primary unit's journal so the user can see which
+phase is running. A 75-second warn threshold pings notify-send if
+the loading is slower than expected; the hard timeout at 180 s
+cancels the launch with an error.
 
-## Fallback / escape hatches
+### Why Zed gets two open paths
 
-- **Desktop entry action "Editor only (no llama-server)"** -- launches
-  the editor without starting llama. Useful when you want to read files
-  or edit settings without the GPU cost.
-- **Manual llama start** -- `systemctl --user start
-  llama-second-opinion.service` from a terminal if you want the server
-  without the editor.
-- **If the launcher hangs** -- `systemctl --user stop
-  codium-second-opinion.service llama-second-opinion.service`.
-- **If Roo disagrees with llama state** -- llama crashed mid-session,
-  for example -- restart with the launcher; Roo reconnects on next
-  request.
+`zed --wait` requires at least one positional path argument. With a
+path, Zed blocks until the window closes; without one, Zed prints
+its usage line and exits immediately. That is a Zed quirk, not
+something the launcher chose.
 
-## What this does *not* do
+The launcher accommodates it:
 
-- No warm-pool: the model is not kept loaded after editor close. If
-  you reopen within a minute, you pay the warm-start 3s again -- still
-  much better than the 35s cold hit, thanks to page cache.
-- No auto-recovery: if llama crashes while you're working, the next
-  request fails and you restart the launcher. Deliberately no
-  `Restart=on-failure` -- a crashing agent backend should be noticed,
-  not silently reanimated.
-- No multi-instance: only one editor can have the agent backend at a
-  time. Good -- one 23 GB VRAM budget.
+- **With a path** (e.g., `2gpu-launch.sh -- /path/to/repo`): Zed
+  runs under `--wait`, the launcher blocks until the editor closes,
+  then calls `llama-shutdown`. This is the polite-cleanup path.
+- **Without a path** (the normal desktop-icon click): Zed runs
+  detached. The launcher exits immediately. The user runs
+  `llama-shutdown` manually when they are done with the work
+  session.
+
+Both paths are correct for their use case. Desktop-icon launches
+are typically "I want to use the editor for a while" -- the user
+does the explicit shutdown when they are done. CLI launches with
+a path argument are typically "I want to edit this one thing" --
+the editor close is a natural shutdown signal.
+
+### The polite-shutdown coordinator
+
+`llama-shutdown` is the only non-trivial piece of lifecycle logic
+in the stack. The script lives at `/usr/local/bin/llama-shutdown`
+(sourced from `systemd/llama-shutdown` in this repo). Its job is
+deciding whether stopping is safe.
+
+The decision tree:
+
+```
+                         llama-shutdown invoked
+                                  |
+                         all units already inactive?
+                              /          \
+                           YES            NO
+                            |              |
+                       exit 0       --force flag set?
+                                       /        \
+                                    YES          NO
+                                     |            |
+                              stop all units    holder check
+                                     |            |
+                                  exit 0     opencode or zed
+                                             processes alive
+                                             and older than 30s?
+                                                 /       \
+                                              YES         NO
+                                               |          |
+                                          refuse        TCP connection
+                                          exit 1        check
+                                                            |
+                                                    any established
+                                                    connection on a
+                                                    llama port?
+                                                       /       \
+                                                    YES         NO
+                                                     |          |
+                                                refuse        grace period
+                                                exit 1        watch
+                                                                  |
+                                                          for 30s, recheck
+                                                          every second:
+                                                          any holder or
+                                                          connection?
+                                                            /       \
+                                                          YES        NO
+                                                           |          |
+                                                       refuse      stop
+                                                       exit 1      exit 0
+```
+
+Two checks, in order, plus a grace window:
+
+**Holder check.** opencode and Zed only hold a TCP connection
+during active inference. Between turns -- when the user is reading
+or thinking -- the connection count goes to zero and may stay zero
+for many minutes while the session is genuinely alive. Treating
+"zero connections right now" as "safe to stop" would yank services
+out from under a session every time the user paused to think.
+
+The fix: any opencode or zed process owned by a configured local
+user counts as a holder regardless of TCP state. The age filter
+(`HOLDER_MIN_AGE_SEC=30`) excludes very-recent processes that are
+likely teardown children of an editor that just closed; a process
+older than the threshold is committed to running and counts as a
+real holder.
+
+**Connection check.** If no holder process is alive but a TCP
+connection is established to a llama port, something we did not
+detect (a curl probe, a benchmark script, a third-party client) is
+using the services. Refuse.
+
+**Grace window.** Even with both checks above passing, a session
+can be briefly idle between turns. The script watches for 30
+seconds before stopping; if any holder or connection appears, the
+shutdown aborts.
+
+The 30-second grace and the 30-second age filter together produce
+behavior that looks responsive to the user (`llama-shutdown` from a
+terminal completes within ~30 s when the system is genuinely idle)
+without false positives on real sessions (a paused-to-think user
+keeps services alive indefinitely).
+
+### Why services are not enabled at boot
+
+`systemctl enable` would start the services every boot. The user's
+machine is not always running AI work -- gaming, video editing, and
+plain desktop work all want the VRAM that the four services
+collectively reserve.
+
+The four units are installed but not enabled. They start on demand
+from the launcher, stay up across a work session, and stop politely
+when the user runs the shutdown coordinator (or when the launcher
+runs it on the path-argument exit path).
+
+This means the boot sequence does not depend on llama-server being
+healthy, which is the correct shape: a llama-server failure should
+not delay or fail the user's login.
+
+### Why polkit, not sudo
+
+Local users need to start, stop, and restart the four llama units
+without typing a password every time. `sudo systemctl start
+llama-primary` works, but the per-launch password prompt is bad UX
+and discourages the polite-shutdown habit (users hold services up
+indefinitely rather than re-type their password).
+
+The polkit rule at `systemd/polkit/10-llama-services.rules` grants
+configured local users passwordless control of exactly the four
+llama units. Other systemctl actions still require sudo. The rule's
+`allowedUsers` array is a customization point -- edit it to list
+the local accounts on your machine that should have access.
+
+The pre-publish version of the rule lists `["your-username-here"]`;
+real deployments edit that to the actual usernames.
+
+### How the pieces fit together
+
+The lifecycle is owned by three artifacts working together:
+
+1. **The systemd units** (`systemd/llama-*.service`) define what
+   gets started, where, and how to restart on failure. They are
+   installed but not enabled.
+2. **The launcher** (`scripts/2gpu-launch.sh`) starts the four
+   units when needed and runs `llama-shutdown` on the path-argument
+   exit path. It does not own service lifetime past startup.
+3. **The shutdown coordinator** (`/usr/local/bin/llama-shutdown`)
+   owns the stop decision. Both the launcher and any direct user
+   invocation route through it.
+
+`opencode-session.sh` is a fourth, narrower artifact: it brings
+services up when a terminal opencode session needs them, but it
+does not stop them on exit. Stopping is always the launcher's
+responsibility (path-argument path) or the user's responsibility
+(everything else).
+
+## Multi-user note
+
+The polite-shutdown coordinator is the load-bearing piece of
+multi-user safety. When a second local user runs the launcher on
+the same workstation, the four llama units serve both users from
+the same memory; the coordinator's holder check prevents either
+user from accidentally stopping the services while the other is
+still working.
+
+The deeper multi-user pattern -- SSHFS-mounted laptop filesystems,
+UID-remapping with `idmap=user`, the reach-back launcher that
+translates laptop paths to mount paths -- is documented in a
+forthcoming reference doc. For now, the load-bearing fact is: the
+shutdown coordinator's holder check works for any number of local
+users, as long as they are listed in `LLAMA_SHUTDOWN_HOLDER_USERS`
+(comma-separated; falls back to `$USER` if unset) and in the
+polkit rule's `allowedUsers` array.
+
+## What you can change
+
+- **`HOLDER_MIN_AGE_SEC`** (default 30): increase if your editor
+  takes longer than 30 seconds to tear down. Decrease if you find
+  the polite shutdown waiting longer than necessary on a clearly
+  idle system.
+- **`GRACE_SEC`** (default 30): increase if you have very-bursty
+  work patterns (long pauses between turns) and want a wider
+  safety window. Decrease if you trust your "I'm done" signal.
+- **`LLAMA_SHUTDOWN_HOLDER_USERS`**: set to a comma-separated list
+  of usernames (e.g., `LLAMA_SHUTDOWN_HOLDER_USERS=alice,bob
+  llama-shutdown`) to extend holder detection to additional users.
+  Defaults to the running user.
+- **The launcher's timeouts** (`EXPECTED_READY=60`, `WARN_READY=75`,
+  `HARD_TIMEOUT=180`): tune to match your hardware. Slow disks or
+  cold page cache push the load time up.
+
+## Where to look when something breaks
+
+- **`llama-shutdown` refuses but you know nobody is connected:**
+  run with `--force`. Investigate why afterward -- usually a stale
+  opencode/zed process older than 30 seconds. `pgrep -af opencode`
+  and `pgrep -af zed` show the survivors.
+- **The launcher's splash hangs past 180 seconds:**
+  `journalctl -u llama-primary.service -n 100`. Common causes:
+  cold disk page cache (model takes longer than usual to load),
+  GPU driver hung from a previous session, GGUF file missing or
+  corrupted.
+- **Services stay up after `llama-shutdown` reports success:**
+  the script returns 0 only after issuing `systemctl stop` to each
+  active unit. If `systemctl is-active` still returns active,
+  systemd's stop hit a timeout. `journalctl -u llama-<role>.service
+  -n 50` shows the stop sequence.
+- **Polite shutdown loops in the grace window forever:**
+  something is reconnecting between checks. `ss -tn state
+  established '( sport = :11434 )'` (and the other ports) shows
+  the live connection. Often a benchmark script or a browser tab
+  pointed at one of the endpoints.
+
+## Where to look for adjacent docs
+
+- The four llama services and what they run: `docs/llama-services-reference.md`.
+- The env files that the launcher and shutdown coordinator both
+  read: `configs/workstation/README.md`.
+- The opencode template that gets rendered at every session start:
+  `configs/opencode/README.md`.
+- The patched opencode binary that Zed launches:
+  `opencode-zed-patches/README.md`.
+- The Library MCP that opencode connects to:
+  `Library/README.md`.
