@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# enforce-doc-templates.sh — PreToolUse hook for Write|Edit
+# enforce-doc-templates.sh -- PreToolUse hook for Write|Edit
 #
 # Portable across Claude Code, VS Code Copilot, and Cursor.
 # Delegates to 'reinicorn doc check-path' so all protected path logic
@@ -9,7 +9,7 @@
 
 INPUT=$(cat)
 
-# Tool name check — Copilot ignores matchers so hook fires for ALL tools.
+# Tool name check -- Copilot ignores matchers so hook fires for ALL tools.
 # Must filter here to avoid overhead on non-write tool calls.
 TOOL=$(echo "$INPUT" | jq -r '.tool_name // empty')
 case "$TOOL" in
@@ -17,7 +17,7 @@ case "$TOOL" in
   *) exit 0 ;;
 esac
 
-# Extract file path — all three editors use .tool_input:
+# Extract file path -- all three editors use .tool_input:
 #   Claude Code: .tool_input.file_path
 #   Cursor:      .tool_input.file_path / .tool_input.filePath
 #   Copilot:     .tool_input.file_path / .tool_input.files[0]

@@ -6,7 +6,7 @@ Ad-hoc file retrieval MCP for local LLM agents. Hand it a path and a question; g
 
 ## What it does
 
-When an agent needs to answer a question about a file, the naive path is `cat file.md` → full content into primary context. Big files blow up context fast; much of the content wasn't relevant anyway.
+When an agent needs to answer a question about a file, the naive path is `cat file.md` -> full content into primary context. Big files blow up context fast; much of the content wasn't relevant anyway.
 
 Librarian inverts this: the agent calls `mine_file(path, query)`. The server:
 
@@ -22,10 +22,10 @@ The primary model only sees the relevant slices. No full-file dumps into context
 ## Architecture (v2)
 
 ```
-agent (opencode) ──MCP stdio──►  librarian/server.py  ───HTTP──► llama-embed (:11437)
+agent (opencode) ──MCP stdio──>  librarian/server.py  ───HTTP──> llama-embed (:11437)
                                          │                        mxbai-embed-large
                                          │                        5700 XT (Vulkan)
-                                         ▼
+                                         v
                                    FileCache (DRAM)
                                    keyed on (path, mtime)
 ```
@@ -78,19 +78,19 @@ Drop a cached entry when done. DRAM discipline; not required (LRU evicts at cap)
 ## Design decisions
 
 ### Single tool, dispatch by extension (not two tools)
-Keeps the caller interface minimal — the agent passes `path` + `query`, the server picks the strategy. Lowest cognitive load on the primary, lowest token cost on the tool schema.
+Keeps the caller interface minimal -- the agent passes `path` + `query`, the server picks the strategy. Lowest cognitive load on the primary, lowest token cost on the tool schema.
 
 ### Session-cache via `(path, mtime)`
 Captures the common case (same file queried multiple times in one turn or session) without persistent storage overhead. Changing a file on disk is automatic cache-miss.
 
 ### No cross-session persistence (v1)
-Cache is in-process DRAM, gone at server restart. For durable topical indexes (e.g., "full Proxmox docs, always searchable"), see the planned two-track architecture in `../second-opinion/`'s memory — a separate `ingest_topic` tool is the right home, not `mine_file`.
+Cache is in-process DRAM, gone at server restart. For durable topical indexes (e.g., "full Proxmox docs, always searchable"), see the planned two-track architecture in `../second-opinion/`'s memory -- a separate `ingest_topic` tool is the right home, not `mine_file`.
 
 ### Rejected: binary files
-v1 rejects files that look binary. A binary-parser layer (PDF, jupyter, docx) is TODO. When added, it runs *serialized* against the text embedder — card 2 never hosts both simultaneously, so VRAM doesn't grow.
+v1 rejects files that look binary. A binary-parser layer (PDF, jupyter, docx) is TODO. When added, it runs *serialized* against the text embedder -- card 2 never hosts both simultaneously, so VRAM doesn't grow.
 
 ### Deferred: auto-retry with alternate strategy
-Current dispatch is hardcoded: extension → strategy. A future safety net could re-run with the other strategy if the first returned low scores, and serve whichever ranked better. The response envelope already includes `strategy` so the wrapper can stub onto this without refactor.
+Current dispatch is hardcoded: extension -> strategy. A future safety net could re-run with the other strategy if the first returned low scores, and serve whichever ranked better. The response envelope already includes `strategy` so the wrapper can stub onto this without refactor.
 
 ---
 
@@ -114,7 +114,7 @@ uv sync  # or: pip install -e .
 
 ```bash
 uv run python -m librarian.server
-# stdio — feed MCP JSON-RPC on stdin for testing
+# stdio -- feed MCP JSON-RPC on stdin for testing
 ```
 
 ### Run via opencode
@@ -166,6 +166,6 @@ v2 (this branch, `v2-document-retrieval`) is document-first, file-scoped, sessio
 
 - Binary parser + embedder (PDF, ipynb, docx). Runs serialized against the text embedder; VRAM stays flat.
 - Auto-retry with alternate strategy when results score poorly.
-- `ingest_topic` — persistent topical indexes, separate tool, still scoped to card 2's mxbai endpoint.
+- `ingest_topic` -- persistent topical indexes, separate tool, still scoped to card 2's mxbai endpoint.
 - Optional top-K-as-pointers-only mode for very context-sensitive callers (two-step retrieve-then-expand).
 - Test suite with representative fixtures (real markdown, real source files of multiple languages).

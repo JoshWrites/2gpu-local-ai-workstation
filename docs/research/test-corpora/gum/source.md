@@ -1,8 +1,8 @@
-# GUM — Georgetown University Multilayer Corpus
+# GUM -- Georgetown University Multilayer Corpus
 
 ## Description
 
-GUM (Zeldes et al., 2017–present) is a multi-genre open-license English
+GUM (Zeldes et al., 2017-present) is a multi-genre open-license English
 corpus developed at Georgetown. It is unusual in offering **both**
 eRST (enhanced Rhetorical Structure Theory) and GDTB (GUM Discourse
 Treebank; PDTB-style shallow-discourse-relation) annotations on the
@@ -24,17 +24,17 @@ Pipe-delimited, one row per discourse relation. Column schema
 (from GUM's gdtb README):
 
 ```
-type | conn_span | … | connective_text | sense | … | arg1_span | … | arg2_span | … | conn_head | provenance
+type | conn_span | ... | connective_text | sense | ... | arg1_span | ... | arg2_span | ... | conn_head | provenance
 ```
 
-- `type` — `Explicit`, `Implicit`, `Hypophora`, `EntRel`, `NoRel`,
+- `type` -- `Explicit`, `Implicit`, `Hypophora`, `EntRel`, `NoRel`,
   `AltLex`, etc.
-- `connective_text` — the discourse connective if explicit, or
+- `connective_text` -- the discourse connective if explicit, or
   underscore `_` if implicit/none.
-- `sense` — PDTB 3.0 sense hierarchy: `Expansion.Conjunction`,
+- `sense` -- PDTB 3.0 sense hierarchy: `Expansion.Conjunction`,
   `Contingency.Cause.Reason`, `Comparison.Contrast`,
   `Temporal.Synchronous`, etc.
-- `arg1_span`, `arg2_span` — character offsets into the raw text.
+- `arg1_span`, `arg2_span` -- character offsets into the raw text.
 
 ### eRST (enhanced RST)
 
@@ -85,25 +85,25 @@ git clone --depth 1 https://github.com/amir-zeldes/gum.git
 
 ## Samples in this directory
 
-- **sample-01-conversation** — `GUM_conversation_christmas`: a family
+- **sample-01-conversation** -- `GUM_conversation_christmas`: a family
   Christmas-morning conversation (gift opening). ~1,112 words. Good
   for dialogue with real-world topic shifts, asides ("she's been
   saying for months that you would never wear it"), contrasts
   ("though it doesn't say Stanford over here"). License: CC BY (per
   GUM conversations sourced under CC BY).
-- **sample-02-academic** — `GUM_academic_huh`: an academic article
+- **sample-02-academic** -- `GUM_academic_huh`: an academic article
   about the universal word "huh?" as a conversational repair
   mechanism. ~1,097 words. Heavy on concession, contrast, and
-  explanation — classic academic-prose discourse moves. License:
+  explanation -- classic academic-prose discourse moves. License:
   CC BY 4.0.
-- **sample-03-bio** — `GUM_bio_byron`: a Wikipedia biography of Lord
+- **sample-03-bio** -- `GUM_bio_byron`: a Wikipedia biography of Lord
   Byron. ~746 words. Mostly narration + elaboration, with some
   causal/result relations. License: Wikipedia CC BY-SA 3.0.
 
 Each sample has three annotation files:
 
-- `sample-XX.clean.txt` — raw whitespace-tokenized text (same as
+- `sample-XX.clean.txt` -- raw whitespace-tokenized text (same as
   what GUM distributes under `rst/gdtb/pdtb/raw/00/`).
-- `sample-XX.annotated.pdtb.txt` — GDTB (PDTB-style) gold relations.
+- `sample-XX.annotated.pdtb.txt` -- GDTB (PDTB-style) gold relations.
   Pipe-delimited, see column schema above.
-- `sample-XX.annotated.rst.rs4` — eRST gold tree, XML (rstweb format).
+- `sample-XX.annotated.rst.rs4` -- eRST gold tree, XML (rstweb format).

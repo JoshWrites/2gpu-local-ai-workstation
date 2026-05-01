@@ -1,4 +1,4 @@
-# MRDA sample-01 (Bdb001, first 200 utterances) — tag mapping notes
+# MRDA sample-01 (Bdb001, first 200 utterances) -- tag mapping notes
 
 Meeting: four ICSI researchers discussing a proposed XML format for
 linking word transcripts with phone-level alignments and annotations.
@@ -27,9 +27,9 @@ D / F / Q buckets.
   the d. is good" (corrects me011 on a letter mnemonic while
   accepting the broader idea). `ar` (reject) or `df` (defending) sub-
   tags may surface here; the "but" is the signal.
-- **contrast**: embedded in statements — "what do you do if you just
+- **contrast**: embedded in statements -- "what do you do if you just
   conceptually if you get um transcriptions where the words are
-  staying but the time boundaries are changing" — not marked as a
+  staying but the time boundaries are changing" -- not marked as a
   separate dialogue act. Text-level only.
 - **commitment**: fe016's opening "I was going to ask people to help
   with today is to give input on what kinds of database format we
@@ -37,18 +37,18 @@ D / F / Q buckets.
   tagged; framed as `s` (statement) in General, likely `rt` (rising
   topic) in Full. me011 "I sort of already have developed an x.m.l.
   format for this sort of stuff" is another commitment. The Full tag
-  `cs` (commit speaker) is not part of the standard MRDA set — MRDA
+  `cs` (commit speaker) is not part of the standard MRDA set -- MRDA
   does not explicitly mark commitment.
 - **reversal**: not in this excerpt.
 - **supersession**: fe016 "it's an o. instead of an i." corrects
-  me011 mid-stream — a small supersession of a detail. Not explicitly
+  me011 mid-stream -- a small supersession of a detail. Not explicitly
   tagged; `%` (interrupted) or `ar` (reject) might be the closest
   native tags.
 - **aside**: me011's "i don't i don't remember exactly what my
   notation was" is an aside during a longer explanation. `df`
   (defending/digressing) or `h` (hold) is the closest; Full MRDA tag
   `co` (commentary) is a match if the annotator chose it.
-- **unresolved**: this is an excerpt — the schema-format question isn't
+- **unresolved**: this is an excerpt -- the schema-format question isn't
   closed here. Many of fe016's follow-up questions are still being
   unpacked at the end of the 200-utterance window. Present by virtue
   of truncation.
@@ -70,8 +70,8 @@ D / F / Q buckets.
 
 ## Notes
 
-MRDA's value is **multi-party dynamics** — floor-grabbing, back-
-channels, overlapping claims — which SwDA (two-party telephone) lacks.
+MRDA's value is **multi-party dynamics** -- floor-grabbing, back-
+channels, overlapping claims -- which SwDA (two-party telephone) lacks.
 For a discourse-act parser, MRDA tests whether the parser can handle
 floor-holder signals (`fh`, `fg`) that don't map cleanly to RST or
 PDTB taxonomies. Expect poor mapping for RST-only parsers.

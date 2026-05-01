@@ -1,8 +1,8 @@
-# GUM sample-02 (academic_huh) — tag mapping notes
+# GUM sample-02 (academic_huh) -- tag mapping notes
 
 Academic article on "huh?" as a universal conversational-repair
 particle. ~1,097 words. Formal written prose with heavy
-argumentation — rich in concession, contrast, and explanation.
+argumentation -- rich in concession, contrast, and explanation.
 
 ## Why this sample
 
@@ -18,7 +18,7 @@ academic argumentation. Contrast-heavy: comparisons between languages
 (on huh? being cross-linguistic) invite parallel / contrast relations.
 
 Elaboration-heavy: each claim is typically followed by evidence /
-example / further unpacking → many `elaboration-additional`,
+example / further unpacking -> many `elaboration-additional`,
 `elaboration-attribute`, `explanation-evidence`,
 `explanation-justify`, `explanation-motivation` relations in eRST.
 
@@ -30,7 +30,7 @@ unresolved.
 ## Mapping
 
 See `sample-01-conversation.tag-mapping.md` for the full mapping
-table — it applies equally here. The **difference** is frequency:
+table -- it applies equally here. The **difference** is frequency:
 
 | Our tag       | sample-01 (conversation) | sample-02 (academic)   |
 |---------------|--------------------------|------------------------|

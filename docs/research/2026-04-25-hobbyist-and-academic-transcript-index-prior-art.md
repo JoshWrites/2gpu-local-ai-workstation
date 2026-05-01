@@ -7,10 +7,10 @@ layers that yesterday's research
 (`2026-04-24-session-as-artifact-and-temporal-retrieval-prior-art.md`)
 explicitly did not cover. Yesterday's pass concentrated on production memory
 systems (Claude memory tool, ChatGPT memory, Mem0, Zep, Letta, LangChain).
-The hypothesis to stress-test here is whether the *non-production* layers —
+The hypothesis to stress-test here is whether the *non-production* layers --
 SillyTavern/Oobabooga/KoboldAI extensions, Open-WebUI/AnythingLLM/LM
 Studio/Msty/Jan, and the academic memory-system literature beyond the
-LongMemEval/LoCoMo/Mem0 baseline — have already shipped the V0 pattern the
+LongMemEval/LoCoMo/Mem0 baseline -- have already shipped the V0 pattern the
 user is proposing, in part or in whole.
 
 The V0 pattern under test (recapped from
@@ -25,7 +25,7 @@ The V0 pattern under test (recapped from
    `recall(query)` and gets back verbatim line spans.
 4. **In-session scope**: retrieval substitutes for compaction *during the
    same conversation*, not just cross-session.
-5. **Temporal-aware routing** (state vs. history) layered on top — V2.
+5. **Temporal-aware routing** (state vs. history) layered on top -- V2.
 
 The four sub-questions below are answered in turn. Negative findings are
 called out; "nobody is doing X" is a finding when it is true.
@@ -36,9 +36,9 @@ labeled `[inference]`.
 
 ---
 
-## Q1 — Hobbyist / homelab tooling
+## Q1 -- Hobbyist / homelab tooling
 
-### Q1.1 — SillyTavern
+### Q1.1 -- SillyTavern
 
 SillyTavern is the most relevant single project: it is the largest and most
 active hobbyist front-end for local conversational LLMs, and has the
@@ -56,12 +56,12 @@ the mechanism is:
   message"). Each message is stored individually and can be retrieved
   individually.
 - At generation time, the most recent N messages (default 2) are used as a
-  query vector. Past messages with relevance ≥ 25% are candidates; the top
-  3 are "shuffled" into the chat history — i.e. *temporarily moved within
+  query vector. Past messages with relevance >= 25% are candidates; the top
+  3 are "shuffled" into the chat history -- i.e. *temporarily moved within
   the prompt* so the model sees them.
 - "If a vector search matches the vector of a summarized message, the
   original message is retrieved from chat history and shuffled into
-  context" — i.e. the **verbatim** message is what gets injected, not the
+  context" -- i.e. the **verbatim** message is what gets injected, not the
   summary, even when summarization is layered on top.
 - Storage backend is `vectra` (in-process JSON index on the Node server
   side) by default. Embeddings can come from OpenAI, the locally-hosted
@@ -69,7 +69,7 @@ the mechanism is:
 - Items stored carry the vector plus metadata; messages are split if
   `message_chunk_size` is set.
 
-This is in-session AND cross-session by design — the index is per-chat-file
+This is in-session AND cross-session by design -- the index is per-chat-file
 and grows as the chat grows. **Verbatim retrieval over the current session
 is shipped, on by default once enabled, with embeddings produced
 automatically per-turn.** This is the closest existing implementation of
@@ -77,7 +77,7 @@ V0's Tier-1 inline indexing path.
 
 What it *does not* do:
 
-- No tiered indexing — there is no "rich features at compaction" pass.
+- No tiered indexing -- there is no "rich features at compaction" pass.
   Tags like speaker / contains-code / contains-citation are not surfaced;
   metadata is the embedding plus a hash and chunk index.
 - Retrieval is "shuffle into prompt," not a tool call. The model does not
@@ -93,10 +93,10 @@ What it *does not* do:
 backed by ChromaDB. Per the issue tracker
 (https://github.com/SillyTavern/SillyTavern/issues/2625) and the
 SillyTavern-Extras repo (https://github.com/SillyTavern/SillyTavern-Extras
-— now marked OBSOLETE), Smart Context "is deprecated since data bank and
+-- now marked OBSOLETE), Smart Context "is deprecated since data bank and
 currently already integrated vectorization is present in default
-sillytavern." Same mechanism (whole chat history → vector DB → search on
-new input → inject matching messages), older transport. Replaced by
+sillytavern." Same mechanism (whole chat history -> vector DB -> search on
+new input -> inject matching messages), older transport. Replaced by
 Vector Storage. Not maintained.
 
 **Lorebook / World Info.** Static keyword-triggered prompt injection. World
@@ -113,7 +113,7 @@ inserted into the prompt at a configurable depth. Token budget is computed
 as `max summary buffer = context size - summarization prompt - previous
 summary - response length`
 (https://docs.sillytavern.app/extensions/summarize/). This is the
-*opposite* of V0 — lossy compaction of the transcript. Useful as a
+*opposite* of V0 -- lossy compaction of the transcript. Useful as a
 counter-example: this is what the community used before vectorization
 worked well, and per several how-to writeups (e.g.
 https://rpwithai.com/how-to-manage-long-chats-on-sillytavern/) is still
@@ -130,7 +130,7 @@ the original brief listed it.
   Generates AI summaries of "chapters" of the chat; agent invokes
   `query_timeline_chapter` / `query_timeline_chapters` to retrieve them.
   Stores chapters in chat metadata as JSON. **Tool-call retrieval shipped
-  in a hobbyist extension** — but the artifact is summary-based, not
+  in a hobbyist extension** -- but the artifact is summary-based, not
   verbatim, and chapters are coarse.
 - **TunnelVision** (Coneja-Chibi/deadbranch-forks,
   https://github.com/Coneja-Chibi/TunnelVision). "Fully autonomous and
@@ -143,7 +143,7 @@ the original brief listed it.
 - **sillytavern-character-memory / CharMemory** (bal-spec,
   https://github.com/bal-spec/sillytavern-character-memory). Auto-extracts
   *structured character memories* into the Data Bank, vectorized. Pure
-  fact-extraction shape — Mem0-adjacent, not Pattern 1.
+  fact-extraction shape -- Mem0-adjacent, not Pattern 1.
 - **SillyTavern-ReMemory** (InspectorCaracal,
   https://github.com/InspectorCaracal/SillyTavern-ReMemory). "Yet another
   SillyTavern memory extension." Summary-centric.
@@ -168,7 +168,7 @@ shipped: tool-call recall (only one extension does this, with summaries),
 tiered cheap/rich indexing, multi-card disposability, line-numbered
 indexing, or a metadata layer beyond the embedding itself.
 
-### Q1.2 — Oobabooga text-generation-webui
+### Q1.2 -- Oobabooga text-generation-webui
 
 A different kind of negative finding: the long-term-memory ecosystem in
 text-generation-webui is real but **stale and fragmented**.
@@ -187,7 +187,7 @@ extension. Uses `sentence-transformers/all-mpnet-base-v2` and scikit-learn
 linear search against loaded embedding vectors. **Explicitly marked "no
 longer in development"** per the runpod.io writeup
 (https://www.runpod.io/blog/how-to-work-with-long-term-memory-in-oobabooga-and-text-generation
-— "The original long_term_memory extension is no longer in development,
+-- "The original long_term_memory extension is no longer in development,
 and anyone still using it should migrate"). Hacker News thread
 (https://news.ycombinator.com/item?id=35944203) is from 2023. Dead.
 
@@ -212,7 +212,7 @@ data, not transcripts. Nothing here is tiered, multi-card, disposable, or
 tool-call-driven. The community has effectively migrated to SillyTavern
 for this use case.
 
-### Q1.3 — KoboldAI / koboldcpp
+### Q1.3 -- KoboldAI / koboldcpp
 
 Per the Memory/Author's Note/World Info wiki page
 (https://github.com/KoboldAI/KoboldAI-Client/wiki/Memory,-Author's-Note-and-World-Info)
@@ -245,7 +245,7 @@ are user-wired, not automatic. The "automatic per-turn embedding of the
 transcript" pattern is **not** a default in KoboldAI; it is a default in
 SillyTavern (which is the more common front-end for koboldcpp anyway).
 
-### Q1.4 — Open-WebUI
+### Q1.4 -- Open-WebUI
 
 Per the official docs
 (https://docs.openwebui.com/features/chat-conversations/memory/,
@@ -257,14 +257,14 @@ DeepWiki mirror
   for backend tasks", "I live in Vienna") in a vector DB. Manually
   editable. As of recent versions with Native Function Calling, the model
   can manage its own memory via five tool calls (add/update/delete/list/
-  query). This is the **fact-extraction** pattern — explicitly *not*
+  query). This is the **fact-extraction** pattern -- explicitly *not*
   Pattern 1 / V0. Same shape as ChatGPT Memory and Mem0.
 - **RAG** operates on attached documents, not on the chat history itself
   by default. Hybrid BM25 + vector search via EnsembleRetriever
   (https://deepwiki.com/open-webui/open-webui/5.4-hybrid-retrieval-strategies).
   Cross-encoder reranker. Configurable via `ENABLE_RAG_HYBRID_SEARCH`,
   `HYBRID_BM25_WEIGHT`. Performance issue #20327 is open as of recent
-  releases — BM25 reindexes per query, O(n) latency.
+  releases -- BM25 reindexes per query, O(n) latency.
 - **Reference Chat History** (discussion #13041,
   https://github.com/open-webui/open-webui/discussions/13041,
   and adaptive-memory plugin
@@ -277,7 +277,7 @@ Memory is fact-extraction. Verbatim per-turn transcript indexing of the
 *current* session is **not** the default and is approximated only by
 adaptive-memory plugins.
 
-### Q1.5 — AnythingLLM, LM Studio, Jan, Msty
+### Q1.5 -- AnythingLLM, LM Studio, Jan, Msty
 
 **AnythingLLM** (Mintplex-Labs,
 https://github.com/Mintplex-Labs/anything-llm). Document-oriented RAG
@@ -294,7 +294,7 @@ Documents" feature. If document fits in context, full text is dropped in;
 otherwise RAG-mode chunks and retrieves. Up to 5 files, 30 MB combined.
 Citations at end of response. Embeddings via configurable models
 (nomic-embed-text-v1.5, EmbeddingGemma). MCP support added in 0.3.17 (June
-2025). **Chat history itself is not indexed for retrieval** — RAG operates
+2025). **Chat history itself is not indexed for retrieval** -- RAG operates
 on attached documents only, per docs.
 
 **Jan AI** (https://www.jan.ai/docs). Open-source ChatGPT alternative.
@@ -305,7 +305,7 @@ docs. Standard "history is a list, eventually trimmed."
 **Msty Studio** (https://docs.msty.studio/features/knowledge-stacks/overview).
 Knowledge Stacks is the RAG primitive. Notably, the Next-Gen Knowledge
 Stacks feature (https://docs.msty.studio/features/knowledge-stacks/next-gen)
-allows **adding past conversations to a stack** — "you can add past
+allows **adding past conversations to a stack** -- "you can add past
 conversations into your stack, so your AI can reference things you've
 already discussed." This is the closest of the four to V0, but the
 mechanism is *user-curated* (you upload a Conversation Project) and the
@@ -318,16 +318,16 @@ not in-session, not tiered.
 "add past conversations to a stack" is the most adjacent feature; it is
 manual and cross-session.
 
-### Q1.6 — In-session retrieval as a hobbyist pattern
+### Q1.6 -- In-session retrieval as a hobbyist pattern
 
-The specific question — *does any hobbyist tool frame the current active
+The specific question -- *does any hobbyist tool frame the current active
 session as a retrieval artifact you query during the conversation, instead
 of relying on summarization or sliding-window for in-session compaction?*
 
 **SillyTavern Vector Storage answers yes, partially.** The *current chat*
 is indexed message-by-message in the background, and verbatim messages
 are shuffled into the prompt at generation time. But the model does not
-*query* — the front-end injects. There is no `recall(query)` tool; the
+*query* -- the front-end injects. There is no `recall(query)` tool; the
 "query" is just "the most recent 2 messages, embedded." This is the
 in-session-retrieval mechanism, but in *push* form, not *pull* form.
 
@@ -347,7 +347,7 @@ hermesatlas.com project page
 
 - "Persists every message in a SQLite database organized by conversation."
 - "Summarizes chunks of older messages into summaries using the configured
-  LLM" — but the **raw messages stay in the database**, summaries link
+  LLM" -- but the **raw messages stay in the database**, summaries link
   back to source messages, "agents can drill into any summary to recover
   the original detail."
 - DAG of summary nodes; raw leaves are verbatim messages.
@@ -387,14 +387,14 @@ multiple agent frameworks.
 **This is the strongest existing analogue to V0 found in this survey.**
 It is more directly a "verbatim current-session, agent recalls via tool
 call, never lose a message" implementation than anything covered
-yesterday — Claude memory tool and Letta/MemGPT recall are framed
+yesterday -- Claude memory tool and Letta/MemGPT recall are framed
 cross-session; Hermes-LCM is framed *current-session*. The user's V0 is
 not unique on the tool-call-into-current-session axis.
 
-### Q1.7 — r/LocalLLaMA, r/SillyTavernAI, Hacker News surface
+### Q1.7 -- r/LocalLLaMA, r/SillyTavernAI, Hacker News surface
 
 A direct-Reddit search via `site:reddit.com` returned no useful matches
-[negative finding — Reddit indexing in web search is poor]. Indirect
+[negative finding -- Reddit indexing in web search is poor]. Indirect
 evidence from how-to writeups and HN threads:
 
 - HN "Ask HN: How do you give a local AI model long-term memory?"
@@ -421,13 +421,13 @@ default features in any tool surveyed.
 
 ---
 
-## Q2 — Academic prototypes
+## Q2 -- Academic prototypes
 
 The yesterday pass covered LongMemEval, LoCoMo, Mem0, Zep/Graphiti, and
 the temporal-RAG/SelRoute literature. This pass widens the academic
 lens.
 
-### Q2.1 — Generative Agents (Park et al., 2023)
+### Q2.1 -- Generative Agents (Park et al., 2023)
 
 Park et al., UIST 2023 (arXiv:2304.03442,
 https://ar5iv.labs.arxiv.org/html/2304.03442). The canonical design.
@@ -438,13 +438,13 @@ Mechanism specifics:
   timestamp, a most-recent-access timestamp, an importance score (LLM
   self-rated 1-10), and an embedding.
 - **Retrieval scoring**: weighted sum of three signals, each
-  min-max-normalized to [0,1] —
+  min-max-normalized to [0,1] --
     - recency = exponential decay over time since last retrieval (decay
       factor 0.99 per simulated hour in the paper),
     - relevance = cosine similarity between memory embedding and query
       embedding,
     - importance = the LLM-rated importance score.
-  α weights set to 1 in the paper (uniform).
+  alpha weights set to 1 in the paper (uniform).
 - **Reflection** = periodically, the agent generates higher-level
   abstractions ("Klaus is dedicated to research") that are *also* added
   to the same memory stream as new entries with their own importance
@@ -456,17 +456,17 @@ How close is this to V0?
 - **Memory stream is a verbatim store.** Yes, observations are stored as
   natural language. Match for V0's "store the words."
 - **Retrieval is per-query, top-k.** Yes. Match.
-- **Index is dense vector.** Yes — embedding-based retrieval over the
+- **Index is dense vector.** Yes -- embedding-based retrieval over the
   whole stream. Match for V0 Tier-1.
 - **Tiered features.** *Partial.* The importance score is an LLM-rated
   cheap-feature equivalent; reflections are a richer LLM pass. But
   reflection is *adding new abstract entries*, not enriching the index of
-  existing entries. The closer-to-V0 framing — "embed first, classify
-  later when idle" — is **not** what Generative Agents does.
+  existing entries. The closer-to-V0 framing -- "embed first, classify
+  later when idle" -- is **not** what Generative Agents does.
 - **Disposable context / multi-card.** Not addressed; this is a research
   simulator, not a system architecture.
 - **In-session vs. cross-session.** Generative Agents has no "session"
-  concept — agents run continuously over simulated days. The retrieval
+  concept -- agents run continuously over simulated days. The retrieval
   is *over their entire lifetime*. Functionally this is in-session +
   cross-session collapsed; matches V0's "session is the retrieval
   artifact" framing more than Claude/Letta's cross-session-only framing.
@@ -476,7 +476,7 @@ the V0 retrieval-scoring shape. It is **not** tiered in the V0 sense; it
 *is* a unified-session retrieval design; it does not address the GPU /
 disposability question (it predates the modern resident-model framing).
 
-### Q2.2 — A-MEM (Xu et al., 2025)
+### Q2.2 -- A-MEM (Xu et al., 2025)
 
 A-MEM, arXiv:2502.12110 (Xu, Liang, Mei, Gao, Tan, Zhang, Rutgers/AGI
 Research, https://arxiv.org/abs/2502.12110, code at
@@ -485,12 +485,12 @@ memory. Mechanism:
 
 - **Note construction.** When a new memory is added, the system
   generates a structured note: contextual description, keywords, tags.
-  This is an **LLM-generated rich-feature pass per memory** — a tiered
+  This is an **LLM-generated rich-feature pass per memory** -- a tiered
   step.
 - **Link generation.** The system analyzes historical memories to
   identify relevant links. New edges added to a graph.
 - **Memory evolution.** New memories can trigger updates to *existing*
-  memory representations — i.e. the index is mutable.
+  memory representations -- i.e. the index is mutable.
 
 How close to V0?
 
@@ -508,13 +508,13 @@ How close to V0?
 - **Mutable index.** A-MEM updates older memory representations as new
   ones come in. V0 explicitly does not modify older entries (the
   transcript is append-only, but the *index* of the transcript could be
-  modified — V0 does not address this).
+  modified -- V0 does not address this).
 
 **Verdict:** A-MEM is the closest match for the *tiered LLM-enrichment*
 half of V0. Eager rather than lazy. Not multi-card. Not specifically
 in-session. Strong overall design match for V0 V2.
 
-### Q2.3 — MemoryBank (Zhong et al., 2023)
+### Q2.3 -- MemoryBank (Zhong et al., 2023)
 
 MemoryBank, arXiv:2305.10250 (https://arxiv.org/abs/2305.10250, AAAI 2024
 https://ojs.aaai.org/index.php/AAAI/article/view/29946, code at
@@ -534,7 +534,7 @@ Generative Agents (recency + relevance, plus importance via Ebbinghaus).
 Not tiered in the cheap/rich sense. Not multi-card. Cross-session-first
 framing.
 
-### Q2.4 — MemGPT/Letta (covered yesterday)
+### Q2.4 -- MemGPT/Letta (covered yesterday)
 
 Already covered in yesterday's research file
 (`2026-04-24-session-as-artifact-and-temporal-retrieval-prior-art.md`,
@@ -543,7 +543,7 @@ tiered cheap-vs-rich. Single-card. Cross-session by design but the
 recall tier *also* covers in-session because the conversation log is the
 recall log.
 
-### Q2.5 — MemoChat (Lu et al., 2023)
+### Q2.5 -- MemoChat (Lu et al., 2023)
 
 MemoChat, arXiv:2308.08239
 (https://ar5iv.labs.arxiv.org/html/2308.08239). "Tuning LLMs to Use
@@ -556,18 +556,18 @@ on retrieved memos. Iterative *memorization-retrieval-response* cycle.
 LLM writes. Same family as ConversationSummaryMemory in LangChain.
 **Anti-pattern relative to V0.** Listed for completeness.
 
-### Q2.6 — RecallM, ChatDB, MemoryLLM, Ret-LLM, SCM
+### Q2.6 -- RecallM, ChatDB, MemoryLLM, Ret-LLM, SCM
 
 - **RecallM** (https://www.emergentmind.com/topics/recallm). Hybrid Neo4j
   graph + ChromaDB vector store. Stores triples + embeddings. Cypher +
-  similarity hybrid retrieval. **Mem0/Zep family** — fact-extraction +
+  similarity hybrid retrieval. **Mem0/Zep family** -- fact-extraction +
   graph. Anti-pattern for V0.
 - **ChatDB** (Hu et al., 2023). "Augmenting LLMs with databases as their
   symbolic memory." LLM writes SQL operations to record/recall facts.
   Symbolic, not verbatim-text.
 - **MemoryLLM** (Wang et al., ICML 2024,
   https://github.com/wangyu-ustc/MemoryLLM). Self-updatable memory
-  embedded in model weights. "Memory region within the weights" — not a
+  embedded in model weights. "Memory region within the weights" -- not a
   retrieval system at all in the V0 sense.
 - **Ret-LLM** (Modarressi et al., arXiv:2305.14322
   https://arxiv.org/abs/2305.14322; evolved into MemLLM,
@@ -583,32 +583,32 @@ LLM writes. Same family as ConversationSummaryMemory in LangChain.
   sense.** Uniform single-card design. Not tiered.
 
 **Verdict for Q2.6:** RecallM/ChatDB/MemoryLLM/Ret-LLM are not
-verbatim-store designs. SCM is partial — verbatim segments are possible
+verbatim-store designs. SCM is partial -- verbatim segments are possible
 but not the focus, and there's no tiered indexing.
 
-### Q2.7 — H-MEM, MAGMA, Memoria, EMem, HippoRAG
+### Q2.7 -- H-MEM, MAGMA, Memoria, EMem, HippoRAG
 
 These are all 2024-2026 academic memory designs found in the Awesome-AI-
 Memory list (https://github.com/IAAR-Shanghai/Awesome-AI-Memory).
 
 - **H-MEM** (arXiv:2507.22925,
   https://arxiv.org/abs/2507.22925). Hierarchical memory with four
-  layers: Domain → Category → Memory Trace → Episode. Each vector has a
+  layers: Domain -> Category -> Memory Trace -> Episode. Each vector has a
   positional index pointing to its sub-memories. Layer-by-layer
-  retrieval. **Hierarchical** but not tiered in the V0 sense — H-MEM's
+  retrieval. **Hierarchical** but not tiered in the V0 sense -- H-MEM's
   hierarchy is over *abstraction levels*, not over *index richness at
   the same level*. Different axis.
 - **MAGMA** (arXiv:2601.03236). Multi-graph: orthogonal
   semantic/temporal/causal/entity graphs. Retrieval as policy-guided
-  traversal. Architectural match for V0 V2's temporal routing — multiple
+  traversal. Architectural match for V0 V2's temporal routing -- multiple
   index views, query-adaptive selection. But not specifically
   in-session.
 - **Memoria** (arXiv:2512.12686). Session-level summarization +
-  weighted KG user model. **Anti-pattern** — summary-driven.
+  weighted KG user model. **Anti-pattern** -- summary-driven.
 - **EMem-G/EMem** (arXiv:2511.17208, "A Simple Yet Strong Baseline").
   Explicitly anti-compression: "rather than using aggressive compression
   or independent relation triples, the research proposes an
-  event-centric representation … aiming to preserve information in
+  event-centric representation ... aiming to preserve information in
   non-compressive form." Elementary Discourse Units (EDUs) as the
   retrieval unit. **Verbatim-leaning baseline.** Strong intellectual
   match for V0's "preserve, don't compress" stance.
@@ -617,19 +617,19 @@ Memory list (https://github.com/IAAR-Shanghai/Awesome-AI-Memory).
   Anti-pattern for V0 directly, but the "neurobiologically inspired"
   framing is interesting context.
 
-### Q2.8 — Has any academic system specifically targeted in-session
+### Q2.8 -- Has any academic system specifically targeted in-session
 transcript retrieval as a substitute for compaction?
 
 This is the sharpest version of the V0 question. Searching for "in-session
 retrieval", "current conversation retrieval", "compaction substitute" via
 arXiv-targeted queries surfaces:
 
-- **EMem-G** (arXiv:2511.17208) — explicitly anti-compression, but
+- **EMem-G** (arXiv:2511.17208) -- explicitly anti-compression, but
   framed at multi-session benchmarks, not "single-active-session
   retrieval substituting for compaction."
 - **Microsoft Agent Framework Compaction docs**
   (https://learn.microsoft.com/en-us/agent-framework/agents/conversations/compaction)
-  describe "context compaction (reversible)" — strip information that
+  describe "context compaction (reversible)" -- strip information that
   exists elsewhere; the agent can re-read via tool. This is the V0
   intuition stated in production-doc form: *retrieve from elsewhere
   instead of compacting*. But "elsewhere" is the file system / tool
@@ -637,7 +637,7 @@ arXiv-targeted queries surfaces:
 - **Lethain's writeup** "Building an internal agent: Context window
   compaction" (https://lethain.com/agents-context-compaction/). Standard
   summarization-based compaction. No retrieval-substitute framing.
-- **Hermes-LCM** (https://github.com/stephenschoettler/hermes-lcm —
+- **Hermes-LCM** (https://github.com/stephenschoettler/hermes-lcm --
   same as above). Already discussed; this *is* the explicit framing.
   Hobbyist plugin, not academic.
 
@@ -660,14 +660,14 @@ ingredients separately:
 - Anti-compression baseline: EMem-G.
 - Controller-driven retrieval: SCM, MemoChat (with summaries).
 
-The *specific* framing — single active session, line-numbered transcript,
-tiered cheap/rich, retrieval substitutes for compaction — is **not** a
+The *specific* framing -- single active session, line-numbered transcript,
+tiered cheap/rich, retrieval substitutes for compaction -- is **not** a
 named published academic pattern as of this survey. Hermes-LCM is the
 closest existing implementation in any layer, and it is hobbyist code.
 
 ---
 
-## Q3 — Tiered indexing in either community
+## Q3 -- Tiered indexing in either community
 
 The V0 claim under test: cheap features (embedding + parsed tags) inline
 per-turn; rich features (LLM classification, entity extraction, discourse
@@ -682,7 +682,7 @@ tags) lazily during compaction or idle time.
   cheap-tier-first-then-rich-later pipeline.
 - **Hermes-LCM** has summaries-of-chunks layered over verbatim raw, which
   is a form of two-tier index over the same store. Not "cheap inline
-  plus rich at compaction" — it is "verbatim per-message + LLM-summary
+  plus rich at compaction" -- it is "verbatim per-message + LLM-summary
   per-chunk." Different axis but architecturally adjacent.
 - **No SillyTavern extension I found explicitly stages a cheap-features-
   inline + rich-features-lazy pipeline** (negative finding).
@@ -703,14 +703,14 @@ tags) lazily during compaction or idle time.
   Framework Context Compaction page, which describes asynchronous
   LLM-summary compaction in a sliding window
   (https://learn.microsoft.com/en-us/agent-framework/agents/conversations/compaction)
-  — but the work being deferred is summarization for storage, not
+  -- but the work being deferred is summarization for storage, not
   *enrichment of an index*.
 
 **Verdict for Q3:** Tiered indexing where cheap features go inline
 per-turn and rich features come at compaction/idle time is **not a
 commodity pattern** in either community. A-MEM does the rich pass
 eagerly. Hermes-LCM has a two-tier store but not a two-tier index. V0's
-specific staging — embed inline, classify on idle — is not a named
+specific staging -- embed inline, classify on idle -- is not a named
 pattern in the literature.
 
 This is a meaningful finding. The user's V0 is not novel in *concept*
@@ -719,20 +719,20 @@ in *naming* the cheap/rich split as a memory-system architecture point.
 
 ---
 
-## Q4 — Disposable-context / cross-card retrieval
+## Q4 -- Disposable-context / cross-card retrieval
 
 The V0 claim under test: a small embedding/retrieval model resident on
 *card 2* with explicit KV cache reset between queries; the primary stays
 resident on *card 1*.
 
-### Q4.1 — Multi-card homelab patterns observed
+### Q4.1 -- Multi-card homelab patterns observed
 
 - **TEI (text-embeddings-inference)** (HuggingFace,
   https://github.com/huggingface/text-embeddings-inference). Standalone
   embedding inference server. Supports CUDA, ROCm (AMD MI200/MI300), CPU.
   Designed to run as its own service, often on its own GPU. Issue #87
   (https://github.com/huggingface/text-embeddings-inference/issues/87)
-  is the report that TEI uses only one GPU on a multi-GPU node — i.e.
+  is the report that TEI uses only one GPU on a multi-GPU node -- i.e.
   TEI is single-GPU per service, but you run **multiple services pinned
   to different GPUs** to spread the load. This is the production pattern
   for separate-card embeddings.
@@ -741,7 +741,7 @@ resident on *card 1*.
   ollama issue #11986). Globally splits via `CUDA_VISIBLE_DEVICES`;
   per-model GPU pinning is **not** a built-in feature. Issue #5093
   documents this. So under Ollama, you cannot natively say "embed on GPU
-  1, generate on GPU 0" — you have to run two Ollama instances or use a
+  1, generate on GPU 0" -- you have to run two Ollama instances or use a
   different runtime for one of them.
 - **llama.cpp / koboldcpp** support `--main-gpu` and `--tensor-split` for
   splitting one model across cards, and you can run separate processes
@@ -752,7 +752,7 @@ resident on *card 1*.
 - **ROCm** (AMD) supports multi-GPU inference but homelab practitioners
   report scaling issues with dual 7900 XTX
   (https://forum.level1techs.com/t/dual-gpu-7900xtx-vfio-ollama-llm-bad-scaling/229768)
-  on PCIe 4.0 x8 — GPU load doesn't exceed 50%. This is the
+  on PCIe 4.0 x8 -- GPU load doesn't exceed 50%. This is the
   *tensor-parallelism* failure mode; the V0 design avoids it by running
   *different models on different cards* rather than splitting one model.
 - **Asymmetric setups** (one GPU for inference, another for STT/TTS or
@@ -762,11 +762,11 @@ resident on *card 1*.
 
 **TEI + Qdrant on multi-GPU** (Hsu blog,
 https://chaochunhsu.github.io/patterns/blogs/tei_qdrant_cache/) describes
-running TEI on a dedicated GPU with Qdrant on CPU/another GPU — a
+running TEI on a dedicated GPU with Qdrant on CPU/another GPU -- a
 production-shaped multi-card embedding pipeline. This is the closest
 direct analogue to V0's "card 2 = embedder + retrieval specialist."
 
-### Q4.2 — Disposable-context (KV cache reset between queries)
+### Q4.2 -- Disposable-context (KV cache reset between queries)
 
 This is the more specific axis. Searching for "KV cache reset" + "embedding"
 + "stateless" surfaces a different conversation than V0 expects:
@@ -777,21 +777,21 @@ This is the more specific axis. Searching for "KV cache reset" + "embedding"
   https://developer.nvidia.com/blog/introducing-new-kv-cache-reuse-optimizations-in-nvidia-tensorrt-llm/),
   BentoML's KV-cache-offload guide
   (https://bentoml.com/llm/inference-optimization/kv-cache-offloading)
-  all framed around **avoiding** disposability — preserve KV across
+  all framed around **avoiding** disposability -- preserve KV across
   requests for prefix caching benefits.
 - **Stateless inference** is more often discussed in the
   embedding-server context: an embedding model is a single forward pass,
   no autoregressive KV. So an embedding service is *naturally* disposable
-  — there is nothing to reset.
+  -- there is nothing to reset.
 - **Disposable context for a small generative LLM used as a retrieval
-  oracle** — i.e. the V0 framing where you load a small LLM, give it
-  (query + index), get back line numbers, then *reset its KV cache* — is
+  oracle** -- i.e. the V0 framing where you load a small LLM, give it
+  (query + index), get back line numbers, then *reset its KV cache* -- is
   **not a named pattern in any source I found**. The closest published
   primitive is llama.cpp's slot save/restore (mentioned in the user's
   V3+ multi-user time-slicing note), which is the right primitive but is
   used in production for *preserving* state, not deliberately wiping it.
 
-### Q4.3 — Multi-card homelab "embedding on card 2" as default
+### Q4.3 -- Multi-card homelab "embedding on card 2" as default
 
 Most homelab writeups in 2024-2026 (the "Adding AI to my Homelab with an
 eGPU" post, https://olav.ninja/adding-ai-to-my-homelab-with-an-egpu;
@@ -804,7 +804,7 @@ inference) but is **not a default homelab configuration**.
 
 The "small resident retrieval model on card 2 with deliberate KV reset
 between queries" pattern is, as far as this survey can tell, **not a
-named pattern anywhere — production, hobbyist, or academic.** This is
+named pattern anywhere -- production, hobbyist, or academic.** This is
 the strongest negative finding of the entire survey, and it is consistent
 with the user's V0 reframing 10 being genuinely original at the
 configuration level.
@@ -817,10 +817,10 @@ configuration level.
   homelab, exists in production ML stacks.
 - **Deliberate KV cache reset between queries on a small generative
   retrieval model**: not found as a named pattern. The closest analogue
-  is "use a stateless embedding service," which is one step weaker —
+  is "use a stateless embedding service," which is one step weaker --
   it doesn't use a generative model at all.
-- **The combination — small *generative* retrieval model on card 2,
-  treated as a disposable-context oracle the primary calls via tool —
+- **The combination -- small *generative* retrieval model on card 2,
+  treated as a disposable-context oracle the primary calls via tool --
   appears to be unclaimed.**
 
 ---
@@ -852,7 +852,7 @@ configuration level.
    Agents (Park et al., 2023) is the textbook reference and is widely
    reimplemented.
 5. **Anti-compression event-centric retrieval baselines.** EMem-G
-   (arXiv:2511.17208) — explicit "preserve, don't compress" stance over
+   (arXiv:2511.17208) -- explicit "preserve, don't compress" stance over
    discourse units.
 
 ### What's genuinely uncommon in hobbyist/academic space
@@ -873,8 +873,8 @@ configuration level.
    Production ML uses dedicated embedding services on separate GPUs
    (TEI), but those are stateless embedding models, not small generative
    LLMs used as retrieval oracles with deliberate KV resets. This
-   specific combination — small generative retriever, separate card,
-   stateless-by-policy — is not found.
+   specific combination -- small generative retriever, separate card,
+   stateless-by-policy -- is not found.
 4. **Temporal-aware state-vs-history routing over the transcript.**
    Already established as not-found in yesterday's research; this
    survey did not change that picture.
@@ -897,13 +897,13 @@ axis is SillyTavern Vector Storage (embedding-based, automatic,
 default-on), but it lacks tool-call invocation, tiered indexing, and
 multi-card disposability.
 
-**The full V0 stack — verbatim line-numbered transcript + tiered
+**The full V0 stack -- verbatim line-numbered transcript + tiered
 cheap/rich indexing + tool-call retrieval + disposable-context model on
-a separate GPU + temporal-aware routing — is not implemented as a single
+a separate GPU + temporal-aware routing -- is not implemented as a single
 system anywhere I found.** Each *individual* component exists in some
 form somewhere; the combination is unclaimed. This is the same shape of
-finding as yesterday's Pattern 1 + Pattern 2 verdict — the soup is novel,
-the ingredients are not — but extended to two more axes (the tiered
+finding as yesterday's Pattern 1 + Pattern 2 verdict -- the soup is novel,
+the ingredients are not -- but extended to two more axes (the tiered
 indexing axis and the multi-card disposability axis).
 
 ### What yesterday's framing should be revised to say
@@ -945,159 +945,159 @@ substantive claims V0 can make are:
 
 ### Hobbyist / homelab
 
-- SillyTavern Chat Vectorization docs —
+- SillyTavern Chat Vectorization docs --
   https://docs.sillytavern.app/extensions/chat-vectorization/
-- SillyTavern Smart Context (deprecated) —
+- SillyTavern Smart Context (deprecated) --
   https://docs.sillytavern.app/extensions/smart-context/;
   https://github.com/SillyTavern/SillyTavern/issues/2625
-- SillyTavern Data Bank / Vector Storage —
+- SillyTavern Data Bank / Vector Storage --
   https://docs.sillytavern.app/usage/core-concepts/data-bank/;
   https://deepwiki.com/SillyTavern/SillyTavern/6.3-vector-storage-and-rag-system;
   https://deepwiki.com/SillyTavern/SillyTavern/6-context-and-memory-systems
-- SillyTavern Summarize —
+- SillyTavern Summarize --
   https://docs.sillytavern.app/extensions/summarize/
-- SillyTavern World Info —
+- SillyTavern World Info --
   https://docs.sillytavern.app/usage/core-concepts/worldinfo/
-- SillyTavern-Extras (obsolete) —
+- SillyTavern-Extras (obsolete) --
   https://github.com/SillyTavern/SillyTavern-Extras
-- timeline-memory (unkarelian) —
+- timeline-memory (unkarelian) --
   https://github.com/unkarelian/timeline-memory
-- TunnelVision (Coneja-Chibi) —
+- TunnelVision (Coneja-Chibi) --
   https://github.com/Coneja-Chibi/TunnelVision;
   https://github.com/deadbranch-forks/TunnelVision-sillytavernyp
-- SillyTavern-MemoryBooks (aikohanasaki) —
+- SillyTavern-MemoryBooks (aikohanasaki) --
   https://github.com/aikohanasaki/SillyTavern-MemoryBooks
-- sillytavern-character-memory (bal-spec) —
+- sillytavern-character-memory (bal-spec) --
   https://github.com/bal-spec/sillytavern-character-memory
-- SillyTavern-ReMemory (InspectorCaracal) —
+- SillyTavern-ReMemory (InspectorCaracal) --
   https://github.com/InspectorCaracal/SillyTavern-ReMemory
-- arkhon_memory_st (kissg96, archived) —
+- arkhon_memory_st (kissg96, archived) --
   https://github.com/kissg96/arkhon_memory_st_archive
-- Oobabooga superboogav2 —
+- Oobabooga superboogav2 --
   https://github.com/oobabooga/text-generation-webui/tree/main/extensions/superboogav2
-- Oobabooga long_term_memory (wawawario2, unmaintained) —
+- Oobabooga long_term_memory (wawawario2, unmaintained) --
   https://github.com/wawawario2/long_term_memory;
   https://news.ycombinator.com/item?id=35944203;
   https://www.runpod.io/blog/how-to-work-with-long-term-memory-in-oobabooga-and-text-generation
-- annoy_ltm (YenRaven) —
+- annoy_ltm (YenRaven) --
   https://github.com/YenRaven/annoy_ltm
-- complex_memory (theubie) —
+- complex_memory (theubie) --
   https://github.com/theubie/complex_memory
-- KoboldAI Memory / Author's Note / World Info —
+- KoboldAI Memory / Author's Note / World Info --
   https://github.com/KoboldAI/KoboldAI-Client/wiki/Memory,-Author's-Note-and-World-Info
-- KoboldAI embedding-via-keywords proposal —
+- KoboldAI embedding-via-keywords proposal --
   https://github.com/KoboldAI/KoboldAI-Client/discussions/223
-- koboldcpp wiki (TextDB / `--embeddingsmodel`) —
+- koboldcpp wiki (TextDB / `--embeddingsmodel`) --
   https://github.com/LostRuins/koboldcpp/wiki
-- Open-WebUI memory docs —
+- Open-WebUI memory docs --
   https://docs.openwebui.com/features/chat-conversations/memory/;
   https://deepwiki.com/open-webui/open-webui/6.4-memory-and-context-management
-- Open-WebUI hybrid retrieval —
+- Open-WebUI hybrid retrieval --
   https://deepwiki.com/open-webui/open-webui/5.4-hybrid-retrieval-strategies
-- Open-WebUI Reference Chat History discussion —
+- Open-WebUI Reference Chat History discussion --
   https://github.com/open-webui/open-webui/discussions/13041
-- Open-WebUI Adaptive Memory plugin —
+- Open-WebUI Adaptive Memory plugin --
   https://open-webui.com/open-webui-adaptive-memory/
-- AnythingLLM repo + memory-feature request —
+- AnythingLLM repo + memory-feature request --
   https://github.com/Mintplex-Labs/anything-llm;
   https://github.com/Mintplex-Labs/anything-llm/issues/3289;
   https://github.com/Mintplex-Labs/anything-llm/issues/4821
-- LM Studio RAG docs —
+- LM Studio RAG docs --
   https://lmstudio.ai/docs/app/basics/rag;
   https://deepwiki.com/lmstudio-ai/docs/8.3-retrieval-augmented-generation-(rag)
-- Jan AI docs —
+- Jan AI docs --
   https://www.jan.ai/docs
-- Msty Knowledge Stacks (Next-Gen) —
+- Msty Knowledge Stacks (Next-Gen) --
   https://docs.msty.studio/features/knowledge-stacks/overview;
   https://docs.msty.studio/features/knowledge-stacks/next-gen
-- Hermes-LCM (Stephen Schoettler) —
+- Hermes-LCM (Stephen Schoettler) --
   https://github.com/stephenschoettler/hermes-lcm;
   https://hermesatlas.com/projects/stephenschoettler/hermes-lcm;
   https://github.com/stephenschoettler/hermes-lcm/blob/main/engine.py;
   https://github.com/stephenschoettler/hermes-lcm/blob/main/plugin.yaml
-- Hermes-Agent + LCM-as-plugin proposal —
+- Hermes-Agent + LCM-as-plugin proposal --
   https://github.com/NousResearch/hermes-agent/issues/5701;
   https://hermes-agent.nousresearch.com/docs/developer-guide/context-compression-and-caching
-- lossless-claw (Martian Engineering) —
+- lossless-claw (Martian Engineering) --
   https://github.com/martian-engineering/lossless-claw
-- HN "Ask HN: How do you give a local AI model long-term memory?" —
+- HN "Ask HN: How do you give a local AI model long-term memory?" --
   https://news.ycombinator.com/item?id=46252809
-- rpwithai SillyTavern long-chat guide —
+- rpwithai SillyTavern long-chat guide --
   https://rpwithai.com/how-to-manage-long-chats-on-sillytavern/
 
 ### Academic
 
-- Park et al., Generative Agents, UIST 2023, arXiv:2304.03442 —
+- Park et al., Generative Agents, UIST 2023, arXiv:2304.03442 --
   https://ar5iv.labs.arxiv.org/html/2304.03442
-- Xu et al., A-MEM, arXiv:2502.12110 —
+- Xu et al., A-MEM, arXiv:2502.12110 --
   https://arxiv.org/abs/2502.12110;
   https://github.com/agiresearch/A-mem
-- Zhong et al., MemoryBank, arXiv:2305.10250 —
+- Zhong et al., MemoryBank, arXiv:2305.10250 --
   https://arxiv.org/abs/2305.10250;
   https://ojs.aaai.org/index.php/AAAI/article/view/29946;
   https://github.com/zhongwanjun/MemoryBank-SiliconFriend
-- Lu et al., MemoChat, arXiv:2308.08239 —
+- Lu et al., MemoChat, arXiv:2308.08239 --
   https://ar5iv.labs.arxiv.org/html/2308.08239
-- Liang et al., SCM, arXiv:2304.13343 —
+- Liang et al., SCM, arXiv:2304.13343 --
   https://arxiv.org/html/2304.13343;
   https://github.com/wbbeyourself/SCM4LLMs
-- Modarressi et al., Ret-LLM / MemLLM, arXiv:2305.14322 —
+- Modarressi et al., Ret-LLM / MemLLM, arXiv:2305.14322 --
   https://arxiv.org/abs/2305.14322
-- Wang et al., MemoryLLM, ICML 2024 —
+- Wang et al., MemoryLLM, ICML 2024 --
   https://github.com/wangyu-ustc/MemoryLLM
-- Hu et al., RecallM —
+- Hu et al., RecallM --
   https://www.emergentmind.com/topics/recallm
-- Gutiérrez et al., HippoRAG, arXiv:2405.14831 —
+- Gutiérrez et al., HippoRAG, arXiv:2405.14831 --
   https://arxiv.org/abs/2405.14831
-- H-MEM, arXiv:2507.22925 —
+- H-MEM, arXiv:2507.22925 --
   https://arxiv.org/abs/2507.22925
-- MAGMA, arXiv:2601.03236 —
+- MAGMA, arXiv:2601.03236 --
   https://arxiv.org/html/2601.03236v1
-- Memoria, arXiv:2512.12686 —
+- Memoria, arXiv:2512.12686 --
   https://arxiv.org/html/2512.12686v1
-- EMem-G/EMem, arXiv:2511.17208 —
+- EMem-G/EMem, arXiv:2511.17208 --
   https://arxiv.org/abs/2511.17208
-- Awesome-AI-Memory list (IAAR-Shanghai) —
+- Awesome-AI-Memory list (IAAR-Shanghai) --
   https://github.com/IAAR-Shanghai/Awesome-AI-Memory
 
 ### Multi-card / homelab GPU configuration
 
-- HuggingFace TEI —
+- HuggingFace TEI --
   https://github.com/huggingface/text-embeddings-inference;
   https://huggingface.co/docs/text-embeddings-inference/index
-- TEI single-GPU-per-instance issue —
+- TEI single-GPU-per-instance issue --
   https://github.com/huggingface/text-embeddings-inference/issues/87
-- TEI + Qdrant multi-GPU pattern (Hsu) —
+- TEI + Qdrant multi-GPU pattern (Hsu) --
   https://chaochunhsu.github.io/patterns/blogs/tei_qdrant_cache/
-- Ollama multi-GPU notes —
+- Ollama multi-GPU notes --
   https://www.knightli.com/en/2026/04/19/ollama-multiple-gpu-notes/;
   https://github.com/ollama/ollama/issues/5093;
   https://github.com/ollama/ollama/issues/11986
-- llama.cpp Vulkan multi-GPU performance —
+- llama.cpp Vulkan multi-GPU performance --
   https://github.com/ggml-org/llama.cpp/discussions/10879;
   https://github.com/ggml-org/llama.cpp/discussions/15021
-- Dual 7900 XTX scaling Level1Techs thread —
+- Dual 7900 XTX scaling Level1Techs thread --
   https://forum.level1techs.com/t/dual-gpu-7900xtx-vfio-ollama-llm-bad-scaling/229768
-- ROCm multi-GPU docs —
+- ROCm multi-GPU docs --
   https://rocm.docs.amd.com/en/latest/how-to/rocm-for-ai/fine-tuning/multi-gpu-fine-tuning-and-inference.html
-- HeteroGPU (mixed-vendor pipeline parallelism) —
+- HeteroGPU (mixed-vendor pipeline parallelism) --
   https://dev.to/rushichaudhari/training-llms-on-mixed-gpus-my-experiments-and-what-i-learnt-1k7n
-- KV cache reuse (NVIDIA TensorRT-LLM) —
+- KV cache reuse (NVIDIA TensorRT-LLM) --
   https://developer.nvidia.com/blog/introducing-new-kv-cache-reuse-optimizations-in-nvidia-tensorrt-llm/
-- KV cache offloading (BentoML guide) —
+- KV cache offloading (BentoML guide) --
   https://bentoml.com/llm/inference-optimization/kv-cache-offloading
 
 ### Engineering writeups on compaction / context management
 
-- Microsoft Agent Framework Compaction —
+- Microsoft Agent Framework Compaction --
   https://learn.microsoft.com/en-us/agent-framework/agents/conversations/compaction
-- Lethain on internal-agent context-window compaction —
+- Lethain on internal-agent context-window compaction --
   https://lethain.com/agents-context-compaction/
-- Google Developers context-aware multi-agent framework —
+- Google Developers context-aware multi-agent framework --
   https://developers.googleblog.com/architecting-efficient-context-aware-multi-agent-framework-for-production/
-- Phil Schmid context-engineering part 2 —
+- Phil Schmid context-engineering part 2 --
   https://www.philschmid.de/context-engineering-part-2
-- Claude Code session memory (claudefa.st) —
+- Claude Code session memory (claudefa.st) --
   https://claudefa.st/blog/guide/mechanics/session-memory
-- claude-history (Raine) —
+- claude-history (Raine) --
   https://github.com/raine/claude-history

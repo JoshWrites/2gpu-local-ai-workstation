@@ -179,7 +179,7 @@ render_opencode_config() {
 
 pkill_rogue_servers() {
   # Kill any llama-server or ollama process not spawned by systemd (those
-  # are OK — systemctl stop will handle them on teardown). Shell-launched
+  # are OK -- systemctl stop will handle them on teardown). Shell-launched
   # ones would fight for ports and we can't tell them apart cleanly, so we
   # just kill anything on our target ports.
   local found=0
@@ -268,7 +268,7 @@ wait_for_endpoints() {
 # Service lifecycle is owned by the launcher (2gpu-launch.sh) and
 # by the manual `llama-shutdown` command. This wrapper only brings llama up
 # if it isn't already and then runs opencode. On exit we leave services
-# running — terminal opencode and Zed-spawned opencode share endpoints, and
+# running -- terminal opencode and Zed-spawned opencode share endpoints, and
 # tearing down here would yank them out from under a still-active session.
 
 if [[ ! -x "$OPENCODE_BIN" ]]; then

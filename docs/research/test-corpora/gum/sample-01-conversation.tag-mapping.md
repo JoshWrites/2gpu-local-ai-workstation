@@ -1,8 +1,8 @@
-# GUM sample-01 (conversation_christmas) — tag mapping notes
+# GUM sample-01 (conversation_christmas) -- tag mapping notes
 
 A family gift-opening conversation transcribed with discourse
 structure. ~1,112 words. Multi-party dialogue (Mom, Dad, Judy,
-Dan, etc.), naturalistic, full of asides and topic shifts — the hard
+Dan, etc.), naturalistic, full of asides and topic shifts -- the hard
 case for discourse parsers.
 
 ## Target tags present
@@ -10,25 +10,25 @@ case for discourse parsers.
 Scanning the PDTB-style gold annotations in
 `sample-01-conversation.annotated.pdtb.txt`, I see:
 
-- `Expansion.Conjunction` (many) — multi-clause additions, typically
+- `Expansion.Conjunction` (many) -- multi-clause additions, typically
   text-level **elaboration** or **continuation**.
-- `Expansion.Equivalence` — "in other words" style restatements.
+- `Expansion.Equivalence` -- "in other words" style restatements.
   Maps to **elaboration** in our taxonomy.
-- `Comparison.Contrast` — "but" and "though" linked clauses.
+- `Comparison.Contrast` -- "but" and "though" linked clauses.
   Maps directly to our **contrast**.
-- `Contingency.Cause.Reason` — "cause", "because" clauses.
+- `Contingency.Cause.Reason` -- "cause", "because" clauses.
   Explanation / reason; does not map to any of our tags directly.
-- `Contingency.Cause.Result` — "so" clauses. Commitment-adjacent if
+- `Contingency.Cause.Result` -- "so" clauses. Commitment-adjacent if
   the result clause is a decision.
-- `Contingency.Condition.Arg1-as-cond` / `.Arg2-as-cond` — "if"
+- `Contingency.Condition.Arg1-as-cond` / `.Arg2-as-cond` -- "if"
   conditionals.
-- `Contingency.Purpose.Arg2-as-goal` — "in order to" structures.
-- `Temporal.Synchronous` — "when" clauses.
-- `Hypophora` — speaker asks and answers own question. Partial
+- `Contingency.Purpose.Arg2-as-goal` -- "in order to" structures.
+- `Temporal.Synchronous` -- "when" clauses.
+- `Hypophora` -- speaker asks and answers own question. Partial
   overlap with our **question** tag.
-- `EntRel` — entity-based coherence (anaphora-driven) without an
+- `EntRel` -- entity-based coherence (anaphora-driven) without an
   explicit relation.
-- `NoRel` — annotator marked no discourse relation.
+- `NoRel` -- annotator marked no discourse relation.
 
 ## Mapping table
 
@@ -37,13 +37,13 @@ Scanning the PDTB-style gold annotations in
 | contrast      | Comparison.Contrast                                         | adversative-contrast                         |
 | concession    | Comparison.Concession, Comparison.Concession+SpeechAct      | adversative-concession                       |
 | elaboration   | Expansion.Conjunction, Expansion.Equivalence, Expansion.Level-of-detail | elaboration-additional, elaboration-attribute |
-| directive     | — (not encoded at discourse-relation level)                 | — (encoded in topic-solutionhood if paired with question) |
+| directive     | -- (not encoded at discourse-relation level)                 | -- (encoded in topic-solutionhood if paired with question) |
 | question      | Hypophora + question mark; see also topic-question in RST   | topic-question                               |
-| commitment    | — (no direct PDTB sense)                                    | — (no direct eRST relation; evaluation-comment + declarative mood approximates) |
-| reversal      | — (no direct PDTB sense)                                    | — (no direct eRST relation)                  |
-| supersession  | — (no direct PDTB sense)                                    | — (no direct eRST relation)                  |
-| aside         | — (not distinguished from elaboration/comment)              | evaluation-comment                           |
-| unresolved    | — (structural absence of answer / purpose / result)         | — (structural)                               |
+| commitment    | -- (no direct PDTB sense)                                    | -- (no direct eRST relation; evaluation-comment + declarative mood approximates) |
+| reversal      | -- (no direct PDTB sense)                                    | -- (no direct eRST relation)                  |
+| supersession  | -- (no direct PDTB sense)                                    | -- (no direct eRST relation)                  |
+| aside         | -- (not distinguished from elaboration/comment)              | evaluation-comment                           |
+| unresolved    | -- (structural absence of answer / purpose / result)         | -- (structural)                               |
 
 ## Structural note: what PDTB & RST miss
 

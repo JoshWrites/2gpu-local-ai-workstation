@@ -1,4 +1,4 @@
-# SwDA sample-02 (sw_0624_3557) — tag mapping notes
+# SwDA sample-02 (sw_0624_3557) -- tag mapping notes
 
 Topic: AIDS research funding and Magic Johnson. ~1,080 words.
 Mix of opinion exchange, factual sourcing, concession, and
@@ -6,7 +6,7 @@ topic-shifting asides.
 
 ## Target tags observed
 
-- **question**: multiple — turn 1 B "You think about AIDS research?"
+- **question**: multiple -- turn 1 B "You think about AIDS research?"
   (`qo`), turn 10 B "That's in the world, or in America?" (`qr`, or
   alternative), turn 15 B "Whose figure is that?" (`qw`),
   turn 22 A "Do you think they should spend more?" (`qy`),
@@ -16,22 +16,22 @@ topic-shifting asides.
   with supporting `sd` continuations; turn 35 B elaborates on Magic
   Johnson's actions. Present.
 - **concession**: turn 29 B "I think he's probably doing the right
-  thing… *but* I don't think it's anything exceptional" — classic
+  thing... *but* I don't think it's anything exceptional" -- classic
   concessive contrast. Present and strong.
 - **contrast**: turn 29 B's "but" construction; turn 11 A "although it
   is not killing that many people now, it still has the opportunity to
   get out of control". Present.
 - **commitment**: turn 40 A "I'm glad that Mister Johnson's changed his
-  tune on safe sex to abstinence" — an evaluative commitment, not a
+  tune on safe sex to abstinence" -- an evaluative commitment, not a
   decision. Weak. No strong task-commitment (chat is open-ended).
 - **reversal**: turn 40 A "I'm glad that Mister Johnson's changed his
   tune" narrates a reversal (Magic Johnson's, not the speaker's). No
   within-speaker reversal in this sample.
 - **supersession**: absent.
 - **aside**: turn 22 A "Sometimes you hear things on the radio that,
-  you know, could be true or couldn't be" — meta-comment on sourcing.
+  you know, could be true or couldn't be" -- meta-comment on sourcing.
   Mild aside. Turn 44 A "let's see. What are some of the other
-  questions… I don't have any friends that have the disease" — speaker
+  questions... I don't have any friends that have the disease" -- speaker
   checks the task list, then shifts. Strong aside / topic transition.
 - **unresolved**: sample ends mid-conversation ("that sort of thing,"
   at turn 53). Unresolved by design. Present.
@@ -56,7 +56,7 @@ topic-shifting asides.
 This sample is **stronger than sample-01 on concession and contrast**
 because it's an opinion exchange with explicit concessive structure
 ("although", "but not exceptional"). It's **weaker on commitment**
-because nothing gets decided — it's chit-chat. It exemplifies the
+because nothing gets decided -- it's chit-chat. It exemplifies the
 **limitation of SwDA**: the "but I don't think it's anything exceptional"
 in turn 29 is a single `sv` tag; the *contrast* relation to the
 preceding `sv` ("doing the right thing for a man in his position") is

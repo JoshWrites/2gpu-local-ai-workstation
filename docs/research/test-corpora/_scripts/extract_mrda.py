@@ -29,7 +29,7 @@ with open(out_annot, 'w') as f:
 
 # Clean text: speaker + utterance
 with open(out_clean, 'w') as f:
-    f.write("# MRDA (ICSI Meeting Recorder Dialogue Act Corpus) excerpt — clean text\n")
+    f.write("# MRDA (ICSI Meeting Recorder Dialogue Act Corpus) excerpt -- clean text\n")
     f.write(f"# Source file: {src.split('/')[-1]}\n")
     f.write("# Speakers: fe### = female, me### = male, with numeric ID.\n")
     f.write("# This is a naturalistic meeting transcript; disfluencies are minimally scrubbed.\n\n")

@@ -1,4 +1,4 @@
-# MRDA — ICSI Meeting Recorder Dialogue Act Corpus
+# MRDA -- ICSI Meeting Recorder Dialogue Act Corpus
 
 ## Description
 
@@ -6,7 +6,7 @@ Shriberg, Dhillon, Bhagat, Ang, Carvey (2004). 75 naturally-occurring
 research-group meetings recorded at ICSI (International Computer
 Science Institute), ~72 hours of audio, 53 unique speakers, ~180K
 hand-annotated dialog-act tags plus adjacency-pair annotations.
-Multi-party: each meeting has ~5–10 participants. Most annotated
+Multi-party: each meeting has ~5-10 participants. Most annotated
 meetings are research discussions of speech processing and dialogue
 system research.
 
@@ -49,7 +49,7 @@ git clone --depth 1 https://github.com/NathanDuran/MRDA-Corpus.git
 - **sample-01**: First 200 utterances of meeting **Bdb001** (~1,500 words
   of cleaned text). A discussion among four participants (fe016, me011,
   me018, mn017) about a proposed XML format for meeting transcript
-  annotation — timeline references, utterance IDs, and how forced-
+  annotation -- timeline references, utterance IDs, and how forced-
   alignment output maps into the format. The first speaker (fe016) has
   a stated goal ("main thing I was going to ask people to help with
   today is to give input on what kinds of database format we should

@@ -1,12 +1,12 @@
 #!/usr/bin/env bash
-# Stage 1: Stress-test card 2 (5700 XT) — llama-secondary + llama-embed concurrent.
+# Stage 1: Stress-test card 2 (5700 XT) -- llama-secondary + llama-embed concurrent.
 #
 # Includes a BULK INGEST phase (200 chunks, simulating real persistent-ingest load)
 # because the architectural question is: "can card 2 host both the distiller's
 # summarizer AND the embedder during realistic ingest workloads?"
 #
-# Pass → Stage 2 (add primary card alongside)
-# Fail → embedder moves to CPU; revise stack before Stage 2
+# Pass -> Stage 2 (add primary card alongside)
+# Fail -> embedder moves to CPU; revise stack before Stage 2
 #
 # Does NOT require opencode.
 #
@@ -33,9 +33,9 @@ echo "=== Preflight ==="
 check_endpoint() {
   local name="$1" url="$2"
   if curl -fs --max-time 3 "$url" >/dev/null 2>&1; then
-    echo "  $name — OK"
+    echo "  $name -- OK"
   else
-    echo "  $name — UNREACHABLE ($url)" >&2
+    echo "  $name -- UNREACHABLE ($url)" >&2
     return 1
   fi
 }
@@ -79,7 +79,7 @@ secondary_load() {
   done
 }
 
-# Lightweight ongoing embed load — 16 chunks per burst.
+# Lightweight ongoing embed load -- 16 chunks per burst.
 embed_load_light() {
   local log="$1" duration="$2"
   : > "$log"
@@ -114,7 +114,7 @@ embed_load_light() {
   done
 }
 
-# Bulk-ingest workload — models realistic persistent-topic ingest.
+# Bulk-ingest workload -- models realistic persistent-topic ingest.
 # Embeds 200 unique chunks across ~13 batches of 16. Each chunk is a
 # synthesized sentence (not realistic prose, but tokenization-realistic).
 embed_load_bulk() {
@@ -185,7 +185,7 @@ bulk_t0=$(date +%s.%N)
 (embed_load_bulk "$OUT_DIR/emb-bulk-solo.txt" 200)
 bulk_t1=$(date +%s.%N)
 bulk_solo_elapsed=$(awk -v t0="$bulk_t0" -v t1="$bulk_t1" 'BEGIN { printf "%.2f", t1-t0 }')
-echo "  complete — 200 chunks in ${bulk_solo_elapsed}s solo"
+echo "  complete -- 200 chunks in ${bulk_solo_elapsed}s solo"
 
 # ── Phase 4: Concurrent light load (secondary + 16-chunk embed) ──────────────
 
@@ -204,7 +204,7 @@ wait $vram_pid $sec_pid $emb_pid
 
 echo ""
 echo "=== Phase 5: Concurrent BULK load (secondary + 200-chunk ingest) ==="
-echo "  this is the hard test — models real persistent-ingest under load"
+echo "  this is the hard test -- models real persistent-ingest under load"
 (vram_watch "$OUT_DIR/vram-bulk.txt" 120) &
 vram_bulk_pid=$!
 (secondary_load "$OUT_DIR/sec-concurrent-bulk.txt" 120) &
@@ -250,7 +250,7 @@ peak_vram_bulk=$(vram_peak "$OUT_DIR/vram-bulk.txt")
 
 echo ""
 echo "╔══════════════════════════════════════════════════════════╗"
-echo "║ RESULTS — Stage 1                                        ║"
+echo "║ RESULTS -- Stage 1                                        ║"
 echo "╚══════════════════════════════════════════════════════════╝"
 echo ""
 echo "--- Secondary (Qwen3-4B) latency ---"
@@ -298,7 +298,7 @@ check_ratio() {
     echo "  FAIL: $label ${ratio}x baseline (>${max_ratio}x allowed)"
     fail=1
   else
-    echo "  PASS: $label ${ratio}x baseline (≤${max_ratio}x)"
+    echo "  PASS: $label ${ratio}x baseline (<=${max_ratio}x)"
   fi
 }
 
@@ -314,7 +314,7 @@ check_ratio "Secondary w/ light embed"   "$sec_base" "$sec_light" 1.25
 check_ratio "Secondary w/ bulk ingest"   "$sec_base" "$sec_bulk"  1.50
 check_ratio "Embed light concurrent"     "$emb_base" "$emb_light" 1.50
 
-# Bulk-ingest concurrent shouldn't be more than 2x solo — if it is, contention
+# Bulk-ingest concurrent shouldn't be more than 2x solo -- if it is, contention
 # is severe enough that persistent-ingest during active sessions is impractical.
 bulk_ratio=$(awk -v s="$bulk_solo_elapsed" -v c="$bulk_concurrent_elapsed" \
   'BEGIN{if(s==0)print 99; else printf "%.2f", c/s}')
@@ -322,11 +322,11 @@ if awk -v r="$bulk_ratio" 'BEGIN{exit !(r > 2.00)}'; then
   echo "  FAIL: Bulk ingest ${bulk_ratio}x slower under load (>2.0x allowed)"
   fail=1
 else
-  echo "  PASS: Bulk ingest ${bulk_ratio}x slower under load (≤2.0x)"
+  echo "  PASS: Bulk ingest ${bulk_ratio}x slower under load (<=2.0x)"
 fi
 
 if (( peak_vram_bulk >= 7800 )); then
-  echo "  FAIL: VRAM peak ${peak_vram_bulk} MB during bulk (≥7800 MB ceiling)"
+  echo "  FAIL: VRAM peak ${peak_vram_bulk} MB during bulk (>=7800 MB ceiling)"
   fail=1
 else
   echo "  PASS: VRAM peak ${peak_vram_bulk} MB during bulk (<7800 MB)"
@@ -334,11 +334,11 @@ fi
 
 echo ""
 if (( fail == 0 )); then
-  echo "✓ STAGE 1 PASSED — proceed to stage 2 (add primary card)."
+  echo "[x] STAGE 1 PASSED -- proceed to stage 2 (add primary card)."
   echo ""
   echo "Next: ./stress-test-stage2-both-cards.sh"
 else
-  echo "✗ STAGE 1 FAILED — move embed to CPU before stage 2."
+  echo "[ ] STAGE 1 FAILED -- move embed to CPU before stage 2."
 fi
 
 echo ""

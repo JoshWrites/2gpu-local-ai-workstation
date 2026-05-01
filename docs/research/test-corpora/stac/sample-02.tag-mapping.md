@@ -1,4 +1,4 @@
-# STAC sample-02 (592_s1_league3_game6_1) — tag mapping notes
+# STAC sample-02 (592_s1_league3_game6_1) -- tag mapping notes
 
 Shorter Catan dialogue, 502 words / 105 EDUs / 108 relations.
 Relation types in this sample: Acknowledgement, Background,
@@ -10,12 +10,12 @@ Question_answer_pair, Result.
 
 Sample-01 is a game-setup conversation (meta-chat about scheduling,
 yesterday's game, weather). Sample-02 is deeper into actual
-negotiation — trade proposals and counterproposals, which amplify
+negotiation -- trade proposals and counterproposals, which amplify
 `Correction`, `Contrast`, and `Question_answer_pair`.
 
 ## Same mapping table as sample-01 applies
 
-See sample-01.tag-mapping.md for the STAC-relation → our-tag
+See sample-01.tag-mapping.md for the STAC-relation -> our-tag
 correspondence. This sample provides additional confirmation of
 `Correction` (i.e. supersession) in a negotiation context rather than
 the social-chat context of sample-01.
@@ -24,11 +24,11 @@ the social-chat context of sample-01.
 
 Scanning the annotations JSON, watch for:
 
-- `Correction` edges — these are the parser's supersession signal.
-- `Contrast` edges paired with adjacent `Acknowledgement` edges —
+- `Correction` edges -- these are the parser's supersession signal.
+- `Contrast` edges paired with adjacent `Acknowledgement` edges --
   these are concessions.
 - `Question_answer_pair` with a `target` that contains `"but"` or
-  `"no, but"` — concession-inside-answer.
+  `"no, but"` -- concession-inside-answer.
 
 ## Notes
 

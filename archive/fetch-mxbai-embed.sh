@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 # Download mxbai-embed-large-v1 Q8_0 GGUF to /home/levine/models/mxbai-embed-large/.
-# Idempotent — skips download if the file already exists and passes a minimal sanity check.
+# Idempotent -- skips download if the file already exists and passes a minimal sanity check.
 #
 # Source: ChristianAzinn/mxbai-embed-large-v1-gguf on Hugging Face.
 # Q8_0 is recommended over smaller quants for embedding models (quant quality matters

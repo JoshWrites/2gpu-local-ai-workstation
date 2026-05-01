@@ -1,21 +1,21 @@
 # Decision log
 
-## 2026-04-28 — kickoff
+## 2026-04-28 -- kickoff
 
 **Context:** User noticed opencode-in-Zed fails to surface tool approval prompts; bash boxes appear empty in the UI. Investigated as a debugging session, traced through opencode source.
 
 **Constraints set by user:**
 - Permission decisions must be **per-call interactive**, not static allowlists.
-- Solutions must be **local** (no hosted agent substitutes — Claude is for toolchain, opencode is for files).
+- Solutions must be **local** (no hosted agent substitutes -- Claude is for toolchain, opencode is for files).
 - Top priority: opencode as first-class Zed citizen.
-- Phase 2 priority: solution must be remote-serveable (matching the existing `work-opencode` SSH pattern for laptop→workstation).
-- User willing to fork Zed if needed (deferred — not needed unless other paths fail).
+- Phase 2 priority: solution must be remote-serveable (matching the existing `work-opencode` SSH pattern for laptop->workstation).
+- User willing to fork Zed if needed (deferred -- not needed unless other paths fail).
 - Community contribution desired where it doesn't slow down phase 1.
 
 **Decision:** Hybrid plan.
 1. Build local stdio shim (Phase 1).
 2. Once shim's logic is proven, port it as an upstream PR to opencode (re-doing what closed-bot-PR #7374 did, this time as a human submission).
-3. Remote serving (Phase 2) inherits the shim as the natural place to bridge SSH ↔ stdio. No protocol changes needed.
+3. Remote serving (Phase 2) inherits the shim as the natural place to bridge SSH <-> stdio. No protocol changes needed.
 
 **Why shim before patched-opencode:**
 - Reversible (no fork to maintain).

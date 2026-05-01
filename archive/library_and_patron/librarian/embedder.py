@@ -3,7 +3,7 @@
 Uses the OpenAI-compatible /v1/embeddings endpoint. Batches sent as a single
 request to leverage llama-server's internal batching.
 
-No retry here — retry policy lives at the caller level (the server.py tool).
+No retry here -- retry policy lives at the caller level (the server.py tool).
 """
 
 from __future__ import annotations
@@ -31,7 +31,7 @@ class EmbedderError(RuntimeError):
 def embed_batch(texts: list[str]) -> list[list[float]]:
     """Embed a batch of texts. Returns a list of vectors in the same order.
 
-    Raises EmbedderError on HTTP or parsing failure. No partial results —
+    Raises EmbedderError on HTTP or parsing failure. No partial results --
     either every text gets a vector, or the call raises.
 
     Inputs longer than MAX_CHARS_PER_INPUT are truncated defensively to

@@ -36,7 +36,7 @@ from .embedder import EmbedderError, cosine_similarity, embed_batch, embed_one
 
 # ── Logging ──────────────────────────────────────────────────────────────────
 
-# stderr JSONL — stdout is the MCP transport.
+# stderr JSONL -- stdout is the MCP transport.
 def _log(event: str, **fields) -> None:
     line = {"ts": time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime()), "event": event, **fields}
     print(json.dumps(line), file=sys.stderr, flush=True)
@@ -45,7 +45,7 @@ def _log(event: str, **fields) -> None:
 # ── Binary rejection ─────────────────────────────────────────────────────────
 
 BINARY_SAMPLE_BYTES = 1024
-BINARY_REJECT_RATIO = 0.30  # >30% non-printable → binary, reject
+BINARY_REJECT_RATIO = 0.30  # >30% non-printable -> binary, reject
 
 
 def looks_binary(path: str) -> bool:
@@ -54,7 +54,7 @@ def looks_binary(path: str) -> bool:
         with open(path, "rb") as f:
             sample = f.read(BINARY_SAMPLE_BYTES)
     except OSError:
-        return True  # can't read → treat as binary / reject
+        return True  # can't read -> treat as binary / reject
     if not sample:
         return False  # empty is not binary
     # Printable = ASCII 0x20-0x7E, plus tab/newline/cr (0x09, 0x0A, 0x0D)
@@ -99,9 +99,9 @@ def mine_file(path: str, query: str, top_k: int = 5) -> dict:
     query, typically 1-5 KB of tokens regardless of file size.
 
     Typical uses:
-    - "How does X work in this config?" → mine_file(config_path, "how does X work")
-    - "What does the plan say about Y?"  → mine_file(plan_path, "policy on Y")
-    - "Which section covers Z?"           → mine_file(path, "Z")
+    - "How does X work in this config?" -> mine_file(config_path, "how does X work")
+    - "What does the plan say about Y?"  -> mine_file(plan_path, "policy on Y")
+    - "Which section covers Z?"           -> mine_file(path, "Z")
 
     The file is chunked on first access using a strategy chosen automatically
     from the file extension (markdown-section chunking for .md/.txt/.rst,
@@ -110,7 +110,7 @@ def mine_file(path: str, query: str, top_k: int = 5) -> dict:
 
     Use `read` instead when:
     - You need the whole file verbatim (copying, reproducing, editing).
-    - The file is small (<100 lines) — `read` is simpler for tiny files.
+    - The file is small (<100 lines) -- `read` is simpler for tiny files.
     - The librarian is unavailable (embed server down, tool errored).
 
     Args:

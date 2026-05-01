@@ -1,8 +1,8 @@
 """End-to-end test: exercise mine_file against the live embed server on :11437.
 
 Tests the full pipeline:
-  - code file → code chunker + mxbai embed + cosine-similarity retrieval
-  - doc  file → document chunker + mxbai embed + cosine-similarity retrieval
+  - code file -> code chunker + mxbai embed + cosine-similarity retrieval
+  - doc  file -> document chunker + mxbai embed + cosine-similarity retrieval
   - strategy auto-switches per file type (no manual hint from caller)
   - relevant chunk beats irrelevant chunk on score
   - repeat calls hit cache (no re-embed)
@@ -300,7 +300,7 @@ def test_cache_hit_on_second_call_same_file():
         assert r1["from_cache"] is False
         r2 = _server_mod.mine_file(path, "DNS strategy?", top_k=2)
         assert r2["from_cache"] is True, "second call on same file should hit cache"
-        assert r2["file_id"] == r1["file_id"], "same file → same id"
+        assert r2["file_id"] == r1["file_id"], "same file -> same id"
     finally:
         os.unlink(path)
 
@@ -311,12 +311,12 @@ def test_cache_miss_when_file_changes():
         _fresh_cache()
         r1 = _server_mod.mine_file(path, "firewall?", top_k=1)
         time.sleep(1.1)  # ensure mtime tick
-        # Modify the file — mtime changes → cache key changes → re-embed
+        # Modify the file -- mtime changes -> cache key changes -> re-embed
         with open(path, "a") as f:
             f.write("\n\n## New Section\n\nAdded content.\n")
         r2 = _server_mod.mine_file(path, "firewall?", top_k=1)
         assert r2["from_cache"] is False, "modified file should cause cache miss"
-        assert r2["file_id"] != r1["file_id"], "new mtime → new file_id"
+        assert r2["file_id"] != r1["file_id"], "new mtime -> new file_id"
     finally:
         os.unlink(path)
 

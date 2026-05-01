@@ -1,11 +1,11 @@
-# STAC — Strategic Conversation Corpus (linguistic-only)
+# STAC -- Strategic Conversation Corpus (linguistic-only)
 
 ## Description
 
 STAC (Asher, Hunter, Morey, Farah, Afantenos 2016) is a corpus of
 multi-party online chat logs from games of *The Settlers of Catan*,
 annotated under Segmented Discourse Representation Theory (SDRT).
-Players negotiate trades, bluff, and react to game events — the chat
+Players negotiate trades, bluff, and react to game events -- the chat
 alone is the "linguistic-only" version; a parallel "situated" version
 also includes the non-linguistic game events as discourse units.
 
@@ -26,7 +26,7 @@ adjacent-pair dialogue acts).
 
   | SDRT relation            | Meaning                                         |
   |--------------------------|-------------------------------------------------|
-  | Question_answer_pair     | Q → A (direct answer)                           |
+  | Question_answer_pair     | Q -> A (direct answer)                           |
   | Q_Elab                   | question elaborating on a prior question        |
   | Clarification_question   | request for clarification                       |
   | Elaboration              | more detail on a prior EDU                      |
@@ -47,7 +47,7 @@ adjacent-pair dialogue acts).
 
 - Project site: <https://www.irit.fr/STAC/>
 - Corpus page: <https://www.irit.fr/STAC/corpus.html>
-- Paper: Asher et al. 2016 LREC — <https://aclanthology.org/L16-1432/>
+- Paper: Asher et al. 2016 LREC -- <https://aclanthology.org/L16-1432/>
 
 ## How to reobtain
 
@@ -78,7 +78,7 @@ use requires permission from the STAC authors.
   Parallel, Q_Elab, Question_answer_pair, Result). Good test for
   parsers across the board.
 - **sample-02**: dialogue **592_s1_league3_game6_1** (~502 words, 105
-  EDUs, 108 relations). Shorter and more negotiation-heavy — many
+  EDUs, 108 relations). Shorter and more negotiation-heavy -- many
   trade proposals ("1 wheat for 1 clay?") and counter-proposals, with
   Correction/Contrast relations marking the bargaining back-and-forth.
 

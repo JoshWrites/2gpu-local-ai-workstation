@@ -1,7 +1,7 @@
-# Lessons learned — second-opinion Phase 1
+# Lessons learned -- second-opinion Phase 1
 
 Written 2026-04-15, end of Phase 1. Captured while context was still fresh.
-Organized by the decision, not by chronology — false starts sit next to
+Organized by the decision, not by chronology -- false starts sit next to
 the fix that replaced them.
 
 ## Reference-guide drift
@@ -27,7 +27,7 @@ primary model to the 24 GB card. Documented the confirmed mapping in
 
 Setting `HSA_OVERRIDE_GFX_VERSION=11.0.0` globally made both cards report
 as gfx1100 to ROCm. Without `ROCR_VISIBLE_DEVICES`, llama.cpp happily
-enumerated both and defaulted to device 0 — loading an 18 GB model onto
+enumerated both and defaulted to device 0 -- loading an 18 GB model onto
 an 8 GB card. Caught it because the OS monitor showed 99% utilization on
 the wrong card; the log looked superficially fine.
 
@@ -76,7 +76,7 @@ This is why the Phase 4 "aspect server" design from the reference guide
 would have been redundant reinvention.
 
 **Benchmarked:** 9,792-token identical prompt, 22.9s cold prompt eval
-→ 22ms warm (9,791/9,792 tokens cached). **~1028× speedup.** Real, not
+-> 22ms warm (9,791/9,792 tokens cached). **~1028x speedup.** Real, not
 marginal.
 
 **Lesson:** check current defaults before building abstraction around
@@ -88,9 +88,9 @@ marginal.
 
 Spent time grepping `globalStorage/rooveterinaryinc.roo-cline/settings/`
 for a config file. Roo writes provider URL, model, API key, and headers
-into VSCode's `secretStorage` — which on Linux is libsecret /
+into VSCode's `secretStorage` -- which on Linux is libsecret /
 gnome-keyring, encrypted, not plaintext-editable. The SQLite key is
-`secret://…roo_cline_config_api_config` and its value is ciphertext.
+`secret://...roo_cline_config_api_config` and its value is ciphertext.
 
 **Fix:** configure once via the UI, export to JSON, point
 `roo-cline.autoImportSettingsPath` at the JSON. Every editor start
@@ -103,7 +103,7 @@ and use it. Respecting encrypted storage is a feature.
 
 ### `huggingface-cli` is deprecated; use `hf`
 
-Tried `huggingface-cli download …`. Got a deprecation warning and no
+Tried `huggingface-cli download ...`. Got a deprecation warning and no
 download. Current CLI is `hf` (from `huggingface-hub >= 1.0`). Small
 thing, five seconds to fix, but worth noting.
 
@@ -128,7 +128,7 @@ when you onboard a new agent framework.
 
 ### Roo's Code mode over-plans simple questions
 
-"What files are in this project?" in Code mode → ten tool calls reading
+"What files are in this project?" in Code mode -> ten tool calls reading
 every file and a follow-up question about next steps. 19% of 32K context
 burned with no answer produced. Code mode's system prompt trains the
 model to build a mental model before answering, which is the wrong
@@ -143,8 +143,8 @@ and a behavioral shape. Use them as intended, not by habit.
 ### "Spec" mode from the reference guide is already in Roo as "Architect"
 
 Spent time scaffolding `.roo/modes/spec.yaml` to match reference-guide
-Part 5. Then inventoried Roo 3.52.1's built-ins and found Architect —
-markdown-only edits, ask-clarifying-questions role — is functionally
+Part 5. Then inventoried Roo 3.52.1's built-ins and found Architect --
+markdown-only edits, ask-clarifying-questions role -- is functionally
 identical.
 
 **Fix:** deleted the custom Spec mode, use built-in Architect, kept
@@ -162,7 +162,7 @@ on the 5700 XT running Phi-4 Mini to extract learnings into
 script, prompt engineering, two-scope index, session-start rule.
 
 Rejected after Phase 1's Roo-reads-everything smoke test. The observed
-pain wasn't "forgetting across sessions" — it was **reading**. Roo burned
+pain wasn't "forgetting across sessions" -- it was **reading**. Roo burned
 19% of context on exploratory full-file reads it couldn't even complete
 (silent truncation). The right intervention is semantic retrieval over
 the repo, not post-hoc extraction of conversation transcripts.
@@ -174,7 +174,7 @@ the actual problem.
 
 **Lesson:** a plan written before using a thing will misjudge where the
 pain lives. Run the Phase 1 system for real sessions before committing
-Phase 2 design — and be willing to discard work already specified if
+Phase 2 design -- and be willing to discard work already specified if
 data contradicts the premise. The observer idea isn't dead, just
 demoted; it may return if memory-bank + indexing prove insufficient.
 
@@ -196,10 +196,10 @@ environment inside a stable editor."
 
 First sketch of "stop llama when editor closes" was a wrapper script
 with an EXIT trap. Rejected because VSCodium forks and detaches on
-Linux when an instance is already running — the wrapper exits
+Linux when an instance is already running -- the wrapper exits
 immediately, would kill llama while the user is still typing.
 
-systemd user units with `Requires=llama… BindsTo=llama…` plus
+systemd user units with `Requires=llama... BindsTo=llama...` plus
 `codium --wait` in the editor unit is the clean solution. Standard
 Linux desktop-integration pattern. Survives crashes, no orphan
 processes, no custom PID tracking.
@@ -211,7 +211,7 @@ It already solved this problem.
 
 Built the yad splash with real phase thresholds derived from
 `bench-llama-startup.sh` (3 cold + 7 warm runs). Variance was tiny
-(±0.65s cold, ±0.02s warm), so a 50% slack warn threshold is both
+(+/-0.65s cold, +/-0.02s warm), so a 50% slack warn threshold is both
 noise-proof and actually meaningful.
 
 Skipping this step would have given either noisy false positives (too
@@ -227,7 +227,7 @@ right" is not a threshold.
 
 Subagents reported back with descriptions of work done. Several times
 the description described what they *intended*, not what they wrote.
-Verifying the actual files caught small divergences — a dropped
+Verifying the actual files caught small divergences -- a dropped
 `ROCR_VISIBLE_DEVICES`, a mode file in the wrong location, etc.
 
 **Lesson:** trust but verify subagent reports. When the agent says "I
@@ -246,7 +246,7 @@ at the start; it compounds.
 ### Real use beats anticipated use
 
 The 19% context burn, the silent truncation, the Code-mode over-planning
-— none were visible from reading the reference guide. All appeared in
+-- none were visible from reading the reference guide. All appeared in
 the first five minutes of actually driving Roo. Phase 2's redirection
 depended entirely on this.
 
@@ -257,7 +257,7 @@ next plan. Pre-planning past that point is speculation.
 ### Three cold-start samples is fine; seven warm-start samples is overkill
 
 Benchmarking: 7 warm runs showed 20 ms variance. Three would have been
-enough to establish the baseline. Didn't hurt — total cost was 10 min —
+enough to establish the baseline. Didn't hurt -- total cost was 10 min --
 but next time 3+3 would do.
 
 **Lesson:** sample until the standard deviation stops moving. Extra

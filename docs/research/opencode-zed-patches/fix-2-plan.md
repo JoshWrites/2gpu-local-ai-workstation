@@ -1,4 +1,4 @@
-# Fix 2 plan — emit Zed's `_meta` terminal convention
+# Fix 2 plan -- emit Zed's `_meta` terminal convention
 
 ## Goal
 
@@ -21,7 +21,7 @@ Zed has **two** code paths for permission cards on bash tool calls:
    This is what we need.
 
 Code reference: `crates/agent_ui/src/conversation_view/thread_view.rs:5924`
-(`render_terminal_tool_call`) — the rich card. Decoder for the convention
+(`render_terminal_tool_call`) -- the rich card. Decoder for the convention
 is at `crates/agent_servers/src/acp.rs:3340-3450`.
 
 ## The convention is Zed-proprietary, not ACP spec
@@ -29,13 +29,13 @@ is at `crates/agent_servers/src/acp.rs:3340-3450`.
 The `_meta.terminal_info` / `terminal_output` / `terminal_exit` keys are
 Zed extensions to ACP. The official ACP spec defines a *client-driven*
 terminal model (`terminal/create`, `terminal/output`,
-`terminal/wait_for_exit`) where the client runs the command — that's not
+`terminal/wait_for_exit`) where the client runs the command -- that's not
 what we want, since opencode runs the command itself.
 
 **Both reference implementations follow the same shape:**
 
-- `@zed-industries/claude-agent-acp` (TypeScript) — batched output emission
-- `zed-industries/codex-acp` (Rust) — streamed output emission
+- `@zed-industries/claude-agent-acp` (TypeScript) -- batched output emission
+- `zed-industries/codex-acp` (Rust) -- streamed output emission
 
 Wire shapes are identical between the two.
 
@@ -52,7 +52,7 @@ Zed advertises the extension in `initialize`:
 }
 ```
 
-**We must check for this before emitting the convention** — non-Zed ACP
+**We must check for this before emitting the convention** -- non-Zed ACP
 clients (formulahendry/vscode-acp, gemini-cli-desktop, etc.) don't
 advertise it. Both reference adapters fall back to a fenced code block
 when absent.
@@ -66,7 +66,7 @@ if (params.clientCapabilities?._meta?.["terminal-auth"] === true) { ... }
 We add a parallel check for `terminal_output` and stash it on the agent
 instance. Reuse pattern.
 
-## Wire shape — verbatim from claude-agent-acp
+## Wire shape -- verbatim from claude-agent-acp
 
 ### A. Initial `tool_call` announce (status: pending)
 
@@ -142,9 +142,9 @@ We just route those chunks into `terminal_output` deltas.
 The bash tool's lifecycle in `tool/bash.ts` already emits the right
 events at the right moments:
 
-- Tool announce → currently `tool_call` (state.input = {})
-- Live output → currently emitted as `metadata.output` updates
-- Completion → status: completed with metadata
+- Tool announce -> currently `tool_call` (state.input = {})
+- Live output -> currently emitted as `metadata.output` updates
+- Completion -> status: completed with metadata
 
 These all flow through `acp/agent.ts`. The fix is in agent.ts, not bash.ts:
 intercept events for `kind: "execute"` tools and add the `_meta` keys
@@ -164,13 +164,13 @@ when the client advertises capability.
 
 ## Risks and gotchas surfaced by research
 
-- **Encoding.** Bash output may contain non-UTF8 bytes. Codex-acp uses `String::from_utf8_lossy`. We need an equivalent in TS — `Buffer.toString("utf8")` does that lossily. Don't try to send Uint8Arrays in `data`.
+- **Encoding.** Bash output may contain non-UTF8 bytes. Codex-acp uses `String::from_utf8_lossy`. We need an equivalent in TS -- `Buffer.toString("utf8")` does that lossily. Don't try to send Uint8Arrays in `data`.
 - **Race per opencode #7370.** The first `tool_call` MUST carry `rawInput` populated AND `_meta.terminal_info`. opencode currently sends `rawInput: {}` in the initial announce and updates later. Our existing patches partly mitigate this; for the `_meta` fix we need to ensure both fields land in the first emission, not just the update.
-- **Permission flow ordering.** The permission card renders from the tool_call message that triggered the permission ask. The terminal_info on that announce is what gives the card its expandable nature. If we emit terminal_info only on the post-approval run, the prompt card stays minimal — too late.
+- **Permission flow ordering.** The permission card renders from the tool_call message that triggered the permission ask. The terminal_info on that announce is what gives the card its expandable nature. If we emit terminal_info only on the post-approval run, the prompt card stays minimal -- too late.
 
 ## Estimated effort
 
-~2–3 hours including:
+~2-3 hours including:
 - Reading codex-acp's streaming pattern in detail (best reference for cadence).
 - Writing the four patches above.
 - Adding tests against captured fixtures.
@@ -187,7 +187,7 @@ The code is well-trodden; we just port it.
   spec, even before output streaming.
 - **Streaming output** adds the live preview during execution and the
   expanded-card output preview before approval.
-- **Exit status** completes the picture — exit code visible in the card.
+- **Exit status** completes the picture -- exit code visible in the card.
 
 These could land as one PR or three. Recommend one: it's a coherent
 "emit Zed terminal convention" change.
@@ -199,13 +199,13 @@ When submitting to opencode, the PR description should:
 - Reference the two existing reference implementations (claude-agent-acp,
   codex-acp).
 - Frame as "emit Zed-compatible `_meta` extension when client advertises
-  `_meta.terminal_output`" — not "conform to ACP spec".
+  `_meta.terminal_output`" -- not "conform to ACP spec".
 - Closes opencode #14034.
 - Note the capability is gated; non-Zed clients see no behavioral change.
 
 ## Files we'd touch
 
-- `packages/opencode/src/acp/agent.ts` — capability detection, `_meta`
+- `packages/opencode/src/acp/agent.ts` -- capability detection, `_meta`
   injection on tool_call/tool_call_update for execute kind.
 
 That's it. One file. The bash tool itself doesn't change.

@@ -1,4 +1,4 @@
-# SwDA — Switchboard Dialog Act Corpus
+# SwDA -- Switchboard Dialog Act Corpus
 
 ## Description
 
@@ -6,8 +6,8 @@ SwDA (Jurafsky, Shriberg, Biasca 1997) is the dialog-act-tagged layer on
 top of the Switchboard-1 Telephone Speech Corpus. 1,155 five-minute
 telephone conversations (~205K utterances, 1.4M words) between
 strangers assigned a topic. Each utterance is tagged with a dialog act
-from the SWBD-DAMSL tag set (≈42 labels in the standard "clustered"
-version; ≈220 in the full).
+from the SWBD-DAMSL tag set (~=42 labels in the standard "clustered"
+version; ~=220 in the full).
 
 ## Annotation taxonomy
 
@@ -19,7 +19,7 @@ SWBD-DAMSL is a shallow dialog-act tagset with tags like:
 | sv   | Statement-opinion    | "I think it's a splendid paper."|
 | qw   | Wh-question          | "How do you gain your news?"|
 | qy   | Yes/no question      | "Is that correct?"|
-| qo   | Open-ended question  | "What kind of experience…?"|
+| qo   | Open-ended question  | "What kind of experience...?"|
 | ad   | Action-directive     | "Hold it down a little longer."|
 | aa   | Agree/accept         | "Right."|
 | aap  | Accept-part          | partial agreement |
@@ -32,7 +32,7 @@ SWBD-DAMSL is a shallow dialog-act tagset with tags like:
 | fc   | Conventional closing | "Good-bye."|
 | ft   | Thanking             | "Thank you for calling."|
 | fp   | Conventional opening | "Hi, how are you?"|
-| o    | Other                | — |
+| o    | Other                | -- |
 | +    | Continuer            | utterance extending prior speaker's turn |
 
 Full manual: <https://web.stanford.edu/~jurafsky/ws97/manual.august1.html>

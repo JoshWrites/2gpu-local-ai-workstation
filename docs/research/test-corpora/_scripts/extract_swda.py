@@ -16,7 +16,7 @@ with open(src, newline='') as f:
     for row in r:
         rows.append(row)
 
-# Group by (caller, utterance_index) — that's one "turn" in the original
+# Group by (caller, utterance_index) -- that's one "turn" in the original
 lines = []
 current_caller = None
 current_utt_idx = None

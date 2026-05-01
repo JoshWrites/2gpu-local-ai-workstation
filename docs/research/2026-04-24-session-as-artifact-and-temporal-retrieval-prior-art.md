@@ -15,7 +15,7 @@ than a fetched primary source, that is noted.
 
 ---
 
-## Pattern 1 — Session-as-Retrievable-Artifact
+## Pattern 1 -- Session-as-Retrievable-Artifact
 
 The pattern to pin down: the live conversation transcript is kept *verbatim*
 on disk, indexed (embeddings / keyword / both) turn-by-turn, and any model
@@ -24,7 +24,7 @@ wording* of earlier turns into its current context. The transcript is never
 summarized, never lossy-compacted, never "handed off." It grows append-only
 and is the authoritative record.
 
-### Q1.1 — Has anyone explicitly published or deployed this?
+### Q1.1 -- Has anyone explicitly published or deployed this?
 
 Yes, with caveats. Two serious instances, plus several partial ones.
 
@@ -38,40 +38,40 @@ ordering and datetime filtering
 Simon Willison's comparison of Claude vs ChatGPT memory emphasizes the
 architectural point directly: "Claude recalls by only referring to your raw
 conversation history. There are no AI-generated summaries or compressed
-profiles — just real-time searches through your actual past chats"
+profiles -- just real-time searches through your actual past chats"
 (https://simonwillison.net/2025/Sep/12/claude-memory/). The
 contrast is with ChatGPT, which auto-injects a synthesized profile at session
 start. Claude's design is explicitly the Pattern-1 shape: durable verbatim
 store, model-initiated retrieval, no precomputed summary layer. The one
-asymmetry vs. the user's proposal is scope — Claude searches *across past
-sessions* rather than over a line-numbered *current* session — but the
+asymmetry vs. the user's proposal is scope -- Claude searches *across past
+sessions* rather than over a line-numbered *current* session -- but the
 principle (retrieve verbatim spans on demand) is the same.
 
 **2. MemGPT / Letta `recall memory`.** MemGPT
 (Packer et al., arXiv:2310.08560) introduced a two-tier external memory: core
 (always in context) plus recall (paged). Recall memory is documented as the
 verbatim conversational log: "recall storage in simple terms is the full
-conversation history … not only the messages exchanges between the user and
+conversation history ... not only the messages exchanges between the user and
 the assistant but also all other messages, including system messages,
 reasoning message, tool calls and their return values"
 (https://arxiv.org/pdf/2310.08560). Letta (the productionized
 successor) exposes `conversation_search` and a date-search tool that let the
 agent page verbatim turns back into context
-(https://docs.letta.com/advanced/memory-management/ — per search excerpt:
-"recall memory … preserves the complete history of interactions that can be
+(https://docs.letta.com/advanced/memory-management/ -- per search excerpt:
+"recall memory ... preserves the complete history of interactions that can be
 searched and retrieved when needed, even when not in the active context
 window"). Letta explicitly distinguishes **recall** (verbatim conversation)
-from **archival** (processed / summarized / embedded content) — the recall
+from **archival** (processed / summarized / embedded content) -- the recall
 tier is Pattern 1 by construction.
 
 **3. LangChain `ConversationBufferMemory` / `VectorStoreRetrieverMemory`.**
 `ConversationBufferMemory` stores every message verbatim and replays all of
-them — pure verbatim store, no retrieval, fails at length.
+them -- pure verbatim store, no retrieval, fails at length.
 `VectorStoreRetrieverMemory` stores each past message pair as an embedded
 document and retrieves top-K by semantic similarity
 (https://python.langchain.com/api_reference/langchain/memory/langchain.memory.buffer.ConversationBufferMemory.html;
 https://www.pinecone.io/learn/series/langchain/langchain-conversational-memory/).
-The retrieved documents *are* the original text of prior turns — so this is a
+The retrieved documents *are* the original text of prior turns -- so this is a
 verbatim-retrieval pattern, but it is not a durable "growing artifact on
 disk treated like a wiki article"; it is an in-memory or session-scoped
 vector store. `ConversationSummaryMemory` is the non-Pattern-1 alternative:
@@ -80,14 +80,14 @@ it rewrites history into a running summary
 
 **4. Partial / adjacent.**
 - **Zep / Graphiti** (arXiv:2501.13956) stores a temporally-aware *knowledge
-  graph* derived from the transcript, not the transcript itself — closer to
+  graph* derived from the transcript, not the transcript itself -- closer to
   Mem0's structured-fact shape than to Pattern 1
   (https://arxiv.org/abs/2501.13956).
-- **Mem0** extracts facts and updates/invalidates them — explicitly *not*
+- **Mem0** extracts facts and updates/invalidates them -- explicitly *not*
   Pattern 1 (https://arxiv.org/html/2504.19413v1).
 - **Memobase / Memoria** follow the fact-extraction shape
   (https://arxiv.org/html/2512.12686v1).
-- **ChatGPT memory** auto-writes a compressed profile at session close —
+- **ChatGPT memory** auto-writes a compressed profile at session close --
   anti-pattern (the "summary-written-by-outgoing-model" shape the Mem0 paper
   identified as worst).
 - **Event-sourcing for agents.** A recent engineering pattern frames the
@@ -96,16 +96,16 @@ it rewrites history into a running summary
   https://tianpan.co/blog/2026-04-10-agent-state-event-stream-immutable-event-sourcing;
   Akka, https://akka.io/blog/event-sourcing-the-backbone-of-agentic-ai).
   This matches the "immutable growing artifact" half of Pattern 1 but does
-  not inherently prescribe retrieval-on-demand by the model itself — the
+  not inherently prescribe retrieval-on-demand by the model itself -- the
   model usually sees the full projection.
 
 **Summary for Q1.1.** The pattern exists as a deployed product (Claude's
 memory tool) and as a research system (MemGPT/Letta's recall tier). Neither
 explicitly frames it as "line-numbered session-scoped artifact that multiple
-models query independently," but the core mechanism — verbatim store, model
-invokes search tool, raw spans come back into context — is shipped.
+models query independently," but the core mechanism -- verbatim store, model
+invokes search tool, raw spans come back into context -- is shipped.
 
-### Q1.2 — Closest analogues and what they actually store
+### Q1.2 -- Closest analogues and what they actually store
 
 | System | Store shape | Retrieval granularity | Summary layer? |
 |---|---|---|---|
@@ -126,7 +126,7 @@ requires "No." Claude's memory tool, MemGPT/Letta recall, and LangChain's
 buffer/vector-retriever memories are the only production options that
 satisfy it. Everything with a "Yes" in that column is a different pattern.
 
-### Q1.3 — Performance/quality evidence
+### Q1.3 -- Performance/quality evidence
 
 Three benchmarks are directly relevant.
 
@@ -139,27 +139,27 @@ knowledge updates, abstention) embedded in scalable chat histories
 1. Commercial chat assistants and long-context LLMs show a **30% accuracy
    drop** on information from sustained interactions vs. single-turn
    (https://xiaowu0162.github.io/long-mem-eval/). This is the
-   "just keep shoving everything in context" baseline — it degrades, as
+   "just keep shoving everything in context" baseline -- it degrades, as
    expected.
 
 2. The paper directly compares verbatim-span storage against LLM-extracted
    summary storage at retrieval time. Per the search excerpt from the
    benchmark results: "benchmark testing shows that in AAAK (Adapted
    Abbreviation for AI Knowledge) mode systems achieve 84.2% Recall@5 versus
-   96.6% for verbatim mode — a 12.4 percentage point drop" — i.e. **verbatim
+   96.6% for verbatim mode -- a 12.4 percentage point drop" -- i.e. **verbatim
    storage outperforms LLM-summary extraction by 12.4 percentage points R@5**
    on the benchmark
    (https://www.mempalace.tech/benchmarks, reporting against
    LongMemEval; the framing that "verbatim storage outperforms LLM-extracted
    summaries" is stated in the search excerpt). [Caveat: MemPalace's
-   methodology has been disputed — see Q1.4 below — but the qualitative
+   methodology has been disputed -- see Q1.4 below -- but the qualitative
    direction is consistent with the LongMemEval paper's own finding that
    fine-grained session decomposition (keeping smaller verbatim units)
    improves retrieval.]
 
 **LongMemEval on session decomposition.** The paper's ablation reports that
-"fine-grained session decomposition … slicing sessions into rounds" — i.e.
-indexing smaller verbatim units rather than coarser aggregates — improved
+"fine-grained session decomposition ... slicing sessions into rounds" -- i.e.
+indexing smaller verbatim units rather than coarser aggregates -- improved
 retrieval + QA, with an average +9.4% recall@k and +5.4% final accuracy
 when combined with fact-augmented keys
 (https://arxiv.org/html/2410.10813v2). The direction matches the
@@ -169,7 +169,7 @@ summaries.
 **LoCoMo (Maharana et al., ACL 2024, arXiv:2402.17753).** The benchmark
 referenced in the prior research (the "transcript-replay degrades" finding).
 Its own result goes further: "retrieval and memory augmented generation
-approaches improve performance across most models … in most cases memory
+approaches improve performance across most models ... in most cases memory
 and retrieval-based approaches achieve competitive or superior F1 scores to
 the Full Context baseline," and "overreliance on naive session summaries can
 degrade factual recall"
@@ -180,8 +180,8 @@ summaries hurt. [Inference: the paper does not isolate "verbatim-span
 retrieval" as a named condition, but the retrieval condition in the paper
 operates over the raw transcript, not over summaries.]
 
-**Mem0 on LoCoMo / LongMemEval.** Mem0's own numbers — 91.6 on LoCoMo, 93.4
-on LongMemEval (https://mem0.ai/research) — beat naive
+**Mem0 on LoCoMo / LongMemEval.** Mem0's own numbers -- 91.6 on LoCoMo, 93.4
+on LongMemEval (https://mem0.ai/research) -- beat naive
 full-context at 90% fewer tokens, but trade ~6 points of accuracy vs.
 full-context on LoCoMo
 (https://mem0.ai/blog/mem0-the-token-efficient-memory-algorithm).
@@ -194,7 +194,7 @@ https://github.com/getzep/zep-papers/issues/5). [Inference: the
 published numbers do not yet settle "verbatim-retrieval vs. fact-extraction"
 on a single head-to-head comparison at fixed token budget.]
 
-### Q1.4 — Known failure modes
+### Q1.4 -- Known failure modes
 
 Three documented failure modes of verbatim retrieval over conversation:
 
@@ -208,7 +208,7 @@ Three documented failure modes of verbatim retrieval over conversation:
    without temporal awareness, verbatim retrieval returns the right *topic*
    but not the right *version* of the topic.
 
-2. **Recall@5 ≠ correct answer.** LongMemEval reports 12-point R@5 gaps
+2. **Recall@5 != correct answer.** LongMemEval reports 12-point R@5 gaps
    between configurations (96.6 vs 84.2) yet only 5-6 point end-accuracy
    differences (https://arxiv.org/html/2410.10813v2). The extra
    retrieved spans can conflict with each other; the reader model has to
@@ -218,7 +218,7 @@ Three documented failure modes of verbatim retrieval over conversation:
 
 3. **Recency bias in the reader.** Liu et al. (arXiv:2509.11353, SIGIR-AP
    2025) show LLM rerankers systematically promote more-recent content,
-   moving individual items by up to 95 ranks in listwise reranking — even
+   moving individual items by up to 95 ranks in listwise reranking -- even
    when the question is about an *older* decision
    (https://arxiv.org/abs/2509.11353). Implication for Pattern 1:
    feeding top-K verbatim spans to the model isn't neutral; the model will
@@ -226,15 +226,15 @@ Three documented failure modes of verbatim retrieval over conversation:
 
 4. **Scale of the corpus.** Claude's memory search is acknowledged to fail
    silently when the archive is very large or when the query is badly
-   phrased — search results surface this as a user complaint (Shelly Palmer,
+   phrased -- search results surface this as a user complaint (Shelly Palmer,
    2025-08, https://shellypalmer.com/2025/08/claude-can-reference-past-chats-heres-your-enterprise-playbook/).
    [Inference: unlike a spec document, the transcript is not curated for
-   retrievability — noise dominates at scale.]
+   retrievability -- noise dominates at scale.]
 
 ### Pattern 1 verdict
 
-The pattern as described — *verbatim session transcript as the authoritative
-durable artifact, queried on demand by any model via a retrieval tool* — is
+The pattern as described -- *verbatim session transcript as the authoritative
+durable artifact, queried on demand by any model via a retrieval tool* -- is
 shipped in production by Anthropic (Claude memory tool) and by Letta
 (MemGPT's recall tier), and is a standard configuration option in LangChain
 (`ConversationBufferMemory` + `VectorStoreRetrieverMemory`). The "growing
@@ -247,13 +247,13 @@ retrieval-over-verbatim should replace compaction and handoff summaries
 
 ---
 
-## Pattern 2 — Temporal-Aware Retrieval over Conversation Transcripts
+## Pattern 2 -- Temporal-Aware Retrieval over Conversation Transcripts
 
 The pattern to pin down: retrieval that distinguishes "what is the current
 state of X?" (recency-dominant) from "why / when did we decide X?"
 (chronology-dominant, older pivot turn wins).
 
-### Q2.1 — Temporal RAG / time-aware retrieval literature
+### Q2.1 -- Temporal RAG / time-aware retrieval literature
 
 This is a live and growing area. Five recent-ish threads.
 
@@ -271,45 +271,45 @@ during embedding creation, producing embeddings with an explicit temporal
 dimension
 (https://asycd.medium.com/timestamped-embeddings-for-time-aware-retrieval-augmented-generation-rag-32dd9fb540ff).
 The related formal work is Temporal-aware Matryoshka Representation Learning
-(TMRL) — nested truncations with temporal dimensions in the outer layers,
+(TMRL) -- nested truncations with temporal dimensions in the outer layers,
 general semantics in the inner (per search excerpt on
 https://www.emergentmind.com/topics/temporal-retrieval-augmented-generation-rag).
 
 **3. Temporal Augmented Retrieval (TAR), Rida.** Practitioner writeup on
-dynamic time-aware RAG — blends content similarity with a recency score
+dynamic time-aware RAG -- blends content similarity with a recency score
 (https://adam-rida.medium.com/temporal-augmented-retrieval-tar-dynamic-rag-ad737506dfcc).
 Adjacent to "chronological re-ranking."
 
 **4. Recency priors and freshness (arXiv:2509.19376).** "Solving Freshness
 in RAG: A Simple Recency Prior and the Limits of Heuristic Trend Detection"
-— documents how far a simple recency prior gets on news-style queries, and
+-- documents how far a simple recency prior gets on news-style queries, and
 where heuristics break
 (https://arxiv.org/html/2509.19376).
 
 **5. LLM reranker recency bias (arXiv:2509.11353).** The evidence that LLMs
-left to their own devices *already* overweight recency — fresh passages
+left to their own devices *already* overweight recency -- fresh passages
 shift top-10 mean publication year by up to 4.78 years
 (https://arxiv.org/abs/2509.11353). This cuts both ways: a state
 query gets the free recency bias correct, but a decision-history query is
 actively harmed by it.
 
 **Numbers reported.** On TimeQA (Chen et al., NeurIPS 2021,
-arXiv:2108.06314) — the canonical time-sensitive QA benchmark —
+arXiv:2108.06314) -- the canonical time-sensitive QA benchmark --
 state-of-the-art FiD reaches only 46% on the hard split vs. 87% human
 (https://arxiv.org/abs/2108.06314). TG-RAG and temporal KG approaches
 report gains of several points on temporal splits, but the gap to human
 performance remains large
 (https://arxiv.org/html/2510.13590v1).
 
-### Q2.2 — Memory decay / recency-weighted memory in LLM agents
+### Q2.2 -- Memory decay / recency-weighted memory in LLM agents
 
 **Generative Agents (Park et al., UIST 2023, arXiv:2304.03442).** The
 canonical starting point. Each memory is scored by a weighted combination
 of relevance (cosine similarity), recency (exponential decay over time
-since last retrieval), and importance (LLM self-rated), with α values all
+since last retrieval), and importance (LLM self-rated), with alpha values all
 set to 1 (https://ar5iv.labs.arxiv.org/html/2304.03442). The
 recency term explicitly uses exponential decay. This is a *memory-store*
-design, not a query-type router: every query gets the same α weighting.
+design, not a query-type router: every query gets the same alpha weighting.
 
 **Claude memory tool's `recent_chats`.** A hard recency filter: sort by
 datetime, paginate by before/after
@@ -333,10 +333,10 @@ short- and long-term preference representations; a formal deviation signal
 triggers memory updates
 (https://arxiv.org/html/2510.09720v1). This is the
 closest published analogue to the Pattern-2 concept of a state-change pivot
-detector — but on the *write* side (when to overwrite memory), not the
+detector -- but on the *write* side (when to overwrite memory), not the
 *read* side (how to route a query).
 
-### Q2.3 — Query intent classification for temporal semantics
+### Q2.3 -- Query intent classification for temporal semantics
 
 **SelRoute (McKee, April 2026, arXiv:2604.02431).** This is the most
 directly relevant paper found. SelRoute is a query-type-aware router that
@@ -345,7 +345,7 @@ hybrid / vocabulary-enriched) based on its query type
 (https://arxiv.org/abs/2604.02431;
 https://arxiv.org/html/2604.02431v1). Key findings:
 
-- Regex-based query-type classifier achieves 83% routing accuracy — i.e. a
+- Regex-based query-type classifier achieves 83% routing accuracy -- i.e. a
   *deterministic* classifier beats a uniform retrieval baseline.
 - On LongMemEval_M, SelRoute hits R@5 = 0.800 with bge-base-en-v1.5 (109M
   params), beating Contriever with LLM-generated fact keys at 0.762.
@@ -354,7 +354,7 @@ https://arxiv.org/html/2604.02431v1). Key findings:
 - System runs with no GPU and no LLM inference at query time.
 
 SelRoute's query types are not *named* "state vs. history," but the general
-thesis — *query type is a strong prior; route accordingly* — is exactly
+thesis -- *query type is a strong prior; route accordingly* -- is exactly
 the Pattern-2 thesis applied to retrieval strategy.
 
 **LongMemEval's question taxonomy itself.** The benchmark categorizes
@@ -363,7 +363,7 @@ single-session-preference, temporal-reasoning, knowledge-update, and
 multi-session, with an `_abs` variant for abstention
 (https://xiaowu0162.github.io/long-mem-eval/). Crucially:
 **knowledge-update** is exactly the "state query" class (the user's Python
-library example — obsolete mentions must NOT surface), and
+library example -- obsolete mentions must NOT surface), and
 **temporal-reasoning** is adjacent to the "decision-history" class. The
 benchmark exists; the *router* to handle them differently is SelRoute.
 
@@ -374,16 +374,16 @@ retrieval time and filters candidates by that range. Reported as +11.3%
 recall on rounds, +6.8% on sessions, and +7-11% on temporal-reasoning
 specifically
 (https://arxiv.org/html/2410.10813v2). This is time-aware
-retrieval *given* that the query is time-sensitive — it is not itself a
+retrieval *given* that the query is time-sensitive -- it is not itself a
 classifier for when to be time-sensitive.
 
-### Q2.4 — Event-sequence / change-point detection in conversations
+### Q2.4 -- Event-sequence / change-point detection in conversations
 
 **Dialogue State Tracking (DST).** Long-standing sub-field, pre-LLM
 (MultiWOZ, Schema-Guided Dialogue, etc.). Recent LLM-era work:
 arXiv:2310.14970 ("Towards LLM-driven Dialogue State Tracking"),
 arXiv:2405.13037 ("Enhancing Dialogue State Tracking Models through
-LLM-backed User-Agents Simulation"). DST is classic task-oriented —
+LLM-backed User-Agents Simulation"). DST is classic task-oriented --
 tracking a slot-filling state vector across turns. It is the direct
 intellectual ancestor of "state-lookup query" but has historically not
 been framed as a retrieval problem
@@ -393,7 +393,7 @@ https://arxiv.org/abs/2405.13037).
 **Preference-change / state-transition detection.** arXiv:2510.09720 and
 arXiv:2508.01739 (cited above) are the closest published work on
 detecting when a user's state has changed within a conversation. The
-mechanism — sliding window + EMA + deviation threshold — is portable to
+mechanism -- sliding window + EMA + deviation threshold -- is portable to
 the Pattern-2 use case: build a change-point detector over an embedding
 stream of turns, and let it index "pivot turns" for decision-history
 queries.
@@ -405,7 +405,7 @@ embeddings is implied by the preference-change papers above but I did
 not find a paper that names it as "change-point detection on conversation
 transcripts for retrieval-routing."
 
-### Q2.5 — Version-control-like approaches
+### Q2.5 -- Version-control-like approaches
 
 **Temporal databases (SQL `AS OF`, system-versioned tables).** The
 computer-science ancestor of the "answer as of turn N" pattern. Mature
@@ -415,7 +415,7 @@ Wikipedia on temporal databases). Not applied to LLM conversations in any
 published work I found.
 
 **Graphiti / Zep bi-temporal KG (arXiv:2501.13956).** "Graphiti's
-bi-temporal model … tracks when an event occurred and when it was ingested.
+bi-temporal model ... tracks when an event occurred and when it was ingested.
 Every graph edge (or relationship) includes explicit validity intervals"
 (https://arxiv.org/html/2501.13956v1;
 https://blog.getzep.com/content/files/2025/01/ZEP__USING_KNOWLEDGE_GRAPHS_TO_POWER_LLM_AGENT_MEMORY_2025011700.pdf).
@@ -428,7 +428,7 @@ INVALID rather than deleting them, preserving history
 (https://arxiv.org/html/2504.19413v1).
 
 **Event-sourcing for agents (see Pattern 1 sources).** Event-sourced
-agent frameworks naturally give "state as of event N" — you just replay up
+agent frameworks naturally give "state as of event N" -- you just replay up
 to N. The Akka / TianPan writeups emphasize that every state at every
 point in time is reliably reproducible. [Inference: the primitive is
 there; the temporal-aware *query* layer on top is not addressed in the
@@ -459,8 +459,8 @@ Assembling them into one system is novel; each piece is well-established.
 
 Yes, at the mechanism level; no, at the exact framing.
 
-The **mechanism** — verbatim transcript stored on disk, growing append-only,
-queried by the model via a retrieval tool that returns raw spans — is
+The **mechanism** -- verbatim transcript stored on disk, growing append-only,
+queried by the model via a retrieval tool that returns raw spans -- is
 shipped in Anthropic's Claude memory tool (`conversation_search` +
 `recent_chats`, https://support.claude.com/en/articles/11817273), in
 Letta/MemGPT's recall memory (arXiv:2310.08560; Letta docs), and in
@@ -469,9 +469,9 @@ not worse than, and often better than, summarization-based handoff" is
 backed by LoCoMo (https://snap-research.github.io/locomo/) and
 LongMemEval's session-decomposition ablations (arXiv:2410.10813).
 
-The **exact framing** the user proposes — a line-numbered session-scoped
+The **exact framing** the user proposes -- a line-numbered session-scoped
 artifact that replaces *intra-session* compaction and handoff payloads, with
-multiple concurrent models querying it independently — I did not find as a
+multiple concurrent models querying it independently -- I did not find as a
 named system. Claude and Letta frame the artifact as cross-session; the
 user's proposal makes it intra-session-first. This framing shift (session
 transcript as the durable artifact, live context as a shrinkable query
@@ -481,9 +481,9 @@ synthesis of deployed mechanisms, not a novel mechanism.]
 
 ### (b) Does Pattern 2 exist?
 
-Partially. Every component exists; the exact combination — a query-type
+Partially. Every component exists; the exact combination -- a query-type
 classifier that distinguishes state-lookup from decision-history intent and
-reshapes retrieval accordingly over a conversation — is not a named system.
+reshapes retrieval accordingly over a conversation -- is not a named system.
 
 - **SelRoute** (arXiv:2604.02431) is closest: query-type-aware routing over
   LongMemEval with an 83%-accurate regex classifier and zero LLM-inference
@@ -491,7 +491,7 @@ reshapes retrieval accordingly over a conversation — is not a named system.
   history" but the architectural principle is identical.
 - **LongMemEval's time-aware query expansion** (arXiv:2410.10813) handles
   time-sensitive queries, but only once the query has been identified as
-  time-sensitive — there is no state-vs-history split.
+  time-sensitive -- there is no state-vs-history split.
 - **Zep/Graphiti's bi-temporal KG** (arXiv:2501.13956) natively supports
   "as of time T" queries on facts but still relies on a single retrieval
   mode; the query-intent-classifier layer is absent.
@@ -501,12 +501,12 @@ reshapes retrieval accordingly over a conversation — is not a named system.
 No paper I found names the state-vs-history query axis as the primary
 routing criterion for conversational retrieval.
 
-### (c) Does the combination — Pattern 1 with temporal-aware retrieval —
+### (c) Does the combination -- Pattern 1 with temporal-aware retrieval --
 appear anywhere in the literature?
 
 Closest single system: **Zep/Graphiti on LongMemEval**. Zep keeps the raw
 interactions durable (verbatim is retained for provenance per
-arXiv:2501.13956 abstract — edges maintain "provenance to source data")
+arXiv:2501.13956 abstract -- edges maintain "provenance to source data")
 *and* supports bi-temporal queries natively. But the durable artifact in
 Zep is the temporal KG, not the conversation transcript; the transcript is
 source, the KG is answer. It's a closer analogue to Mem0 with validity
@@ -538,69 +538,69 @@ techniques.* Every ingredient is cited above; the soup is not.
 
 ## Citations index (deduplicated)
 
-- Packer et al., MemGPT, arXiv:2310.08560 — https://arxiv.org/pdf/2310.08560
-- Wu et al., LongMemEval, ICLR 2025, arXiv:2410.10813 —
+- Packer et al., MemGPT, arXiv:2310.08560 -- https://arxiv.org/pdf/2310.08560
+- Wu et al., LongMemEval, ICLR 2025, arXiv:2410.10813 --
   https://arxiv.org/abs/2410.10813;
   https://arxiv.org/html/2410.10813v2;
   https://xiaowu0162.github.io/long-mem-eval/;
   https://github.com/xiaowu0162/LongMemEval
-- Maharana et al., LoCoMo, ACL 2024, arXiv:2402.17753 —
+- Maharana et al., LoCoMo, ACL 2024, arXiv:2402.17753 --
   https://snap-research.github.io/locomo/;
   https://aclanthology.org/2024.acl-long.747.pdf
-- Park et al., Generative Agents, UIST 2023, arXiv:2304.03442 —
+- Park et al., Generative Agents, UIST 2023, arXiv:2304.03442 --
   https://ar5iv.labs.arxiv.org/html/2304.03442
-- Rasmussen et al., Zep / Graphiti, arXiv:2501.13956 —
+- Rasmussen et al., Zep / Graphiti, arXiv:2501.13956 --
   https://arxiv.org/abs/2501.13956;
   https://arxiv.org/html/2501.13956v1;
   https://blog.getzep.com/content/files/2025/01/ZEP__USING_KNOWLEDGE_GRAPHS_TO_POWER_LLM_AGENT_MEMORY_2025011700.pdf;
   https://github.com/getzep/graphiti
-- Mem0, arXiv:2504.19413 — https://arxiv.org/html/2504.19413v1;
+- Mem0, arXiv:2504.19413 -- https://arxiv.org/html/2504.19413v1;
   https://mem0.ai/research;
   https://mem0.ai/blog/mem0-the-token-efficient-memory-algorithm
-- McKee, SelRoute, arXiv:2604.02431 (April 2026) —
+- McKee, SelRoute, arXiv:2604.02431 (April 2026) --
   https://arxiv.org/abs/2604.02431;
   https://arxiv.org/html/2604.02431v1
-- Chen et al., TimeQA, NeurIPS 2021, arXiv:2108.06314 —
+- Chen et al., TimeQA, NeurIPS 2021, arXiv:2108.06314 --
   https://arxiv.org/abs/2108.06314
-- "RAG Meets Temporal Graphs," arXiv:2510.13590 —
+- "RAG Meets Temporal Graphs," arXiv:2510.13590 --
   https://arxiv.org/abs/2510.13590;
   https://arxiv.org/html/2510.13590v1
-- "Solving Freshness in RAG," arXiv:2509.19376 —
+- "Solving Freshness in RAG," arXiv:2509.19376 --
   https://arxiv.org/html/2509.19376
 - Liu et al., "Do LLMs Favor Recent Content?", SIGIR-AP 2025,
-  arXiv:2509.11353 — https://arxiv.org/abs/2509.11353
+  arXiv:2509.11353 -- https://arxiv.org/abs/2509.11353
 - "Preference-Aware Memory Update for Long-Term LLM Agents,"
-  arXiv:2510.09720 — https://arxiv.org/html/2510.09720v1
+  arXiv:2510.09720 -- https://arxiv.org/html/2510.09720v1
 - "Enhancing the Preference Extractor in Multi-turn Dialogues,"
-  arXiv:2508.01739 — https://arxiv.org/pdf/2508.01739
-- "Towards LLM-driven Dialogue State Tracking," arXiv:2310.14970 —
+  arXiv:2508.01739 -- https://arxiv.org/pdf/2508.01739
+- "Towards LLM-driven Dialogue State Tracking," arXiv:2310.14970 --
   https://arxiv.org/abs/2310.14970
 - "Enhancing Dialogue State Tracking Models through LLM-backed User-Agents
-  Simulation," arXiv:2405.13037 — https://arxiv.org/abs/2405.13037
-- Anthropic, Claude memory docs —
+  Simulation," arXiv:2405.13037 -- https://arxiv.org/abs/2405.13037
+- Anthropic, Claude memory docs --
   https://platform.claude.com/docs/en/agents-and-tools/tool-use/memory-tool;
   https://support.claude.com/en/articles/11817273
 - Willison, "Comparing the memory implementations of Claude and ChatGPT,"
-  2025-09-12 — https://simonwillison.net/2025/Sep/12/claude-memory/
-- Letta docs — https://docs.letta.com/advanced/memory-management/;
+  2025-09-12 -- https://simonwillison.net/2025/Sep/12/claude-memory/
+- Letta docs -- https://docs.letta.com/advanced/memory-management/;
   https://docs.letta.com/concepts/memgpt/
-- LangChain memory —
+- LangChain memory --
   https://python.langchain.com/api_reference/langchain/memory/langchain.memory.buffer.ConversationBufferMemory.html;
   https://langchain-doc.readthedocs.io/en/latest/modules/memory/types/summary_buffer.html;
   https://www.pinecone.io/learn/series/langchain/langchain-conversational-memory/
-- Rida, "Temporal Augmented Retrieval (TAR) — Dynamic RAG," Medium —
+- Rida, "Temporal Augmented Retrieval (TAR) -- Dynamic RAG," Medium --
   https://adam-rida.medium.com/temporal-augmented-retrieval-tar-dynamic-rag-ad737506dfcc
-- asycd, "Timestamped Embeddings for Time-Aware RAG," Medium —
+- asycd, "Timestamped Embeddings for Time-Aware RAG," Medium --
   https://asycd.medium.com/timestamped-embeddings-for-time-aware-retrieval-augmented-generation-rag-32dd9fb540ff
-- TianPan, "Agent State as Event Stream," 2026-04-10 —
+- TianPan, "Agent State as Event Stream," 2026-04-10 --
   https://tianpan.co/blog/2026-04-10-agent-state-event-stream-immutable-event-sourcing
-- Akka, "Event Sourcing: The Backbone of Agentic AI" —
+- Akka, "Event Sourcing: The Backbone of Agentic AI" --
   https://akka.io/blog/event-sourcing-the-backbone-of-agentic-ai
-- Zep vs. Mem0 methodology dispute —
+- Zep vs. Mem0 methodology dispute --
   https://blog.getzep.com/lies-damn-lies-statistics-is-mem0-really-sota-in-agent-memory/;
   https://github.com/getzep/zep-papers/issues/5
-- MemPalace benchmark claims (verbatim vs. AAAK numbers) —
+- MemPalace benchmark claims (verbatim vs. AAAK numbers) --
   https://www.mempalace.tech/benchmarks (with caveat that methodology is
   disputed, https://github.com/MemPalace/mempalace/issues/29)
-- Shelly Palmer, "Claude Can Reference Past Chats," 2025-08 —
+- Shelly Palmer, "Claude Can Reference Past Chats," 2025-08 --
   https://shellypalmer.com/2025/08/claude-can-reference-past-chats-heres-your-enterprise-playbook/

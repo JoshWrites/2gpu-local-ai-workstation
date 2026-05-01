@@ -1,4 +1,4 @@
-# Architecture Thinking — Conversation Notes (2026-04-24)
+# Architecture Thinking -- Conversation Notes (2026-04-24)
 
 **Purpose:** Preserve the reasoning developed during a long brainstorming session on
 2026-04-24. This is a thinking journal for future-us, not a spec. The shape is still
@@ -18,7 +18,7 @@ chain.
 How do we get the most out of the 7900 XTX + 5700 XT + 5950X + 64 GB + NVMe
 workstation, given that the "primary" model shouldn't be burdened with noisy context?
 
-This was framed in terms we'd already been using — "active context" vs. "passive
+This was framed in terms we'd already been using -- "active context" vs. "passive
 context." Active = what the primary model must see to think clearly. Passive = noisy
 input that can be compressed off-card before any distilled result reaches the primary.
 Current examples already built: embedder on card 2, watcher on card 2, research
@@ -31,7 +31,7 @@ Over the session, we moved through several reframings. Each one subsumed the las
 **Reframing 1: generation vs. everything else.**
 "Active/passive context" was fuzzy at the edges. The sharper version: the primary
 model's only irreplaceable job is *generating the next user-facing token*. Retrieval,
-ranking, summarization, classification, memory maintenance, validation, observation —
+ranking, summarization, classification, memory maintenance, validation, observation --
 none of these require the primary's specific weights. All of them can in principle
 live elsewhere (CPU, card 2, scheduled jobs). The architecture question becomes "where
 is each non-generation concern cheapest to host?"
@@ -40,9 +40,9 @@ is each non-generation concern cheapest to host?"
 Initial split was active (primary is generating) vs. passive (happens elsewhere). But
 passive has two sub-kinds:
 
-- **Concurrent-passive** — happens while the primary is generating. Must be off-card
+- **Concurrent-passive** -- happens while the primary is generating. Must be off-card
   for VRAM reasons. Examples: watcher, live classifier, embedding at ingest time.
-- **Serial-passive** — happens when the primary is idle or unloaded. Can run on card
+- **Serial-passive** -- happens when the primary is idle or unloaded. Can run on card
   1 transient, card 2, or CPU. Examples: transcript compaction between turns, ingest
   re-embedding overnight, nightly consolidation.
 
@@ -53,13 +53,13 @@ between turns does a much better job than a 4B one, and the swap cost is fine.
 **Reframing 3: coordinator as collection of concerns, not a thing.**
 We started by asking where "the coordinator" should live (in front of the operator,
 behind the endpoint, as a passenger-seat advisor). But "the coordinator" isn't one
-thing — it's several concerns, each with its own natural home:
+thing -- it's several concerns, each with its own natural home:
 
 | Coordination concern | Best home |
 |---|---|
-| Lifecycle (load/unload models) | CPU program — boring, deterministic |
+| Lifecycle (load/unload models) | CPU program -- boring, deterministic |
 | Routing operator request to a model | CPU program calling card-2 classifier when uncertain |
-| Detecting handoff need mid-turn | Card 2 model (semantic judgment) → CPU router |
+| Detecting handoff need mid-turn | Card 2 model (semantic judgment) -> CPU router |
 | Compaction / re-embedding | CPU scheduler triggering card-1-transient or card-2 jobs |
 | Critique / advice during generation | Card 2 model (must be concurrent with card 1) |
 | Permission gating / safety | CPU program (no model needed) |
@@ -103,7 +103,7 @@ now" and transition between assignments cleanly.
 
 **Reframing 6: the best-fit problem is a curation problem, not a runtime problem.**
 Mid-session, we hit the hardest question: "how does the system pick the best-fit
-model for a request?" Research said this is unsolved — models can't reliably
+model for a request?" Research said this is unsolved -- models can't reliably
 self-assess limits (AbstentionBench: reasoning fine-tuning *degrades* abstention by
 ~24%); PEAR shows weak planners degrade quality more than weak executors; Self-MoA
 shows heterogeneous routing often makes quality worse than single-model baseline.
@@ -126,12 +126,12 @@ a quarterly human-curated artifact. The runtime becomes deterministic.
 
 **Reframing 7: use cases aren't invented, they're discovered.**
 Another sharpening from Josh: don't invent a use-case taxonomy. The industry already
-did that — public benchmarks like SWE-bench, LiveCodeBench, MMLU-Pro, BFCL, RULER,
+did that -- public benchmarks like SWE-bench, LiveCodeBench, MMLU-Pro, BFCL, RULER,
 etc. already define use cases precisely and reproducibly. Model releases come
 pre-scored on them. Discovery has two sources:
 
 - **Git history (startup seeding):** what has the user *actually* produced? Commit
-  shapes tell you the rough distribution — "40% Python with tests, 20% specs, 15%
+  shapes tell you the rough distribution -- "40% Python with tests, 20% specs, 15%
   bash, etc." Map those distributions to the benchmark families that already measure
   them.
 - **Monitor logs (ongoing):** while running, the system logs prompts + classifier
@@ -140,7 +140,7 @@ pre-scored on them. Discovery has two sources:
   classification right" and "was the output good."
 
 The generalist is a provisional slot-holder for unknown categories. It's *good*, not
-merely adequate (Josh's correction to my earlier framing) — users shouldn't suffer
+merely adequate (Josh's correction to my earlier framing) -- users shouldn't suffer
 when misclassified. The noticeability of misses comes from the log, not from user
 pain.
 
@@ -150,7 +150,7 @@ keep on disk, sketched:
 
 - Registry slots are weighted by observed frequency (from monitor logs).
 - Each candidate model gets a score equal to the sum of frequencies of all slots
-  it's best-fit for (one model can cover multiple slots — the dedupe gain).
+  it's best-fit for (one model can cover multiple slots -- the dedupe gain).
 - Load models in descending score order until disk budget is full.
 - Slots whose preferred model doesn't make the cut get reassigned to the
   highest-scoring model that *did* make the cut (often the generalist).
@@ -165,7 +165,7 @@ Sub-questions:
 
 1. How do you resume a session after a swap without losing what's been established?
 2. How do two users time-share without their sessions contaminating each other?
-3. What's the architectural shape for "context carries across model changes" — is it
+3. What's the architectural shape for "context carries across model changes" -- is it
    one model holding the thread with others as subroutines, or peers passing state
    between them, or a shared memory store, or something else?
 
@@ -187,7 +187,7 @@ Listed by Josh explicitly:
 3. **Single-thread-of-conversation illusion.** The user sees one conversation, even
    if several models have contributed.
 4. **Confidence in best-fit handling.** Each piece of the task handled by the right
-   model — this is what the curation-not-runtime reframing solves.
+   model -- this is what the curation-not-runtime reframing solves.
 5. **Action-severity gating.** Reads are free. Writes need polite confirmation.
    Deletes need typed confirmation (already built: `confirm_destructive.py`).
 6. **Two-user concurrency by time-slicing.** Two users share the stack.
@@ -201,7 +201,7 @@ Still being tested. Nothing below is decided.
 - **Fabric:** small Python daemon on CPU. Owns arena state, session state, scheduler,
   transitions. Does not think. Executes state transitions when given them. Every
   action logged and fallback-covered. Target: ~2,000 lines.
-- **Council:** small set of stateless helpers the Fabric invokes — classifier,
+- **Council:** small set of stateless helpers the Fabric invokes -- classifier,
   router, compactor, watcher, embedder, reranker, miss-logger. Mostly card 2 and
   CPU. Each is a tool, not an agent.
 - **Primaries:** whatever large model is currently serving the user's turn.
@@ -259,8 +259,8 @@ several things that may change what still holds up in this document:
   appear to have shipped the measurably-worse option. Homelab context makes
   the constraints that drove them to summaries (scale, privacy-by-distance,
   low latency budget) mostly not apply.
-- **Temporal-aware retrieval routing** — routing retrieval on whether the query
-  wants current state vs. decision history — is where the actual research gap
+- **Temporal-aware retrieval routing** -- routing retrieval on whether the query
+  wants current state vs. decision history -- is where the actual research gap
   lives. Every ingredient exists in separate papers (SelRoute, LongMemEval,
   Zep/Graphiti, Generative Agents recency decay, change-point detection). No
   named combination.
@@ -296,11 +296,11 @@ empirical ranking of handoff payload shapes:
     structured facts alone (Mem0) > outgoing-model summary
 
 Outgoing-model prose summary is the **worst-measured** payload shape. The correct
-design is a **structured-facts schema** — fields like `goal`, `decisions_made`,
-`open_threads`, `attempted_approaches`, `current_blocker`, `specialist_request` —
+design is a **structured-facts schema** -- fields like `goal`, `decisions_made`,
+`open_threads`, `attempted_approaches`, `current_blocker`, `specialist_request` --
 that the outgoing model fills in and the incoming model reads. Mem0's numbers
 quantify the tradeoff: ~6 accuracy points lost vs. raw transcript, in exchange
-for ~12× latency and ~10× cost reduction.
+for ~12x latency and ~10x cost reduction.
 
 This updates the handoff-spec-writer Council member's role from "write a prose
 problem statement" to "fill a schema." Small change in interface, large change
@@ -327,7 +327,7 @@ Written now while I still remember them. Revisit when research lands.
    paths, redact secrets by pattern, placeholder hostnames) as default.
    Full anon as a switch for later.
 
-5. **Audit time budget.** 10 prompts × 10 use cases × ~2 min each = 3.5 hours. Too
+5. **Audit time budget.** 10 prompts x 10 use cases x ~2 min each = 3.5 hours. Too
    long to sustain quarterly. Sampling tiers + single-keystroke UI brings it to an
    hour. If tooling is absent, ritual rots.
 
@@ -356,11 +356,11 @@ genuinely novel. What I'd flag as worth further investigation:
 - **KV-save + mmap-warm-cache + handoff-spec generation** as an integrated
   context-switch for GPU-resident LLMs. Each component exists. The integration
   doesn't appear to be published as of 2026-04 (see
-  `2026-04-24-multi-model-handoff-prior-art.md` §7 and JetBrains Junie writeup).
+  `2026-04-24-multi-model-handoff-prior-art.md` Section 7 and JetBrains Junie writeup).
 - **Curation-on-slow-clock registry** (admin ritual + benchmark-aligned taxonomy +
   miss-log discovery loop) as an alternative to runtime "smart routing." The
-  individual pieces all exist; the framing — explicitly moving intelligence out of
-  the hot path into human-curated artifacts on a quarterly cadence — may be worth
+  individual pieces all exist; the framing -- explicitly moving intelligence out of
+  the hot path into human-curated artifacts on a quarterly cadence -- may be worth
   articulating.
 - **Storage-bounded registry with ranked-choice over deduplicated models.** Again,
   individual pieces are standard. The specific algorithm (slots are voters weighted

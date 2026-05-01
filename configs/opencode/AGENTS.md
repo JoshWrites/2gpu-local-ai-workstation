@@ -4,9 +4,9 @@
 
 The `library` MCP server is the preferred path for three things:
 
-1. **Question-shaped file access** — `library_read_file(path, query)`
-2. **Web research** — `library_research(question)`
-3. **On-demand instruction sets** — `library_get_skill(name)`
+1. **Question-shaped file access** -- `library_read_file(path, query)`
+2. **Web research** -- `library_research(question)`
+3. **On-demand instruction sets** -- `library_get_skill(name)`
 
 All three tools share a common contract: they return a *summary layer* by
 default, with the option to escalate to *raw chunks* if the summary is
@@ -15,7 +15,7 @@ verbatim source material.
 
 ---
 
-## `library_read_file` — prefer over `read` for question-shaped access
+## `library_read_file` -- prefer over `read` for question-shaped access
 
 When the user asks a question *about* a file's contents ("how does X work
 in this config?", "what does the plan say about Y?", "summarize the
@@ -57,7 +57,7 @@ English. This means:
 For non-English source documents, the *retrieval* finds the right
 content, but the *summary* may be lower quality, generic, or default
 to English explanations of non-English material. A bilingual summarizer
-swap is planned but not yet shipped — see the multilingual plan in
+swap is planned but not yet shipped -- see the multilingual plan in
 `local-mcp-servers/docs/superpowers/plans/`.
 
 In the meantime: if a user is working with non-English documents and
@@ -66,10 +66,10 @@ chunks will be in the source language, faithful to the original.
 
 ---
 
-## `library_research` — prefer over self-fetching for the web
+## `library_research` -- prefer over self-fetching for the web
 
-When you need information that isn't in context — documentation, current
-events, third-party API docs, error messages — call `library_research(question)`
+When you need information that isn't in context -- documentation, current
+events, third-party API docs, error messages -- call `library_research(question)`
 **before** falling back to `webfetch`.
 
 The Library searches via SearxNG, fetches the top sources, chunks and
@@ -77,7 +77,7 @@ embeds them on the secondary card, and returns a summary with citations.
 Self-fetching with `webfetch` bloats context with raw HTML; the Library
 returns ~1-5K of distilled answer regardless of source size.
 
-Pages are cached in DRAM for the session — calling `library_research` again
+Pages are cached in DRAM for the session -- calling `library_research` again
 on a related question reuses the fetches automatically.
 
 ---
@@ -130,9 +130,9 @@ For each distinct topic, the protocol is:
 
 | Round | Action |
 |-------|--------|
-| 1 | `library_research(question)` → summary. If insufficient, `return_chunks=True` (same round). |
-| 2 | `library_research(refined_question)` → summary, optionally chunks. |
-| 3 | `library_research(further_refined_question)` → summary, optionally chunks. |
+| 1 | `library_research(question)` -> summary. If insufficient, `return_chunks=True` (same round). |
+| 2 | `library_research(refined_question)` -> summary, optionally chunks. |
+| 3 | `library_research(further_refined_question)` -> summary, optionally chunks. |
 | Fallback | If no round produced sufficient information, fall back to `webfetch` directly. |
 
 A **new topic** in the same turn always resets to round 1. The Library is

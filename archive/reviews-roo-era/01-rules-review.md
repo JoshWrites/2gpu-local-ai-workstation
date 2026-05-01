@@ -1,4 +1,4 @@
-# Rules review — second-opinion
+# Rules review -- second-opinion
 
 Reviewer: Review mode audit, 2026-04-15
 Scope: `~/.roo/rules/personal.md`, `rules-templates/*.md`, `.roo/modes/review.yaml`,
@@ -14,7 +14,7 @@ cross-checked against `memory-bank/`, `docs/implementation-plan.md`,
   *will* be instantiated; right now most of this prose has zero effect.
 - **Biggest concrete conflict:** `rules-code-implementation.md` line 12 says
   "run the project's test command (e.g. `pytest`, `go test ./...`). Fix failures
-  before moving on." The repo has no pytest suite — `tests/` contains a single
+  before moving on." The repo has no pytest suite -- `tests/` contains a single
   `planet_greeting.sh` smoke script. Code mode will either invent a test command
   or loop on a failure-to-locate-tests. Needs to be reframed around bash smoke
   tests, or made conditional.
@@ -24,7 +24,7 @@ cross-checked against `memory-bank/`, `docs/implementation-plan.md`,
   subagent reports" rule. All three were load-bearing in Phase 1 and have no
   representation in any rules file.
 - **Review mode is over-trusting its `groups: [read]` scope.** The YAML's
-  `customInstructions` say "Never edit files … or invoke write-capable tools,"
+  `customInstructions` say "Never edit files ... or invoke write-capable tools,"
   but `groups: [read]` does not deny `execute_command`. If a future Roo build
   includes shell in the read group (or if MCP adds a write tool), the role text
   is the only safeguard. Add an explicit deny-list or a `groups` override.
@@ -40,7 +40,7 @@ cross-checked against `memory-bank/`, `docs/implementation-plan.md`,
    each logical unit of work with a descriptive message") and
    `rules-code-implementation.md` L14-15 ("Commit after each logical unit of
    work") agree. But `rules-code-implementation.md` L12-13 demands tests pass
-   before "moving on." In this repo tests don't exist → the agent cannot both
+   before "moving on." In this repo tests don't exist -> the agent cannot both
    satisfy "run tests" and "commit after each unit." One path forward: downgrade
    the test rule to "run tests *if a test command is defined in project.md*."
 
@@ -55,14 +55,14 @@ cross-checked against `memory-bank/`, `docs/implementation-plan.md`,
 
 3. **Architect mode scope drift.** `rules-architect-planning.md` L6-8 tells
    Architect to "draft `docs/spec.md`" if missing. This repo has no `docs/spec.md`
-   — the closest artifact is `docs/implementation-plan.md`. Architect will
+   -- the closest artifact is `docs/implementation-plan.md`. Architect will
    either create a redundant spec file or no-op. Reconcile: either rename the
    expected file in the rule, or add a project.md clause documenting that this
    repo uses `implementation-plan.md` as its spec.
 
 4. **Architect "markdown only" vs. `yaml` mode files.** L16-17 says "You write
    markdown only." But `.roo/modes/review.yaml` is a YAML file the Architect
-   arguably should be allowed to design. Minor — Architect in Roo 3.52.1 is
+   arguably should be allowed to design. Minor -- Architect in Roo 3.52.1 is
    regex-scoped to `\.md$` by default, so this is soft. Worth a note.
 
 ## Redundancies
@@ -74,7 +74,7 @@ Canonical-location recommendations:
 | Prefer stdlib, justify deps in decisionLog.md | personal.md, project.md, rules-code-implementation.md | personal.md (global constant) | project.md, rules-code-implementation.md |
 | Never `systemctl enable` ollama | personal.md L46-48, project.md L20 example | personal.md | project.md (drop the example, cite personal.md) |
 | Commit after each logical unit | personal.md L31, rules-code-implementation.md L14 | rules-code-implementation.md (mode-scoped) | personal.md (too prescriptive for global) |
-| "Push back plainly" | personal.md L18-20 | personal.md | — (only place, good) |
+| "Push back plainly" | personal.md L18-20 | personal.md | -- (only place, good) |
 
 Net effect: ~40 lines of duplicated guidance can collapse to ~15.
 
@@ -95,7 +95,7 @@ Net effect: ~40 lines of duplicated guidance can collapse to ~15.
 3. **Trust-but-verify subagent reports.** lessons-learned L226-234 flags this
    explicitly. No rule captures it. Add to personal.md under Collaboration:
    "When a subagent reports 'I wrote X to Y,' read Y before believing the
-   report. Intended ≠ written."
+   report. Intended != written."
 
 4. **Cold-vs-warm startup expectations.** Launcher shows phase progress with
    benchmarked thresholds (activeContext.md, lessons-learned L211-222). Agents
@@ -133,7 +133,7 @@ Net effect: ~40 lines of duplicated guidance can collapse to ~15.
 3. **`rules-architect-planning.md` L6 expects `docs/spec.md`;** repo uses
    `docs/implementation-plan.md`. Cite the actual filename.
 
-4. **Review mode's role text says "read the user's plan or spec"** —
+4. **Review mode's role text says "read the user's plan or spec"** --
    `.roo/modes/review.yaml` line 3. Same filename mismatch as #3.
 
 5. **Templates refer to `~/.roo/custom_modes.yaml` indirectly** via the
@@ -164,14 +164,14 @@ Net effect: ~40 lines of duplicated guidance can collapse to ~15.
 
 - **Architect (built-in).** Roo built-in regex-scopes Architect writes to
   markdown. `rules-architect-planning.md` L16-17 ("You write markdown only")
-  is redundant with the built-in scope but cheap reinforcement — keep.
+  is redundant with the built-in scope but cheap reinforcement -- keep.
   However, there's no rule covering the `yaml` mode-definition files Josh
   might want Architect to help design. Not blocking.
 
 ## Voice
 
-All five files use imperative second-person consistently ("Read the spec…",
-"Commit after…", "Never invent content…"). Matches Roo convention. No
+All five files use imperative second-person consistently ("Read the spec...",
+"Commit after...", "Never invent content..."). Matches Roo convention. No
 voice-mismatch findings.
 
 One style nit: `rules-code-memory.md` L17 ("change rarely. Edit them when
@@ -181,10 +181,10 @@ shape or conventions shift."
 
 ## Recommendations (prioritized)
 
-### P0 — do before next session
+### P0 -- do before next session
 
-1. **Instantiate the templates.** Copy `rules-templates/project.md` →
-   `.roo/rules/project.md`; copy `rules-code-implementation.md` →
+1. **Instantiate the templates.** Copy `rules-templates/project.md` ->
+   `.roo/rules/project.md`; copy `rules-code-implementation.md` ->
    `.roo/rules-code/implementation.md`; etc. Edit to reflect this repo
    specifically (not the template defaults). Without this step the entire
    rules-templates/ tree is inert.
@@ -199,7 +199,7 @@ shape or conventions shift."
 3. **Add the silent-truncation rule** to `~/.roo/rules/personal.md` after
    L38. One sentence, high-impact, covered above.
 
-### P1 — do this week
+### P1 -- do this week
 
 4. **Add trust-but-verify and prompt-injection generalization** to
    personal.md (both covered above).
@@ -207,14 +207,14 @@ shape or conventions shift."
 5. **Collapse the three stdlib/dep redundancies** into personal.md only.
 
 6. **Reconcile `docs/spec.md` references** in `rules-architect-planning.md`
-   L6 and `.roo/modes/review.yaml` L3 — change to
+   L6 and `.roo/modes/review.yaml` L3 -- change to
    `docs/implementation-plan.md` or add a project.md alias clause.
 
 7. **Harden Review mode**: add an explicit note in customInstructions about
    MCP write tools, or scope the groups list more tightly if Roo supports
    per-tool deny.
 
-### P2 — before Phase 2 starts
+### P2 -- before Phase 2 starts
 
 8. **Add a `rules-templates/rules-code-phase2-indexing.md`** that activates
    the semantic-search-first rule once the embedding server is live.
@@ -223,7 +223,7 @@ shape or conventions shift."
    cold/warm thresholds so Phase 2+ agents don't misread startup latency
    as hang.
 
-10. **Add a protective rule for `rules-templates/`** itself — edits require
+10. **Add a protective rule for `rules-templates/`** itself -- edits require
     explicit user direction; otherwise treat it as read-only library.
 
 ---

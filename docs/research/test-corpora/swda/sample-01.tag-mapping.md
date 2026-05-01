@@ -1,4 +1,4 @@
-# SwDA sample-01 (sw_0912_3267) — tag mapping notes
+# SwDA sample-01 (sw_0912_3267) -- tag mapping notes
 
 ## What this corpus natively tags
 
@@ -21,7 +21,7 @@ to infer from tag sequences plus text.
 | question      | `qw`, `qy`, `qo`, `qr`, `qh` (rhetorical)                | direct |
 | elaboration   | `sd` + same-speaker continuation of a prior `sd`         | inferrable from `+` continuer + speaker change |
 | commitment    | no direct tag; evidenced by `aa`+`ft`+`fc` closings following a statement of resolution | inferrable |
-| concession    | `sv` with concessive connectives ("well…"), or `aa` followed by `sv` diverging | inferrable |
+| concession    | `sv` with concessive connectives ("well..."), or `aa` followed by `sv` diverging | inferrable |
 | contrast      | not tagged; must be detected in text ("but", "though")  | absent at dialogue-act level |
 | reversal      | not tagged; inferrable when a speaker issues `sd`/`sv` that contradicts a prior `sd`/`sv` of their own | absent |
 | supersession  | not tagged; cross-turn phenomenon outside DA scope       | absent |
@@ -32,27 +32,27 @@ to infer from tag sequences plus text.
 
 Going through sample-01 by turn:
 
-- **question**: turn 1 A "Wondering how you keep up on the news" → `qo`.
-  Turn 4 B "How do you gain your news?" → `qo`. Strongly present.
+- **question**: turn 1 A "Wondering how you keep up on the news" -> `qo`.
+  Turn 4 B "How do you gain your news?" -> `qo`. Strongly present.
 - **directive**: none in this short exchange. Absent.
 - **elaboration**: turn 7 A elaborates on "I get the WASHINGTON POST" ("and
   that is a pretty big newspaper"). Present.
 - **concession**: turn 10 B "that is one of the handicaps with both T V
   and radio" after A admits news doesn't hit. Present.
 - **contrast**: turn 10 A "Though I have the radio on when I go to work,
-  I don't think the news usually hits" — explicit "though". Present.
+  I don't think the news usually hits" -- explicit "though". Present.
 - **commitment**: turn 17 A "we've resolved the issue / and that's what
-  we were asked to do" — decision to end the task. Present.
+  we were asked to do" -- decision to end the task. Present.
 - **reversal / supersession**: absent in this sample (one-shot task).
 - **aside**: turn 9 A "<laughter> because I'm not going right on the hour"
-  — arguably an aside explaining why radio doesn't work. Weak.
+  -- arguably an aside explaining why radio doesn't work. Weak.
 - **unresolved**: absent; sample ends with mutual closing.
 
 ## Notes for the parser survey
 
 SwDA is the best single corpus for **question/directive/commitment** as
 explicit tags. It is **not useful for contrast/reversal/supersession**
-— those are discourse-relation-level, which SwDA does not encode. A
+-- those are discourse-relation-level, which SwDA does not encode. A
 parser whose native output is PDTB-style connective senses (Contingency,
 Comparison, Expansion, Temporal) will map poorly to SwDA's tagset at
 face value; a parser whose output is dialogue acts will map closely.

@@ -12,14 +12,14 @@ For a `git status` call, opencode's bash tool flow:
 T+0ms     create tool part: state.input = {} (placeholder)
 T+286ms   permission system evaluates patterns, fires `permission.asked`
 T+0ms     OUR PATCH RUNS in agent.ts:
-            sdk.session.message(...) → fetches part by callID
-            part.state.input is still {} ← the input field hasn't been
+            sdk.session.message(...) -> fetches part by callID
+            part.state.input is still {} <- the input field hasn't been
                                            populated yet
-            → fall back to permission.metadata, which is also {}
-            → requestPermission sent to Zed with rawInput = {}
+            -> fall back to permission.metadata, which is also {}
+            -> requestPermission sent to Zed with rawInput = {}
 T+4ms     bash tool finally calls part.update with state.input =
             { command: "git status", description: "..." }
-            (too late — the permission request is already on the wire)
+            (too late -- the permission request is already on the wire)
 ```
 
 So our `agent.ts` fix is **looking up `part.state.input` before it's
@@ -41,7 +41,7 @@ time. No path to a populated rawInput.
 
 Two layers:
 
-1. **Keep the agent.ts fix** — it does the right thing for tools whose
+1. **Keep the agent.ts fix** -- it does the right thing for tools whose
    `state.input` IS populated before `ctx.ask`. We don't have to revert.
 2. **Also patch tool/bash.ts** to populate `metadata: { command, description }`
    directly. Then `permission.metadata` arrives at the ACP layer non-empty,
@@ -67,7 +67,7 @@ re-submitting.
 
 ## Patches preserved
 
-- `our-patch-agent.diff` — the agent.ts change (42 lines)
-- `our-patch-bash.diff` — the bash.ts change (44 lines including helper signature update)
+- `our-patch-agent.diff` -- the agent.ts change (42 lines)
+- `our-patch-bash.diff` -- the bash.ts change (44 lines including helper signature update)
 
 Total upstream contribution candidate: 86 lines across two files.

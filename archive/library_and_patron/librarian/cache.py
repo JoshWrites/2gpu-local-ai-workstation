@@ -4,7 +4,7 @@ Keyed on file_id, which is derived from (absolute_path, mtime). If a file is
 re-mined after it was modified on disk, the cache miss is automatic because
 the key changes.
 
-Bounded by entry count rather than memory bytes — entries are small (chunks
+Bounded by entry count rather than memory bytes -- entries are small (chunks
 + vectors) and the server process is short-lived per opencode session.
 """
 

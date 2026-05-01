@@ -1,6 +1,6 @@
-# Brainstorm — Model-switcher on card 2? Profiles in opencode? What else can move to CPU/DRAM?
+# Brainstorm -- Model-switcher on card 2? Profiles in opencode? What else can move to CPU/DRAM?
 
-**Context:** late-evening brainstorm at the end of the Librarian V2 session. Three questions you asked before turning in. Answered here for tomorrow-morning reading. Nothing committed as a plan — this is a thinking document.
+**Context:** late-evening brainstorm at the end of the Librarian V2 session. Three questions you asked before turning in. Answered here for tomorrow-morning reading. Nothing committed as a plan -- this is a thinking document.
 
 **Date:** 2026-04-22
 
@@ -17,19 +17,19 @@
 
 A "model-switcher" in the dispatcher sense needs a small LLM to classify/route incoming requests. Two ways it could land on card 2:
 
-### Option A — Third model on card 2
+### Option A -- Third model on card 2
 
-A second Qwen3-1.7B or similar small model, ~2 GB loaded, for routing decisions. Would fit in the ~2.7 GB headroom but be tight — peak VRAM climbs to ~7.5 GB, which is within stress-test pass thresholds but leaves almost no margin for driver allocations, flash-attn working memory, or unexpected transient spikes.
+A second Qwen3-1.7B or similar small model, ~2 GB loaded, for routing decisions. Would fit in the ~2.7 GB headroom but be tight -- peak VRAM climbs to ~7.5 GB, which is within stress-test pass thresholds but leaves almost no margin for driver allocations, flash-attn working memory, or unexpected transient spikes.
 
 **Concern:** we passed the 8 GB envelope stress test with 2.7 GB headroom explicitly because "a third specialist on card 2 is plausible if needed." A dispatcher model that's *always* loaded would consume that headroom permanently. Fine for steady-state, risky for edge cases (future large query, different model variant, driver update).
 
-### Option B — CPU-hosted router (my actual recommendation)
+### Option B -- CPU-hosted router (my actual recommendation)
 
-A 1-4B model on CPU runs at ~10-15 tok/s on your 5950X. For routing decisions — which are tiny prompts with tiny outputs — that's more than fast enough. Zero VRAM cost on either card.
+A 1-4B model on CPU runs at ~10-15 tok/s on your 5950X. For routing decisions -- which are tiny prompts with tiny outputs -- that's more than fast enough. Zero VRAM cost on either card.
 
 **Tradeoff:** CPU inference latency per routing decision is maybe 200-500ms vs 50-100ms on GPU. In absolute terms, still fast enough that nobody notices. You only lose against GPU-based routing if the router fires hundreds of times per turn, which it won't.
 
-### Option C — Don't build a router at all
+### Option C -- Don't build a router at all
 
 This is the honest third option. Below.
 
@@ -43,7 +43,7 @@ Real question: **do you need a dispatcher/router at all right now?** You have:
 
 The "dispatcher" in the tightened handoff was meant to route between *different primary models* (coder vs. reasoner vs. reviewer). If you're not swapping primaries, the dispatcher pattern isn't doing work for you. It becomes complexity without capability gain.
 
-Unless you specifically want to A/B test the dispatcher pattern against your current stack (see the earlier brainstorm — that test is worth running but expected to show the current stack is best), don't build a router yet.
+Unless you specifically want to A/B test the dispatcher pattern against your current stack (see the earlier brainstorm -- that test is worth running but expected to show the current stack is best), don't build a router yet.
 
 **If you later decide to build one:** Option B (CPU). Card 2 headroom is a hedge for future needs (bigger embedder, reranker, binary-file parser), not to be spent on routing.
 
@@ -63,7 +63,7 @@ Opencode has an `agent` config block where you can define named agents, each wit
 
 The built-in agents are `Build` (full tool access) and `Plan` (restricted). You can define custom agents in `opencode.json` or as Markdown files.
 
-**Operator switches between agents using Tab** — direct, no LLM reasoning about which to pick. That's your "not agentically choose" requirement, exactly.
+**Operator switches between agents using Tab** -- direct, no LLM reasoning about which to pick. That's your "not agentically choose" requirement, exactly.
 
 ### Concrete profile shape that fits your workflow
 
@@ -83,15 +83,15 @@ Based on the runs we saw today and what you use opencode for:
 }
 ```
 
-- **`build`** — default. Full tools, current GLM-based ops stack.
-- **`research`** — read-only. For "explain this codebase" sessions where you don't want any accidental edits/runs. Still uses GLM because Librarian + distiller integration matters more than model choice.
-- **`quick`** — smaller, faster primary for quick interactions where you don't need GLM's capability ceiling.
+- **`build`** -- default. Full tools, current GLM-based ops stack.
+- **`research`** -- read-only. For "explain this codebase" sessions where you don't want any accidental edits/runs. Still uses GLM because Librarian + distiller integration matters more than model choice.
+- **`quick`** -- smaller, faster primary for quick interactions where you don't need GLM's capability ceiling.
 
 Tab-switching means you deliberately pick which mode you're in for the session or for the current task. No router, no LLM reasoning, just mode selection.
 
 ### Caveat worth knowing
 
-Switching agents mid-session **changes the active model** but opencode doesn't restart the MCP servers — Librarian + distiller keep their state. That's desirable.
+Switching agents mid-session **changes the active model** but opencode doesn't restart the MCP servers -- Librarian + distiller keep their state. That's desirable.
 
 But switching to an agent with a different `llama-primary` model target when the server is serving something else (e.g., `quick` agent expects `qwen3-coder:30b` on :11434 but `llama-primary.service` is serving GLM) will fail gracefully because opencode just sends the request and gets whatever :11434 returns. The `Conflicts=` on your systemd units means only one primary model can be live at a time.
 
@@ -109,14 +109,14 @@ If per-profile model swapping becomes important (it probably won't for a while),
 
 This is the richer question. You have **~30 GB of idle DRAM and 30 of 32 CPU threads mostly idle** during AI sessions. Plenty of silicon to trade against. Here's the honest inventory, ranked by ROI.
 
-### Tier 1 — high value, straightforward builds
+### Tier 1 -- high value, straightforward builds
 
 #### 1. MoE expert offload for a bigger primary model
 
-**This is the biggest latent capability upgrade in your stack.** llama.cpp supports partial CPU offload of mixture-of-experts models via `--n-cpu-moe` — hot layers stay on GPU, cold expert FFN tensors live in DRAM, and activation vectors cross PCIe per token.
+**This is the biggest latent capability upgrade in your stack.** llama.cpp supports partial CPU offload of mixture-of-experts models via `--n-cpu-moe` -- hot layers stay on GPU, cold expert FFN tensors live in DRAM, and activation vectors cross PCIe per token.
 
 Relevant for:
-- **Qwen3-Next-80B-A3B** or **gpt-oss-20b** or similar — 20-80B parameter MoE models that would never fit at Q4 in 24 GB VRAM alone, but *do* fit at ~18 GB on-GPU + ~20 GB in DRAM.
+- **Qwen3-Next-80B-A3B** or **gpt-oss-20b** or similar -- 20-80B parameter MoE models that would never fit at Q4 in 24 GB VRAM alone, but *do* fit at ~18 GB on-GPU + ~20 GB in DRAM.
 - Benchmarks from the ecosystem: 30-40 tok/s decode is plausible on your hardware for an 80B-A3B model with this setup.
 
 **Why it's good for you:** capability ceiling. GLM-4.7-Flash is solid but occasionally hits limits on deep reasoning (we saw glimpses today with the hookscript confabulation). A bigger MoE model with MoE offload *would not cost you any more VRAM* and would live in the same 64K context envelope.
@@ -133,8 +133,8 @@ Not everything needs an LLM. Things you're currently doing on the primary or sec
 
 - **JSON schema validation** for MCP tool returns (currently we rely on the model producing valid JSON; a CPU-side validator could catch and retry)
 - **Compose-file linting** (YAML parse + schema check before proposing changes)
-- **SSH command safety analysis** (regex + AST-ish patterns for "rm -rf", "pct destroy", chained destructive verbs) — the `ssh<read>` vs `ssh<write>` classifier we discussed
-- **Markdown section extraction** (the chunker's document strategy — already CPU)
+- **SSH command safety analysis** (regex + AST-ish patterns for "rm -rf", "pct destroy", chained destructive verbs) -- the `ssh<read>` vs `ssh<write>` classifier we discussed
+- **Markdown section extraction** (the chunker's document strategy -- already CPU)
 - **File change detection / watching** (already CPU-ish via watchdog)
 
 **Why this matters:** every LLM call to do work a regex can do is wasted compute. The ~1 token per char of embedder time for a 5 KB chunk is 50 ms; a regex over 5 KB is 50 microseconds.
@@ -151,21 +151,21 @@ Distiller and any future miner-of-web-content re-fetch the same URLs across sess
 
 ---
 
-### Tier 2 — real capability, needs design
+### Tier 2 -- real capability, needs design
 
 #### 4. CPU-hosted specialist for slow-but-thorough tasks
 
 Not every task needs GPU latency. Things that could run on CPU at 5-15 tok/s and not bother anyone:
 
-- **Reranker** — after Librarian returns top-K, a small reranker (e.g., `cross-encoder/ms-marco-MiniLM`) on CPU re-scores the K chunks against the query with a more expensive model. Slow but improves quality on ambiguous queries. Fits in ~500 MB RAM, runs at ~100 ms per pair.
-- **Binary file parser** — when we build support for PDFs, ipynb, etc. The *parsing* (PDF → text) runs on CPU. Only the embedding step needs the GPU. Natural CPU work.
-- **Structured-output validator/retry** — a very small model (1-3B) on CPU that sanity-checks distiller JSON outputs before returning them. Catches the `parse_json_error` class we saw today.
+- **Reranker** -- after Librarian returns top-K, a small reranker (e.g., `cross-encoder/ms-marco-MiniLM`) on CPU re-scores the K chunks against the query with a more expensive model. Slow but improves quality on ambiguous queries. Fits in ~500 MB RAM, runs at ~100 ms per pair.
+- **Binary file parser** -- when we build support for PDFs, ipynb, etc. The *parsing* (PDF -> text) runs on CPU. Only the embedding step needs the GPU. Natural CPU work.
+- **Structured-output validator/retry** -- a very small model (1-3B) on CPU that sanity-checks distiller JSON outputs before returning them. Catches the `parse_json_error` class we saw today.
 
 **Cost:** depends on which. Reranker is ~1 day. Binary parser is a week (lots of format edge cases). Validator is a day.
 
 #### 5. Tmpfs for KV cache checkpoints
 
-llama.cpp supports `--slot-save-path` for saving/restoring KV cache per-slot. Currently points at `/tmp/aspects/` which is disk-backed. Mounting a 4-8 GB tmpfs (RAM-backed) at that path makes restore much faster — 10+ GB/s from DRAM vs. 3-5 GB/s from NVMe.
+llama.cpp supports `--slot-save-path` for saving/restoring KV cache per-slot. Currently points at `/tmp/aspects/` which is disk-backed. Mounting a 4-8 GB tmpfs (RAM-backed) at that path makes restore much faster -- 10+ GB/s from DRAM vs. 3-5 GB/s from NVMe.
 
 **Why it's niche:** you don't swap models mid-session currently. If you start using the profile-switching idea from Q2, this becomes useful.
 
@@ -173,7 +173,7 @@ llama.cpp supports `--slot-save-path` for saving/restoring KV cache per-slot. Cu
 
 ---
 
-### Tier 3 — worth knowing, not worth building yet
+### Tier 3 -- worth knowing, not worth building yet
 
 #### 6. CPU-hosted embedder fallback
 
@@ -204,9 +204,9 @@ Long-dead-end direction (because we already rejected LanceDB-on-disk persistence
 | 5 | Deterministic CPU tooling | Ongoing | Eliminates wasted LLM calls | Add as noticed |
 | 6 | CPU-hosted reranker | ~1 day | Better retrieval quality on ambiguous queries | After measuring ambiguous-query failures |
 
-My suggested next build in the morning: **#1 (MoE bench)** — highest expected value, cheapest to validate. You either confirm GLM is the right primary and move on, or you find a bigger MoE model that outperforms it within the same VRAM envelope, which changes everything.
+My suggested next build in the morning: **#1 (MoE bench)** -- highest expected value, cheapest to validate. You either confirm GLM is the right primary and move on, or you find a bigger MoE model that outperforms it within the same VRAM envelope, which changes everything.
 
-Second suggestion: **#2 (profiles)** — already supported by opencode, you just haven't configured it. 30 minutes to wire and probably useful immediately.
+Second suggestion: **#2 (profiles)** -- already supported by opencode, you just haven't configured it. 30 minutes to wire and probably useful immediately.
 
 Skip routing/dispatcher work unless something specifically pushes you toward it.
 
@@ -215,8 +215,8 @@ Skip routing/dispatcher work unless something specifically pushes you toward it.
 ## Sources
 
 - [llama.cpp MoE offload guide (Doctor-Shotgun on HF)](https://huggingface.co/blog/Doctor-Shotgun/llamacpp-moe-offload-guide)
-- [Two-tier GPU+RAM expert cache proposal — llama.cpp issue 20757](https://github.com/ggml-org/llama.cpp/issues/20757)
+- [Two-tier GPU+RAM expert cache proposal -- llama.cpp issue 20757](https://github.com/ggml-org/llama.cpp/issues/20757)
 - [Qwen3-235B-A22B MoE config (Medium)](https://medium.com/@david.sanftenberg/gpu-poor-how-to-configure-offloading-for-the-qwen-3-235b-a22b-moe-model-using-llama-cpp-13dc15287bed)
 - [HOBBIT: MoE expert offloading paper (arxiv)](https://arxiv.org/html/2411.01433v2)
-- [opencode agents docs](https://opencode.ai/docs/agents/) — profile-switching reference
-- [opencode models docs](https://opencode.ai/docs/models/) — per-agent model override
+- [opencode agents docs](https://opencode.ai/docs/agents/) -- profile-switching reference
+- [opencode models docs](https://opencode.ai/docs/models/) -- per-agent model override

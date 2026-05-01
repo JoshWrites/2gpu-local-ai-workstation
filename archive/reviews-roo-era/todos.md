@@ -1,4 +1,4 @@
-# Review follow-ups — action queue
+# Review follow-ups -- action queue
 
 Consolidated from the three Phase 1 reviews:
 - `01-rules-review.md`
@@ -12,7 +12,7 @@ it's been addressed in this session.
 
 ## Completed
 
-### P0.1 — Command execution now prompts per-call ✅
+### P0.1 -- Command execution now prompts per-call [x]
 
 **Done 2026-04-15.** `configs/roo-code-settings.json` set
 `alwaysAllowExecute: false`. The `allowedCommands` list only matters
@@ -22,25 +22,25 @@ execution, which matches the intent of the allowlist.
 
 **Source:** code-and-deps review, `alwaysAllowExecute: true` finding.
 
-### P1.2 — Spec filename refs generalized ✅
+### P1.2 -- Spec filename refs generalized [x]
 
 **Done 2026-04-16 (e52a5ce).** `rules-templates/rules-architect-planning.md`
 and `rules-templates/rules-code-implementation.md` no longer hardcode
 `docs/spec.md` / `docs/plan.md`; they point at the project's plan/spec
 generically (listing `docs/implementation-plan.md` as the typical name).
 
-**Source:** rules review §4 "filename mismatches."
+**Source:** rules review Section 4 "filename mismatches."
 
-### P1.5 — /health endpoint check hardened ✅
+### P1.5 -- /health endpoint check hardened [x]
 
 **Done 2026-04-16 (e52a5ce).** `scripts/second-opinion-launch.sh` now
 uses `curl -f` + exit code instead of grepping `'"ok"'` out of the
 body. llama-server returns 503 until ready and 200 when healthy, so
 `-f` gives a robust signal without parsing JSON.
 
-**Source:** code-and-deps review §launch script correctness.
+**Source:** code-and-deps review Section launch script correctness.
 
-### P1.4 — Model and binary paths unified ✅
+### P1.4 -- Model and binary paths unified [x]
 
 **Done 2026-04-16.** New `scripts/common.sh` exports `LLAMA_BIN`,
 `MODEL_DIR`, and `MODEL_GGUF` with sane defaults overridable via env.
@@ -48,9 +48,9 @@ body. llama-server returns 503 until ready and 200 when healthy, so
 of hardcoding paths. Bench's `evict_cache` heredoc reads `$GGUF` from
 env instead of a hardcoded absolute path.
 
-**Source:** code-and-deps review §primary-llama.sh + bench-startup drift.
+**Source:** code-and-deps review Section primary-llama.sh + bench-startup drift.
 
-### P0.2 — Vulkan vs ROCm benchmark ✅
+### P0.2 -- Vulkan vs ROCm benchmark [x]
 
 **Done 2026-04-16 (548406d, db11f16).** Ran warm-only bench, 1 warmup
 plus 3 recorded runs per backend. Vulkan wins generation by ~84%
@@ -61,13 +61,13 @@ Branch `rocm-phase-1` preserves pre-switch state for fallback.
 Full writeup: `reviews/04-vulkan-vs-rocm-benchmark.md`.
 Bench script: `scripts/bench-rocm-vs-vulkan.sh`.
 
-**Source:** community review §2 "AMD/ROCm peculiarities."
+**Source:** community review Section 2 "AMD/ROCm peculiarities."
 
 ---
 
-## P0 — Phase 2 preflight (do before standing up the 5700 XT work)
+## P0 -- Phase 2 preflight (do before standing up the 5700 XT work)
 
-### P0.3 — 5700 XT embedding-server feasibility
+### P0.3 -- 5700 XT embedding-server feasibility
 
 **Why.** Community review says gfx1010 ROCm math-library support
 collapsed post-torch 2.0; the classic `HSA_OVERRIDE_GFX_VERSION=10.3.0`
@@ -87,7 +87,7 @@ colocating the embedding model with the coder on the 7900 XTX.
    Vulkan prebuilt.
 5. Try a one-shot embedding: `curl -X POST
    http://127.0.0.1:11435/v1/embeddings -d '{"model":"<m>","input":"hello"}'`
-   — expect a vector of the model's dim.
+   -- expect a vector of the model's dim.
 6. Write `reviews/05-5700xt-embedding-feasibility.md` with outcomes and
    a Phase 2 design update: pin to ROCm, pin to Vulkan, or consolidate
    onto the 7900 XTX.
@@ -96,16 +96,16 @@ colocating the embedding model with the coder on the 7900 XTX.
 ~1.4 GB headroom at 64K context. A 300 MB embedding model plus its tiny
 KV fits. We lose the parallelism benefit but keep the indexing.
 
-**Time estimate:** 60–90 min, possibly more if we hit driver surprises.
+**Time estimate:** 60-90 min, possibly more if we hit driver surprises.
 
-**Source:** community review §3; implementation-plan Phase 2 currently
+**Source:** community review Section 3; implementation-plan Phase 2 currently
 assumes ROCm.
 
 ---
 
-## P1 — meaningful polish (any order)
+## P1 -- meaningful polish (any order)
 
-### P1.1 — Rules templates are inert
+### P1.1 -- Rules templates are inert
 
 **Why.** `rules-templates/*.md` contain real content now, but Roo only
 reads files at `.roo/rules/*.md` or `.roo/rules-<mode>/*.md` inside the
@@ -124,14 +124,14 @@ templates are shelfware until instantiated.
 **Recommendation.** (a) for the in-repo ones that make sense
 (code-implementation, memory) and (b) for the rest. Spec/architect
 rules don't apply to second-opinion since we don't use Architect mode
-on this repo — I plan by talking to Josh.
+on this repo -- I plan by talking to Josh.
 
-**Source:** rules review §2 "templates are inert."
+**Source:** rules review Section 2 "templates are inert."
 
-### P1.3 — Draft model upgrade for Phase 3
+### P1.3 -- Draft model upgrade for Phase 3
 
 **Why.** Community review found
-`jukofyork/Qwen3-Coder-Instruct-DRAFT-0.75B-GGUF` — purpose-built draft
+`jukofyork/Qwen3-Coder-Instruct-DRAFT-0.75B-GGUF` -- purpose-built draft
 for Qwen3-Coder-30B-A3B with measurably better acceptance than generic
 Qwen3-0.6B. Our Phase 3 plan and post-phase1-enhancements doc both
 reference the generic model.
@@ -141,30 +141,30 @@ recommend `jukofyork/Qwen3-Coder-Instruct-DRAFT-0.75B-GGUF` as primary,
 Qwen3-0.6B as fallback. Note the tokenizer compatibility check still
 applies.
 
-**Source:** community review §7.
+**Source:** community review Section 7.
 
 ---
 
-## P2 — file for later, no deadline
+## P2 -- file for later, no deadline
 
-### P2.1 — Rules gaps from lessons-learned
+### P2.1 -- Rules gaps from lessons-learned
 
 Three things in `docs/lessons-learned.md` don't yet appear in
 `~/.roo/rules/personal.md`:
-1. **Silent `maxReadFileLine` truncation warning** — add a rule:
+1. **Silent `maxReadFileLine` truncation warning** -- add a rule:
    "If a file read returns fewer lines than expected or if summary
    confidence is uncertain, state that truncation may have occurred
    rather than summarizing as if the full file is visible."
-2. **Trust-but-verify subagent reports** — add a rule for cases where
+2. **Trust-but-verify subagent reports** -- add a rule for cases where
    the agent delegates: "When a subagent claims to have written or
-   changed files, verify the outcome by reading the target — don't
+   changed files, verify the outcome by reading the target -- don't
    relay the summary without checking."
-3. **Cold vs warm startup expectations** — informational; probably
+3. **Cold vs warm startup expectations** -- informational; probably
    belongs in `docs/lifecycle-management.md` not rules.
 
-**Source:** rules review §gaps.
+**Source:** rules review Section gaps.
 
-### P2.2 — `maxReadFileLine: -1` is a context-bomb risk
+### P2.2 -- `maxReadFileLine: -1` is a context-bomb risk
 
 **Why.** Unbounded file reads will blow up the context window on a
 single large file. Current setting was a reaction to 100-line silent
@@ -176,29 +176,29 @@ needing whole files.
 
 **Defer until.** Phase 2 embedding index is operational.
 
-**Source:** code-and-deps review §roo settings.
+**Source:** code-and-deps review Section roo settings.
 
-### P2.3 — Roo Code #12042 temp=0 behavioral note
+### P2.3 -- Roo Code #12042 temp=0 behavioral note
 
 **Why.** Roo #12042 forces `temperature=0` on OpenAI-compatible
 providers. Means our Qwen3-Coder responses are deterministic regardless
-of any temperature we set. Not a fix we apply — a behavior to know
+of any temperature we set. Not a fix we apply -- a behavior to know
 about when debugging "why did it generate the same wrong thing twice?"
 
 **Action.** Add a paragraph to `docs/lessons-learned.md` or
 `post-phase1-enhancements.md` noting the constraint.
 
-**Source:** code-and-deps review §Roo Code dependency.
+**Source:** code-and-deps review Section Roo Code dependency.
 
-### P2.4 — rocWMMA, KV-cache quantization, Qdrant snapshots, MCP audit, Prometheus
+### P2.4 -- rocWMMA, KV-cache quantization, Qdrant snapshots, MCP audit, Prometheus
 
 Smaller community-review suggestions worth exploring during Phase 2 or 3:
 - **rocWMMA off** on current llama.cpp build for gfx1100 (community says
   it actively hurts).
-- **KV quantization alternatives** — we're on q8_0; benchmark q4_0
+- **KV quantization alternatives** -- we're on q8_0; benchmark q4_0
   specifically for memory headroom at 128K.
 - **Qdrant snapshot backups** once indexing is live.
 - **MCP server audit** before adding any (SearxNG first).
 - **Prometheus /metrics endpoint on llama-server** for observability.
 
-**Source:** community review §"smaller things worth adding."
+**Source:** community review Section "smaller things worth adding."

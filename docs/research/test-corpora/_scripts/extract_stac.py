@@ -33,7 +33,7 @@ with open(out_annot, 'w') as f:
 # Write clean text (speaker: text), one EDU per line to preserve STAC
 # segmentation (EDUs are atomic discourse units, not necessarily turns)
 with open(out_clean, 'w') as f:
-    f.write("# STAC (Strategic Conversation) linguistic-only corpus — clean text\n")
+    f.write("# STAC (Strategic Conversation) linguistic-only corpus -- clean text\n")
     f.write(f"# Dialogue ID: {target['dialogue_id']}\n")
     f.write("# Source: https://www.irit.fr/STAC/ (CC BY-NC-SA 4.0)\n")
     f.write("# Context: chat logs from multi-player Settlers of Catan games.\n")

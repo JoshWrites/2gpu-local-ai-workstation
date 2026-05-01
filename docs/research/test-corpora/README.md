@@ -9,7 +9,7 @@ This directory is a **parser-independent test set**. A sibling agent is
 independently surveying candidate discourse/dialogue-act parsers; the
 corpora here were selected without knowledge of which parsers are
 under consideration. That separation means later parser evaluation
-won't inadvertently test a parser against data it was trained on —
+won't inadvertently test a parser against data it was trained on --
 as long as whoever picks the parsers verifies the training-set
 overlap at that point.
 
@@ -21,9 +21,9 @@ are the discourse phenomena we expect the indexer to need to detect:
 
 | Tag           | Rough definition                                                 |
 |---------------|------------------------------------------------------------------|
-| reversal      | "actually let's switch to X" — speaker reverses their own stance |
+| reversal      | "actually let's switch to X" -- speaker reverses their own stance |
 | supersession  | a later turn overrides a decision established earlier            |
-| concession    | acknowledging a prior point while adjusting ("yes, but…")        |
+| concession    | acknowledging a prior point while adjusting ("yes, but...")        |
 | contrast      | X but Y                                                          |
 | elaboration   | adding detail to a prior claim                                   |
 | commitment    | decision being made, state changing                              |
@@ -38,7 +38,7 @@ be mapped to these tags well.
 
 ## Corpora included
 
-### `swda/` — Switchboard Dialog Act Corpus
+### `swda/` -- Switchboard Dialog Act Corpus
 
 - **Genre**: two-party telephone conversations.
 - **Taxonomy**: SWBD-DAMSL (~42 dialog acts per utterance).
@@ -49,10 +49,10 @@ be mapped to these tags well.
 - **Access**: free (GPL-2.0 code, corpus redistributable for
   research use).
 
-### `mrda/` — ICSI Meeting Recorder Dialogue Act Corpus
+### `mrda/` -- ICSI Meeting Recorder Dialogue Act Corpus
 
-- **Genre**: multi-party naturalistic meetings (3–10+ speakers).
-- **Taxonomy**: MRDA (≈52 fine tags) extending SWBD-DAMSL with
+- **Genre**: multi-party naturalistic meetings (3-10+ speakers).
+- **Taxonomy**: MRDA (~=52 fine tags) extending SWBD-DAMSL with
   multi-party-specific tags (floor-holder, floor-grabber,
   back-channel).
 - **Strong for**: question, directive, elaboration, multi-party
@@ -62,7 +62,7 @@ be mapped to these tags well.
 - **Access**: processed text free via NathanDuran/MRDA-Corpus
   (GPL-3.0); underlying audio free for research via AMI/ICSI.
 
-### `stac/` — Strategic Conversation (Settlers of Catan)
+### `stac/` -- Strategic Conversation (Settlers of Catan)
 
 - **Genre**: multi-party online chat during competitive game-play
   (negotiation).
@@ -76,7 +76,7 @@ be mapped to these tags well.
   commands), commitment (trade acceptance is game-specific).
 - **Access**: free under CC BY-NC-SA 4.0 for research use.
 
-### `gum/` — Georgetown University Multilayer Corpus
+### `gum/` -- Georgetown University Multilayer Corpus
 
 - **Genres**: academic prose, biography, and face-to-face
   conversation (three samples).
@@ -92,16 +92,16 @@ be mapped to these tags well.
 ## Corpora considered but NOT included
 
 - **RST-DT** (Rhetorical Structure Theory Discourse Treebank;
-  LDC2002T07) — the canonical WSJ-article RST corpus, but LDC-
+  LDC2002T07) -- the canonical WSJ-article RST corpus, but LDC-
   licensed (not freely redistributable). Users with an LDC account
   can obtain it from
   <https://catalog.ldc.upenn.edu/LDC2002T07>. The GUM eRST samples
   here use the same RST framework and are freely available; they
   provide an equivalent test surface without the license friction.
-- **PDTB** (LDC2008T05, LDC2019T05) — likewise LDC-licensed. The
+- **PDTB** (LDC2008T05, LDC2019T05) -- likewise LDC-licensed. The
   GDTB annotations in `gum/` provide PDTB-3.0-compatible relations
   in a freely-redistributable form.
-- **LongMemEval / LoCoMo** — these are long-conversation QA
+- **LongMemEval / LoCoMo** -- these are long-conversation QA
   benchmarks referenced in our Pattern 1 research, but they don't
   carry discourse-relation annotations. They're valuable for
   retrieval evaluation, not for parser-evaluation.
@@ -125,28 +125,28 @@ Comparing the 10 target tags against the four corpora:
 
 ### Biggest gaps
 
-1. **reversal** — no corpus we found tags it directly. STAC's
+1. **reversal** -- no corpus we found tags it directly. STAC's
    `Correction` is the closest single-label proxy when a speaker
    corrects themselves. Parsers likely will need **two-stage**
    detection: first flag a candidate Correction / Contrast /
    Comparison; then check speaker identity to distinguish reversal
    (self) from supersession (other) from correction (other, small).
-2. **commitment** — no discourse theory we surveyed has a first-class
+2. **commitment** -- no discourse theory we surveyed has a first-class
    "commitment" relation. The closest signals are modality
    (declarative + future/decision verbs), speech-act tags, or
    downstream "action-taken" annotations (not present in any of the
    above corpora). Expect to need a supplementary classifier here.
-3. **unresolved** — structural, not a tag. Detectable only by graph
+3. **unresolved** -- structural, not a tag. Detectable only by graph
    traversal of the SDRT-style annotations (STAC) or by checking for
    question EDUs without a Question_answer_pair target.
 
 ## Instructions for obtaining licensed corpora (if later needed)
 
-- **RST-DT**: <https://catalog.ldc.upenn.edu/LDC2002T07> — LDC
+- **RST-DT**: <https://catalog.ldc.upenn.edu/LDC2002T07> -- LDC
   membership or per-corpus license (~$300 research tier at time of
   writing).
-- **PDTB 3.0**: <https://catalog.ldc.upenn.edu/LDC2019T05> — same.
-- **Switchboard audio** (for prosodic features): LDC97S62 —
+- **PDTB 3.0**: <https://catalog.ldc.upenn.edu/LDC2019T05> -- same.
+- **Switchboard audio** (for prosodic features): LDC97S62 --
   <https://catalog.ldc.upenn.edu/LDC97S62>.
 - **ICSI Meeting audio**: free for research with registration at
   <http://groups.inf.ed.ac.uk/ami/icsi/download/>.

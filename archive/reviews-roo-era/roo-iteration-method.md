@@ -14,7 +14,7 @@ repo's branch.
 ## When to use this
 
 - You're considering a change to Roo's rules, modes, settings,
-  allowlist, MCPs, or model — and want evidence the change improves
+  allowlist, MCPs, or model -- and want evidence the change improves
   agent behavior, not just feels better.
 - You hit a Roo failure case worth turning into a regression test.
 - You want to compare Roo behavior across model swaps (e.g. when
@@ -48,15 +48,15 @@ A good test prompt:
 
 ### 1. Define success criteria up front, before run 1
 
-Pick 2–3 measurable signals. Examples:
+Pick 2-3 measurable signals. Examples:
 
 - "Roo runs SSH within the first 3 tool calls."
 - "Roo never calls `attempt_completion` without first proposing a
   user-runnable verification step."
-- "Total tool calls until a useful answer is ≤ N."
+- "Total tool calls until a useful answer is <= N."
 
 Record them in the run-1 branch note. Do not change them between
-runs — that's how you preserve comparability.
+runs -- that's how you preserve comparability.
 
 ### 2. Write the baseline (run 1)
 
@@ -80,7 +80,7 @@ on the branch with these sections:
 3. **Verbatim prompt.**
 4. **Outcome summary.** One paragraph, honest. What Roo did, what
    it failed to do, where the user had to intervene.
-5. **Hypotheses for the next run.** 2–4 candidate single-variable
+5. **Hypotheses for the next run.** 2-4 candidate single-variable
    changes. The next run picks one.
 6. **Reset checklist** (or link to the canonical one below).
 
@@ -152,7 +152,7 @@ the experiment has run its useful course:
    per experiment so reverts are cheap.
 2. **Test repo working tree.**
    `git -C <test-repo> checkout main && git -C <test-repo> pull`,
-   then `git clean -fdx` if anything stray remains. (Be careful —
+   then `git clean -fdx` if anything stray remains. (Be careful --
    `clean -fdx` removes untracked files. Skip if there's anything
    you want to keep.)
 3. **Roo conversation cache.** Restart VSCodium so settings are
@@ -177,11 +177,11 @@ the experiment has run its useful course:
   past notes during future runs and contaminate the experiment.
 - **Letting Roo see the iteration log.** This file lives in
   `second-opinion`, not in the test repo. If a Roo session is in
-  `second-opinion` for some unrelated reason, that's fine — but Roo
+  `second-opinion` for some unrelated reason, that's fine -- but Roo
   iterating against a test prompt should never have access to the
   log of past runs.
 - **Declaring success on one good run.** Local models are
-  non-deterministic (less so when Roo forces temp=0 — see todos.md
+  non-deterministic (less so when Roo forces temp=0 -- see todos.md
   P2.3, but still some). Reproduce wins twice before calling them
   wins.
 - **Skipping the success criteria step.** If you decide what
@@ -198,7 +198,7 @@ you've controlled for it. Options:
 - Confirm temp is actually 0 in llama-server logs.
   Roo PR #12042 forces it for OpenAI-compat providers, but verify
   rather than assume.
-- Run each config 2–3 times and compare aggregates, not one-shots.
+- Run each config 2-3 times and compare aggregates, not one-shots.
 - Reduce variance from environment: same time of day (model
   warm-cache state), no other GPU consumers, identical open-tab
   list in VSCodium.

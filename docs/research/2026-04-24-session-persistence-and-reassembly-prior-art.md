@@ -418,12 +418,12 @@ Model Dialogs"** (arxiv:2402.10962,
 https://arxiv.org/html/2402.10962v1 and
 https://github.com/likenneth/persona_drift) define three automatic metrics
 (prompt-to-line consistency, line-to-line consistency, Q&A consistency) and
-demonstrate that chatbot *instruction stability* — how consistently the model
-follows its system prompt over the course of a dialog — degrades measurably
+demonstrate that chatbot *instruction stability* -- how consistently the model
+follows its system prompt over the course of a dialog -- degrades measurably
 even *without* a model swap. Synthetic multi-turn runs on Gemma 2, Qwen 3, and
 Llama 3.3 show 20-40% turn-by-turn drops in Assistant-Axis projection over
 10-15 turns in therapy/philosophy domains (https://www.emergentmind.com/topics/persona-drift).
-Note: the paper is about instruction/prompt drift, not persona consistency per se —
+Note: the paper is about instruction/prompt drift, not persona consistency per se --
 "persona drift" is a colloquial shorthand for what the paper formally measures as
 instruction instability.
 For the swap case, inference: the new model was never conditioned by the

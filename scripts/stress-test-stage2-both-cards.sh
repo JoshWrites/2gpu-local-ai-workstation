@@ -5,7 +5,7 @@
 # is doing distiller summarization + bulk embedding concurrently.
 #
 # Models the full future stack: primary reasons on long context, secondary
-# summarizes research, embedder ingests a topic — all at once.
+# summarizes research, embedder ingests a topic -- all at once.
 #
 # Pre-reqs:
 #   - Stage 1 passed
@@ -44,9 +44,9 @@ echo "=== Preflight ==="
 check_endpoint() {
   local name="$1" url="$2"
   if curl -fs --max-time 3 "$url" >/dev/null 2>&1; then
-    echo "  $name — OK"
+    echo "  $name -- OK"
   else
-    echo "  $name — UNREACHABLE ($url)" >&2
+    echo "  $name -- UNREACHABLE ($url)" >&2
     return 1
   fi
 }
@@ -231,7 +231,7 @@ mean() { awk '{s+=$1;n++} END{if(n>0)printf "%.3f", s/n}' "$1"; }
 
 echo ""
 echo "╔══════════════════════════════════════════════════════════╗"
-echo "║ RESULTS — Stage 2                                        ║"
+echo "║ RESULTS -- Stage 2                                        ║"
 echo "╚══════════════════════════════════════════════════════════╝"
 echo ""
 echo "--- Primary (GLM, long-doc reasoning) ---"
@@ -268,19 +268,19 @@ if [[ -n "$pri_base" && -n "$pri_con" ]]; then
     echo "  FAIL: Primary long-doc latency ${ratio}x baseline (>1.30x allowed)"
     fail=1
   else
-    echo "  PASS: Primary long-doc latency ${ratio}x baseline (≤1.30x)"
+    echo "  PASS: Primary long-doc latency ${ratio}x baseline (<=1.30x)"
   fi
 fi
 
 if (( peak_c1 >= 23500 )); then
-  echo "  FAIL: Card 1 VRAM peak ${peak_c1} MB (≥23500 MB ceiling)"
+  echo "  FAIL: Card 1 VRAM peak ${peak_c1} MB (>=23500 MB ceiling)"
   fail=1
 else
   echo "  PASS: Card 1 VRAM peak ${peak_c1} MB (<23500 MB)"
 fi
 
 if (( peak_c2 >= 7800 )); then
-  echo "  FAIL: Card 2 VRAM peak ${peak_c2} MB (≥7800 MB ceiling)"
+  echo "  FAIL: Card 2 VRAM peak ${peak_c2} MB (>=7800 MB ceiling)"
   fail=1
 else
   echo "  PASS: Card 2 VRAM peak ${peak_c2} MB (<7800 MB)"
@@ -299,16 +299,16 @@ fi
 
 echo ""
 if (( fail == 0 )); then
-  echo "✓ STAGE 2 PASSED — full stack viable under concurrent load."
+  echo "[x] STAGE 2 PASSED -- full stack viable under concurrent load."
   echo ""
   echo "The two-track research architecture (distiller + ingest_topic) is"
   echo "viable with embedder on card 2. Proceed with ingest_topic design."
 else
-  echo "✗ STAGE 2 FAILED — review specific failure(s) above."
+  echo "[ ] STAGE 2 FAILED -- review specific failure(s) above."
   echo ""
   echo "Most likely mitigations:"
   echo "  - If card 2 VRAM peaked: embedder to CPU."
-  echo "  - If primary latency blew up: likely DRAM/PCIe contention — try"
+  echo "  - If primary latency blew up: likely DRAM/PCIe contention -- try"
   echo "    running bulk ingest OFF-HOURS rather than during active sessions."
 fi
 

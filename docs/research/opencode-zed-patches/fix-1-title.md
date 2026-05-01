@@ -1,15 +1,15 @@
-# Fix 1 — replace `title: "bash"` with the description
+# Fix 1 -- replace `title: "bash"` with the description
 
 ## What the bug was
 
 Even after our patches in `agent.ts` (state.input lookup) and `tool/bash.ts`
 (populate metadata), Zed's permission card still rendered as just "bash".
 
-Reading Zed's source — `crates/agent_ui/src/conversation_view/thread_view.rs`
-— revealed why. The card label is whatever `requestPermission`'s
+Reading Zed's source -- `crates/agent_ui/src/conversation_view/thread_view.rs`
+-- revealed why. The card label is whatever `requestPermission`'s
 `toolCall.title` says. opencode was sending `title: permission.permission`
 (line 208 of `agent.ts`), which is the literal permission *type*. For bash
-calls, that's the string `"bash"` — and that's what Zed dutifully displayed.
+calls, that's the string `"bash"` -- and that's what Zed dutifully displayed.
 
 For a non-permission tool call, opencode sends the description as `title`
 (see `tool/bash.ts:432` and elsewhere). Permission-asking takes a different
@@ -37,9 +37,9 @@ Then use it where `title` was set:
 ```
 
 Preference order:
-1. The LLM-generated description (best — human-readable: "Check git status").
+1. The LLM-generated description (best -- human-readable: "Check git status").
 2. The literal command (fallback for tools that didn't generate a description).
-3. The permission type ("bash") — only as a last resort if nothing else.
+3. The permission type ("bash") -- only as a last resort if nothing else.
 
 ## What this gives you
 
@@ -64,18 +64,18 @@ let should_show_raw_input = !is_terminal_tool && !is_edit && !has_image_content;
 
 The path to the rich expandable card the user spec'd ("2 lines verbatim
 command + 1 line description, expandable to full output") is Zed's
-`_meta` terminal convention — `terminal_info`/`terminal_output`/
+`_meta` terminal convention -- `terminal_info`/`terminal_output`/
 `terminal_exit` keys decoded at `crates/agent_servers/src/acp.rs:3340-3450`.
 That's Fix 2, planned next.
 
 ## Files touched
 
-- `packages/opencode/src/acp/agent.ts` — the title derivation block
+- `packages/opencode/src/acp/agent.ts` -- the title derivation block
   (8 lines added, 1 line modified).
 
 Combined diff against v1.14.28 across all three patches now totals 94 lines:
-- `our-patch-agent.diff` — 50 lines (state.input lookup + title fix)
-- `our-patch-bash.diff` — 44 lines (helper signature + metadata population)
+- `our-patch-agent.diff` -- 50 lines (state.input lookup + title fix)
+- `our-patch-bash.diff` -- 44 lines (helper signature + metadata population)
 
 ## Verification
 

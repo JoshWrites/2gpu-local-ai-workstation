@@ -1,4 +1,4 @@
-# P0.2 — Vulkan vs ROCm benchmark
+# P0.2 -- Vulkan vs ROCm benchmark
 
 **Date:** 2026-04-16
 **Hardware:** RX 7900 XTX (gfx1100), single card
@@ -25,7 +25,7 @@ Run-to-run variance was tight on both backends (<1% on generation,
 
 ## Interpretation
 
-Generation speed dominates real chat/agent latency — the model spends
+Generation speed dominates real chat/agent latency -- the model spends
 far more time predicting tokens than ingesting the prompt. Vulkan's
 ~2x lead on generation vastly outweighs ROCm's lead on prompt
 processing and startup.
@@ -45,7 +45,7 @@ and 2 rely on:
 - `-cram` / `--cache-ram` (default 8192 MiB)
 - `--slot-save-path`
 - `--jinja`
-- `-md` (draft model — needed for Phase 3 speculative decoding)
+- `-md` (draft model -- needed for Phase 3 speculative decoding)
 
 No known loss of capability.
 
@@ -70,6 +70,6 @@ No known loss of capability.
   slow or stalls, compare against `primary-llama.sh` as a fallback.
 - Prompt-processing deficit (~28% slower on Vulkan) could matter at
   long-context *first-token* latency. Re-measure if we start hitting
-  ≥32K prompts regularly.
+  >=32K prompts regularly.
 - rocWMMA tunings no longer relevant (community-review already said
-  they hurt gfx1100 anyway — non-issue).
+  they hurt gfx1100 anyway -- non-issue).

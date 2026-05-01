@@ -1,4 +1,4 @@
-# Full Session Notes — 2026-04-24 Architecture Brainstorming
+# Full Session Notes -- 2026-04-24 Architecture Brainstorming
 
 **Audience:** future-us (next session, after context reset). Read this to pick up
 where we stopped without needing to reconstruct the thinking from the raw research
@@ -25,7 +25,7 @@ memory system.
 - **Indexes of the transcript live dynamically in DRAM**, loaded from NVMe when
   needed, kept warm because 64 GB is more than enough.
 - **Indexing is tiered**: cheap per-turn inline (card 2), medium+rich during
-  compaction pauses (card 1 or card 2 — empirical, to be benchmarked).
+  compaction pauses (card 1 or card 2 -- empirical, to be benchmarked).
 - **Correctness invariant**: at compaction boundaries, the index is guaranteed
   complete up to the compaction horizon. Retrieval only trusts material up to
   the last compaction; everything after is in live KV anyway.
@@ -53,7 +53,7 @@ memory system.
   resident small model for retrieval queries.
 - After each turn completes: card 2 produces an index entry (embedding +
   basic tags: speaker, turn number, timestamp, length, contains-code,
-  contains-citation). No LLM in this path — just embedder + CPU parsing.
+  contains-citation). No LLM in this path -- just embedder + CPU parsing.
 - Index entries stored in DRAM (working copy) and NVMe (durable).
 - Primary has a `recall(query)` tool. Call flow:
   1. Primary emits tool call.
@@ -67,22 +67,22 @@ memory system.
 - **Indexing scope: exchange only** (user message + assistant final response).
   Thinking/tool-use traces stored separately on NVMe but not indexed at V0.
 - **No temporal routing yet.** Naive semantic retrieval. V0 explicitly will
-  fail on supersession-sensitive queries — measured as a known limitation to
+  fail on supersession-sensitive queries -- measured as a known limitation to
   motivate V1/V2.
 
 **Prerequisite artifacts before building V0:**
 
-1. **Tier-1 indexing spec** — one-page document specifying exactly what an
+1. **Tier-1 indexing spec** -- one-page document specifying exactly what an
    index entry contains, which card does what, persistence format. We agreed
    we can't benchmark until we know what we're benchmarking.
-2. **Tier-1 benchmark protocol** — throughput, latency, retrieval quality on
+2. **Tier-1 benchmark protocol** -- throughput, latency, retrieval quality on
    known-answer recalls. Based on existing `scripts/stress-test-stage1-card2.sh`
-   + additions for end-to-end "turn completes → index persists" wall-clock.
+   + additions for end-to-end "turn completes -> index persists" wall-clock.
 
 ## V1 (later)
 
 - Compaction on card 1. User sees an explicit pause.
-- Parallel or sequential indexing during compaction window — benchmarked
+- Parallel or sequential indexing during compaction window -- benchmarked
   to pick the faster path. Fabric supports both modes.
 - Correctness invariant enforced: at resume, index is complete up to
   compaction horizon. Retrieval past that falls through to "still indexing,
@@ -98,7 +98,7 @@ memory system.
 - Supersession detection: turn N supersedes turn M on topic X. Uses the
   state-change dictionary / discourse-act ontology **if and only if** the
   parser survey finds a workable off-the-shelf parser. We do not build a
-  taxonomy from scratch — this is the explicit finding from the end-of-session
+  taxonomy from scratch -- this is the explicit finding from the end-of-session
   research dispatch.
 - **Trace-informed metatextual indexing** ("only exchange survives into the
   transcript and index, but the internal monologue shapes the metatextual
@@ -114,7 +114,7 @@ memory system.
 
 ---
 
-## How we got here — the ten reframings in order
+## How we got here -- the ten reframings in order
 
 This is the reasoning chain. Each reframing subsumed the last.
 
@@ -177,21 +177,21 @@ score until disk full; reassign unseated slots to highest-scoring seated
 model (often the generalist); admin can pin 2-3 specialists. All committed
 to git so the history is the system's self-documentation.
 
-### Reframing 9: transcript-as-retrievable-artifact — Josh's critical move
+### Reframing 9: transcript-as-retrievable-artifact -- Josh's critical move
 
 The breakthrough. Instead of handing state off between models, keep the
 full verbatim transcript as a durable growing artifact with an index.
 When any model needs prior context, it retrieves the original lines via
 tool call. Transcript never moves, never summarizes. The handoff problem
-dissolves because there's nothing to hand off — everything is readable
+dissolves because there's nothing to hand off -- everything is readable
 from the archive.
 
-### Reframing 10: disposable-context retrieval — Josh's sharpest move
+### Reframing 10: disposable-context retrieval -- Josh's sharpest move
 
 The retrieval layer is itself an ephemeral specialist. Load once, keep
 resident. Per query: reset KV cache, hand it (query + index), get back
-line-number verdicts, reset again. The index can be massive — even larger
-than the transcript — because it never has to fit in the primary's
+line-number verdicts, reset again. The index can be massive -- even larger
+than the transcript -- because it never has to fit in the primary's
 context. Only the specialist sees it, one query at a time, with fresh
 context each time. This unlocks arbitrarily rich indexing without
 burdening the primary.
@@ -247,25 +247,25 @@ These are *genuine* open questions, not rhetorical humility:
 
 All in `docs/research/`:
 
-1. `2026-04-24-multi-model-handoff-prior-art.md` — dispatcher-behind /
+1. `2026-04-24-multi-model-handoff-prior-art.md` -- dispatcher-behind /
    catch-and-swap + self-aware handoff requests.
-2. `2026-04-24-front-and-passenger-dispatcher-prior-art.md` — front and
+2. `2026-04-24-front-and-passenger-dispatcher-prior-art.md` -- front and
    passenger variants.
-3. `2026-04-24-session-state-architectures-survey.md` — neutral survey of
+3. `2026-04-24-session-state-architectures-survey.md` -- neutral survey of
    seven architectural shapes for session state.
-4. `2026-04-24-session-persistence-and-reassembly-prior-art.md` — four
+4. `2026-04-24-session-persistence-and-reassembly-prior-art.md` -- four
    threads: persistence under swap, handoff payload shape, multi-session
    serving, reassembly failure modes.
-5. `2026-04-24-session-as-artifact-and-temporal-retrieval-prior-art.md` —
+5. `2026-04-24-session-as-artifact-and-temporal-retrieval-prior-art.md` --
    verbatim retrieval + temporal routing.
-6. `2026-04-24-conversation-notes-architecture-thinking.md` — thinking
+6. `2026-04-24-conversation-notes-architecture-thinking.md` -- thinking
    journal with two reread cues (erratum + round-3 soft-spots).
-7. `2026-04-24-session-notes-full.md` — this file.
-8. `2026-04-24-user-contribution-notes.md` — sibling to this file;
+7. `2026-04-24-session-notes-full.md` -- this file.
+8. `2026-04-24-user-contribution-notes.md` -- sibling to this file;
    tracks Josh's role specifically.
-9. `2026-04-24-discourse-parser-survey.md` — (landing tomorrow from
+9. `2026-04-24-discourse-parser-survey.md` -- (landing tomorrow from
    background agent).
-10. `test-corpora/` — (landing tomorrow from background agent).
+10. `test-corpora/` -- (landing tomorrow from background agent).
 
 ## For the morning session
 
@@ -276,14 +276,14 @@ Read this file first. Then:
    tools or whether it's a research project.
 2. If V0 still looks right, first concrete artifact to produce is the
    **Tier-1 indexing spec** (one page).
-3. If V0 *doesn't* look right by morning, that's fine — the research
+3. If V0 *doesn't* look right by morning, that's fine -- the research
    library is the real artifact and will have standalone value even if
    we never build.
 
 ## Tone note for whoever reads this next
 
 The session was productive and honest. Josh repeatedly corrected me when
-I drifted — toward novelty-claiming, toward over-engineering, toward
+I drifted -- toward novelty-claiming, toward over-engineering, toward
 scope creep. I took the corrections. The design we landed on is smaller
 and more buildable than what I was sketching at multiple points in the
 middle.

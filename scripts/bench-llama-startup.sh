@@ -4,12 +4,12 @@
 # Writes per-run phase timings to bench-results.csv in the repo root.
 #
 # Phases captured (seconds from process start):
-#   rocm_init        — "found N ROCm devices" line
-#   tensor_load_done — first line after "load_tensors: loading" completes
+#   rocm_init        -- "found N ROCm devices" line
+#   tensor_load_done -- first line after "load_tensors: loading" completes
 #                      (we use the first llama_context line as the boundary)
-#   kv_alloc_done    — "llama_kv_cache: size =" line
-#   warmup_done      — "srv    load_model: initializing slots" line
-#   ready            — "server is listening" line
+#   kv_alloc_done    -- "llama_kv_cache: size =" line
+#   warmup_done      -- "srv    load_model: initializing slots" line
+#   ready            -- "server is listening" line
 #
 # Each run leaves the server up for 3s post-ready, then kills it. Between
 # runs we verify GPU 1 VRAM has dropped below 5 GB before proceeding.
@@ -112,7 +112,7 @@ for line in sys.stdin:
   # Extract phase timestamps from the log.
   local rocm_init tensor_done kv_done warm_done server_ready err=""
   rocm_init=$(awk '/ggml_cuda_init: found/ { print $1; exit }' "${log}")
-  # "tensor_load_done" — first llama_context line is the earliest reliable post-tensor marker
+  # "tensor_load_done" -- first llama_context line is the earliest reliable post-tensor marker
   tensor_done=$(awk '/llama_context: constructing llama_context|llama_context:  ROCm_Host output buffer/ { print $1; exit }' "${log}")
   kv_done=$(awk '/llama_kv_cache: size =/ { print $1; exit }' "${log}")
   warm_done=$(awk '/srv    load_model: initializing slots/ { print $1; exit }' "${log}")
