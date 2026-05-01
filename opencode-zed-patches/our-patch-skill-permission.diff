@@ -65,20 +65,20 @@
              const promptDescription =
                typeof md["description"] === "string" ? (md["description"] as string) : undefined
              const promptCommand =
-@@ -241,7 +253,32 @@
+@@ -241,7 +253,31 @@
              //     so we put the description in a separate content block instead
              //     of embedding it in the title with \n.
              //   other: description-or-command-or-bare-name (single line).
 +            // Skill loads carry their own metadata shape: name (the
 +            // skill identifier, e.g. "brainstorming") plus a token
 +            // estimate. The default title resolver below would either
-+            // surface the description as-is or fall through to the
-+            // bare string "skill", neither of which lets the user
-+            // judge cost. So skill gets a dedicated headline:
-+            //   "Load skill: <name> (~<N> tokens)"
-+            // followed by the description on a second line. Zed
-+            // renders the first line as the card title and the
-+            // second as a small subtitle for non-execute kinds.
++            // surface the description as the bare title or fall through
++            // to the literal string "skill", neither of which lets the
++            // user judge cost. So skill gets a dedicated headline
++            // ("Load skill: <name> (~<N> tokens)") with the description
++            // pushed into a content block below -- Zed flattens \n in
++            // permission-card titles for non-execute kinds, so a
++            // two-line title would just truncate with an ellipsis.
 +            const promptSkillName =
 +              typeof md["name"] === "string" ? (md["name"] as string) : undefined
 +            const promptSkillTokens =
@@ -92,9 +92,26 @@
 +                  typeof promptSkillTokens === "number"
 +                    ? ` (~${promptSkillTokens.toLocaleString()} tokens)`
 +                    : ""
-+                const headline = `Load skill: ${promptSkillName}${cost}`
-+                return promptDescription ? `${headline}\n${promptDescription}` : headline
++                return `Load skill: ${promptSkillName}${cost}`
 +              }
                if (permissionKind === "execute" && promptCommand) {
                  return promptDescription ? `${promptCommand}\n${promptDescription}` : promptCommand
                }
+@@ -260,6 +296,17 @@
+             // the user see what they are approving. Bash already has its
+             // own visual treatment so we leave its content untouched here.
+             const promptContent: ToolCallContent[] = []
++            // Skill loads: surface the description as a content block.
++            // The title carries name + token cost; the body is what
++            // the SKILL.md frontmatter says the skill is for. Without
++            // this the user sees only "Load skill: X (~N tokens)" and
++            // has to know what X is from memory.
++            if (permission.permission === "skill" && promptDescription) {
++              promptContent.push({
++                type: "content",
++                content: { type: "text", text: promptDescription },
++              })
++            }
+             if (permissionKind !== "execute" && promptPath && promptDescription) {
+               const newText = typeof md["newString"] === "string"
+                 ? (md["newString"] as string)
