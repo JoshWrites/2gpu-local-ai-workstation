@@ -10,6 +10,18 @@ Description=llama-server primary (GLM-4.7-Flash on 7900 XTX / Vulkan0, port 1143
 # lives at /usr/local/lib/llama.cpp/llama-server (system-shared, Vulkan
 # build). Updating it means editing each llama-* unit by hand. All
 # other paths and values come from /etc/workstation/system.env.
+#
+# Sampler flags below are GLM-4.7-Flash-specific tuning, hardcoded
+# rather than env-parameterized because they are tied to this model's
+# trained behavior and should be re-derived if the model is swapped.
+# Sources:
+#   - Z.AI / unsloth recommended params for tool calling:
+#     temp=0.7, top_p=1.0, min_p=0.01, repeat_penalty=1.0
+#   - llama.cpp defaults differ on three of these (temp=0.8, top_p=0.95,
+#     min_p=0.05); the recommended values consistently resolved both
+#     repetition loops and malformed tool calls in user reports.
+#   - llama.cpp default for repeat-penalty is already 1.0 (disabled),
+#     so it is not set explicitly here.
 
 [Service]
 Type=simple
@@ -18,6 +30,7 @@ ExecStart=/usr/local/lib/llama.cpp/llama-server \
   -m ${WS_MODELS_DIR}/glm-4.7-flash/GLM-4.7-Flash-UD-Q4_K_XL.gguf \
   --device ${WS_GPU_PRIMARY_DEVICE} -ngl 99 -c ${WS_PRIMARY_CONTEXT} --flash-attn on \
   -ctk q8_0 -ctv q8_0 --jinja \
+  --temp 0.7 --top-p 1.0 --min-p 0.01 \
   --host 127.0.0.1 --port ${WS_PORT_PRIMARY}
 Restart=on-failure
 RestartSec=5s
