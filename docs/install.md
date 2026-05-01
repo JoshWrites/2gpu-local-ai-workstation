@@ -230,6 +230,12 @@ What to edit in each file:
   card is which device index.
 - `user.env`: set `WS_USER_ROOT` to your clone path (default
   assumes `~/Documents/Repos/2gpu-local-ai-workstation`).
+  Optionally set `WS_SKILLS_DIRS` to a colon-separated list of
+  personal skill directories the Library MCP's `library_get_skill`
+  tool should search (e.g. `$HOME/skills-personal:$HOME/.claude/skills`).
+  See `configs/workstation/user.env.example` for the full
+  description -- including PATH-style precedence and how it
+  interacts with the bundled `library/skills/`.
 - `secrets.env`: set `WS_PROXMOX_USER` and `WS_PROXMOX_HOST` to
   match a remote you have SSH access to, if you use the
   opencode.json template's SSH-target permission rules. If you do

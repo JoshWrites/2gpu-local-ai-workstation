@@ -98,6 +98,8 @@ WS_USER_ROOT=${TARGET_REPO}
 WS_LIBRARY_ROOT=\$WS_USER_ROOT/Library
 WS_ZED_PROFILE_DIR=${TARGET_HOME}/.local/share/zed-second-opinion
 WS_USER_MODELS_DIR=${TARGET_HOME}/models-experiments
+# Optional: colon-separated personal skill directories for the Library MCP.
+# WS_SKILLS_DIRS=${TARGET_HOME}/skills-personal:${TARGET_HOME}/.claude/skills
 EOF
   ok "user.env written"
 else
