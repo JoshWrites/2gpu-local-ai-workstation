@@ -1,0 +1,402 @@
+diff --git a/packages/opencode/src/tool/edit.ts b/packages/opencode/src/tool/edit.ts
+index 04a84a388..d77165589 100644
+--- a/packages/opencode/src/tool/edit.ts
++++ b/packages/opencode/src/tool/edit.ts
+@@ -53,6 +53,10 @@ export const Parameters = Schema.Struct({
+   replaceAll: Schema.optional(Schema.Boolean).annotate({
+     description: "Replace all occurrences of oldString (default false)",
+   }),
++  description: Schema.String.annotate({
++    description:
++      "Clear, concise description of what this edit does, in 5-10 words. Examples:\nInput: rename function foo to bar\nOutput: Rename foo to bar throughout module\n\nInput: add a null check before deref\nOutput: Guard against null pointer in handler\n\nInput: bump version string\nOutput: Bump package version to 1.4.0",
++  }),
+ })
+ 
+ export const EditTool = Tool.define(
+diff --git a/packages/opencode/src/tool/write.ts b/packages/opencode/src/tool/write.ts
+index d977325f1..fbe046bc0 100644
+--- a/packages/opencode/src/tool/write.ts
++++ b/packages/opencode/src/tool/write.ts
+@@ -22,6 +22,10 @@ export const Parameters = Schema.Struct({
+   filePath: Schema.String.annotate({
+     description: "The absolute path to the file to write (must be absolute, not relative)",
+   }),
++  description: Schema.String.annotate({
++    description:
++      "Clear, concise description of what this file does or what change is being made, in 5-10 words. Examples:\nInput: a new pyproject.toml for a CLI tool\nOutput: Initialize project metadata for the foo CLI\n\nInput: a launcher shell script\nOutput: Launcher script that brings up llama services\n\nInput: a fixture json for tests\nOutput: Test fixture covering the empty-input edge case",
++  }),
+ })
+ 
+ export const WriteTool = Tool.define(
+@@ -35,7 +39,7 @@ export const WriteTool = Tool.define(
+     return {
+       description: DESCRIPTION,
+       parameters: Parameters,
+-      execute: (params: { content: string; filePath: string }, ctx: Tool.Context) =>
++      execute: (params: { content: string; filePath: string; description: string }, ctx: Tool.Context) =>
+         Effect.gen(function* () {
+           const filepath = path.isAbsolute(params.filePath)
+             ? params.filePath
+diff --git a/packages/opencode/test/tool/edit.test.ts b/packages/opencode/test/tool/edit.test.ts
+index fb2080591..54f7f839c 100644
+--- a/packages/opencode/test/tool/edit.test.ts
++++ b/packages/opencode/test/tool/edit.test.ts
+@@ -83,6 +83,7 @@ describe("tool.edit", () => {
+                 filePath: filepath,
+                 oldString: "",
+                 newString: "new content",
++                description: "test fixture edit",
+               },
+               ctx,
+             ),
+@@ -112,6 +113,7 @@ describe("tool.edit", () => {
+                 filePath: filepath,
+                 oldString: "",
+                 newString: "using Up;\n",
++                description: "test fixture edit",
+               },
+               ctx,
+             ),
+@@ -141,6 +143,7 @@ describe("tool.edit", () => {
+                 filePath: filepath,
+                 oldString: "",
+                 newString: "nested file",
++                description: "test fixture edit",
+               },
+               ctx,
+             ),
+@@ -171,6 +174,7 @@ describe("tool.edit", () => {
+                   filePath: filepath,
+                   oldString: "",
+                   newString: "content",
++                  description: "test fixture edit",
+                 },
+                 ctx,
+               ),
+@@ -201,6 +205,7 @@ describe("tool.edit", () => {
+                 filePath: filepath,
+                 oldString: "old content",
+                 newString: "new content",
++                description: "test fixture edit",
+               },
+               ctx,
+             ),
+@@ -230,6 +235,7 @@ describe("tool.edit", () => {
+                 filePath: filepath,
+                 oldString: "using System;",
+                 newString: "using Up;",
++                description: "test fixture edit",
+               },
+               ctx,
+             ),
+@@ -261,6 +267,7 @@ describe("tool.edit", () => {
+                   filePath: filepath,
+                   oldString: "old",
+                   newString: "new",
++                  description: "test fixture edit",
+                 },
+                 ctx,
+               ),
+@@ -286,6 +293,7 @@ describe("tool.edit", () => {
+                   filePath: filepath,
+                   oldString: "same",
+                   newString: "same",
++                  description: "test fixture edit",
+                 },
+                 ctx,
+               ),
+@@ -311,6 +319,7 @@ describe("tool.edit", () => {
+                   filePath: filepath,
+                   oldString: "not in file",
+                   newString: "replacement",
++                  description: "test fixture edit",
+                 },
+                 ctx,
+               ),
+@@ -335,6 +344,7 @@ describe("tool.edit", () => {
+                 filePath: filepath,
+                 oldString: "foo",
+                 newString: "qux",
++                description: "test fixture edit",
+                 replaceAll: true,
+               },
+               ctx,
+@@ -367,6 +377,7 @@ describe("tool.edit", () => {
+                   filePath: filepath,
+                   oldString: "original",
+                   newString: "modified",
++                  description: "test fixture edit",
+                 },
+                 ctx,
+               ),
+@@ -397,6 +408,7 @@ describe("tool.edit", () => {
+                 filePath: filepath,
+                 oldString: "line2",
+                 newString: "new line 2\nextra line",
++                description: "test fixture edit",
+               },
+               ctx,
+             ),
+@@ -423,6 +435,7 @@ describe("tool.edit", () => {
+                 filePath: filepath,
+                 oldString: "old",
+                 newString: "new",
++                description: "test fixture edit",
+               },
+               ctx,
+             ),
+@@ -450,6 +463,7 @@ describe("tool.edit", () => {
+                   filePath: filepath,
+                   oldString: "",
+                   newString: "",
++                  description: "test fixture edit",
+                 },
+                 ctx,
+               ),
+@@ -475,6 +489,7 @@ describe("tool.edit", () => {
+                   filePath: dirpath,
+                   oldString: "old",
+                   newString: "new",
++                  description: "test fixture edit",
+                 },
+                 ctx,
+               ),
+@@ -499,6 +514,7 @@ describe("tool.edit", () => {
+                 filePath: filepath,
+                 oldString: "line2",
+                 newString: "new line a\nnew line b",
++                description: "test fixture edit",
+               },
+               ctx,
+             ),
+@@ -569,6 +585,7 @@ describe("tool.edit", () => {
+                 filePath,
+                 oldString: input.oldString,
+                 newString: input.newString,
++                description: "test fixture edit",
+                 replaceAll: input.replaceAll,
+               },
+               ctx,
+@@ -725,6 +742,7 @@ describe("tool.edit", () => {
+                 filePath: filepath,
+                 oldString: "top = 0",
+                 newString: "top = 1",
++                description: "test fixture edit",
+               },
+               delayedCtx,
+             ),
+@@ -738,6 +756,7 @@ describe("tool.edit", () => {
+                 filePath: filepath,
+                 oldString: "bottom = 0",
+                 newString: "bottom = 2",
++                description: "test fixture edit",
+               },
+               delayedCtx,
+             ),
+diff --git a/packages/opencode/test/tool/parameters.test.ts b/packages/opencode/test/tool/parameters.test.ts
+index 8ea008a45..1c6b3d3ff 100644
+--- a/packages/opencode/test/tool/parameters.test.ts
++++ b/packages/opencode/test/tool/parameters.test.ts
+@@ -101,20 +101,37 @@ describe("tool parameters", () => {
+   })
+ 
+   describe("edit", () => {
+-    test("accepts all four fields", () => {
+-      expect(parse(Edit, { filePath: "/a", oldString: "x", newString: "y", replaceAll: true })).toEqual({
++    test("accepts all five fields", () => {
++      expect(
++        parse(Edit, {
++          filePath: "/a",
++          oldString: "x",
++          newString: "y",
++          replaceAll: true,
++          description: "test edit",
++        }),
++      ).toEqual({
+         filePath: "/a",
+         oldString: "x",
+         newString: "y",
+         replaceAll: true,
++        description: "test edit",
+       })
+     })
+     test("replaceAll is optional", () => {
+-      const parsed = parse(Edit, { filePath: "/a", oldString: "x", newString: "y" })
++      const parsed = parse(Edit, {
++        filePath: "/a",
++        oldString: "x",
++        newString: "y",
++        description: "test edit",
++      })
+       expect(parsed.replaceAll).toBeUndefined()
+     })
+     test("rejects missing filePath", () => {
+-      expect(accepts(Edit, { oldString: "x", newString: "y" })).toBe(false)
++      expect(accepts(Edit, { oldString: "x", newString: "y", description: "test edit" })).toBe(false)
++    })
++    test("rejects missing description", () => {
++      expect(accepts(Edit, { filePath: "/a", oldString: "x", newString: "y" })).toBe(false)
+     })
+   })
+ 
+@@ -250,11 +267,18 @@ describe("tool parameters", () => {
+   })
+ 
+   describe("write", () => {
+-    test("accepts content + filePath", () => {
+-      expect(parse(Write, { content: "hi", filePath: "/a" })).toEqual({ content: "hi", filePath: "/a" })
++    test("accepts content + filePath + description", () => {
++      expect(parse(Write, { content: "hi", filePath: "/a", description: "test write" })).toEqual({
++        content: "hi",
++        filePath: "/a",
++        description: "test write",
++      })
+     })
+     test("rejects missing filePath", () => {
+-      expect(accepts(Write, { content: "hi" })).toBe(false)
++      expect(accepts(Write, { content: "hi", description: "test write" })).toBe(false)
++    })
++    test("rejects missing description", () => {
++      expect(accepts(Write, { content: "hi", filePath: "/a" })).toBe(false)
+     })
+   })
+ })
+diff --git a/packages/opencode/test/tool/write.test.ts b/packages/opencode/test/tool/write.test.ts
+index e6e383189..35c9a0616 100644
+--- a/packages/opencode/test/tool/write.test.ts
++++ b/packages/opencode/test/tool/write.test.ts
+@@ -62,7 +62,7 @@ describe("tool.write", () => {
+       provideTmpdirInstance((dir) =>
+         Effect.gen(function* () {
+           const filepath = path.join(dir, "newfile.txt")
+-          const result = yield* run({ filePath: filepath, content: "Hello, World!" })
++          const result = yield* run({ filePath: filepath, content: "Hello, World!", description: "test fixture write" })
+ 
+           expect(result.output).toContain("Wrote file successfully")
+           expect(result.metadata.exists).toBe(false)
+@@ -77,7 +77,7 @@ describe("tool.write", () => {
+       provideTmpdirInstance((dir) =>
+         Effect.gen(function* () {
+           const filepath = path.join(dir, "nested", "deep", "file.txt")
+-          yield* run({ filePath: filepath, content: "nested content" })
++          yield* run({ filePath: filepath, content: "nested content", description: "test fixture write" })
+ 
+           const content = yield* Effect.promise(() => fs.readFile(filepath, "utf-8"))
+           expect(content).toBe("nested content")
+@@ -88,7 +88,7 @@ describe("tool.write", () => {
+     it.live("handles relative paths by resolving to instance directory", () =>
+       provideTmpdirInstance((dir) =>
+         Effect.gen(function* () {
+-          yield* run({ filePath: "relative.txt", content: "relative content" })
++          yield* run({ filePath: "relative.txt", content: "relative content", description: "test fixture write" })
+ 
+           const content = yield* Effect.promise(() => fs.readFile(path.join(dir, "relative.txt"), "utf-8"))
+           expect(content).toBe("relative content")
+@@ -103,7 +103,7 @@ describe("tool.write", () => {
+         Effect.gen(function* () {
+           const filepath = path.join(dir, "existing.txt")
+           yield* Effect.promise(() => fs.writeFile(filepath, "old content", "utf-8"))
+-          const result = yield* run({ filePath: filepath, content: "new content" })
++          const result = yield* run({ filePath: filepath, content: "new content", description: "test fixture write" })
+ 
+           expect(result.output).toContain("Wrote file successfully")
+           expect(result.metadata.exists).toBe(true)
+@@ -121,7 +121,7 @@ describe("tool.write", () => {
+           const bom = String.fromCharCode(0xfeff)
+           yield* Effect.promise(() => fs.writeFile(filepath, `${bom}using System;\n`, "utf-8"))
+ 
+-          yield* run({ filePath: filepath, content: "using Up;\n" })
++          yield* run({ filePath: filepath, content: "using Up;\n", description: "test fixture write" })
+ 
+           const content = yield* Effect.promise(() => fs.readFile(filepath, "utf-8"))
+           expect(content.charCodeAt(0)).toBe(0xfeff)
+@@ -138,7 +138,7 @@ describe("tool.write", () => {
+             const bom = String.fromCharCode(0xfeff)
+             yield* Effect.promise(() => fs.writeFile(filepath, `${bom}using System;\n`, "utf-8"))
+ 
+-            yield* run({ filePath: filepath, content: "using Up;\n" })
++            yield* run({ filePath: filepath, content: "using Up;\n", description: "test fixture write" })
+ 
+             const content = yield* Effect.promise(() => fs.readFile(filepath, "utf-8"))
+             expect(content.charCodeAt(0)).toBe(0xfeff)
+@@ -167,7 +167,7 @@ describe("tool.write", () => {
+         Effect.gen(function* () {
+           const filepath = path.join(dir, "file.txt")
+           yield* Effect.promise(() => fs.writeFile(filepath, "old", "utf-8"))
+-          const result = yield* run({ filePath: filepath, content: "new" })
++          const result = yield* run({ filePath: filepath, content: "new", description: "test fixture write" })
+ 
+           expect(result.metadata).toHaveProperty("filepath", filepath)
+           expect(result.metadata).toHaveProperty("exists", true)
+@@ -181,7 +181,7 @@ describe("tool.write", () => {
+       provideTmpdirInstance((dir) =>
+         Effect.gen(function* () {
+           const filepath = path.join(dir, "sensitive.json")
+-          yield* run({ filePath: filepath, content: JSON.stringify({ secret: "data" }) })
++          yield* run({ filePath: filepath, content: JSON.stringify({ secret: "data" }), description: "test fixture write" })
+ 
+           if (process.platform !== "win32") {
+             const stats = yield* Effect.promise(() => fs.stat(filepath))
+@@ -198,7 +198,7 @@ describe("tool.write", () => {
+         Effect.gen(function* () {
+           const filepath = path.join(dir, "data.json")
+           const data = { key: "value", nested: { array: [1, 2, 3] } }
+-          yield* run({ filePath: filepath, content: JSON.stringify(data, null, 2) })
++          yield* run({ filePath: filepath, content: JSON.stringify(data, null, 2), description: "test fixture write" })
+ 
+           const content = yield* Effect.promise(() => fs.readFile(filepath, "utf-8"))
+           expect(JSON.parse(content)).toEqual(data)
+@@ -211,7 +211,7 @@ describe("tool.write", () => {
+         Effect.gen(function* () {
+           const filepath = path.join(dir, "binary.bin")
+           const content = "Hello\x00World\x01\x02\x03"
+-          yield* run({ filePath: filepath, content })
++          yield* run({ filePath: filepath, content, description: "test fixture write" })
+ 
+           const buf = yield* Effect.promise(() => fs.readFile(filepath))
+           expect(buf.toString()).toBe(content)
+@@ -223,7 +223,7 @@ describe("tool.write", () => {
+       provideTmpdirInstance((dir) =>
+         Effect.gen(function* () {
+           const filepath = path.join(dir, "empty.txt")
+-          yield* run({ filePath: filepath, content: "" })
++          yield* run({ filePath: filepath, content: "", description: "test fixture write" })
+ 
+           const content = yield* Effect.promise(() => fs.readFile(filepath, "utf-8"))
+           expect(content).toBe("")
+@@ -239,7 +239,7 @@ describe("tool.write", () => {
+         Effect.gen(function* () {
+           const filepath = path.join(dir, "multiline.txt")
+           const lines = ["Line 1", "Line 2", "Line 3", ""].join("\n")
+-          yield* run({ filePath: filepath, content: lines })
++          yield* run({ filePath: filepath, content: lines, description: "test fixture write" })
+ 
+           const content = yield* Effect.promise(() => fs.readFile(filepath, "utf-8"))
+           expect(content).toBe(lines)
+@@ -252,7 +252,7 @@ describe("tool.write", () => {
+         Effect.gen(function* () {
+           const filepath = path.join(dir, "crlf.txt")
+           const content = "Line 1\r\nLine 2\r\nLine 3"
+-          yield* run({ filePath: filepath, content })
++          yield* run({ filePath: filepath, content, description: "test fixture write" })
+ 
+           const buf = yield* Effect.promise(() => fs.readFile(filepath))
+           expect(buf.toString()).toBe(content)
+@@ -268,7 +268,7 @@ describe("tool.write", () => {
+           const readonlyPath = path.join(dir, "readonly.txt")
+           yield* Effect.promise(() => fs.writeFile(readonlyPath, "test", "utf-8"))
+           yield* Effect.promise(() => fs.chmod(readonlyPath, 0o444))
+-          const exit = yield* run({ filePath: readonlyPath, content: "new content" }).pipe(Effect.exit)
++          const exit = yield* run({ filePath: readonlyPath, content: "new content", description: "test fixture write" }).pipe(Effect.exit)
+           expect(exit._tag).toBe("Failure")
+         }),
+       ),
+@@ -282,7 +282,7 @@ describe("tool.write", () => {
+           const filepath = path.join(dir, "src", "components", "Button.tsx")
+           yield* Effect.promise(() => fs.mkdir(path.dirname(filepath), { recursive: true }))
+ 
+-          const result = yield* run({ filePath: filepath, content: "export const Button = () => {}" })
++          const result = yield* run({ filePath: filepath, content: "export const Button = () => {}", description: "test fixture write" })
+           expect(result.title).toEndWith(path.join("src", "components", "Button.tsx"))
+         }),
+       ),
