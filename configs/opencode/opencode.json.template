@@ -3,7 +3,7 @@
   "provider": {
     "llama-primary": {
       "npm": "@ai-sdk/openai-compatible",
-      "name": "llama-primary (chat, primary GPU)",
+      "name": "chat",
       "api": "http://localhost:${WS_PORT_PRIMARY}/v1",
       "models": {
         "glm-4.7-flash": {
@@ -20,7 +20,7 @@
     },
     "llama-secondary": {
       "npm": "@ai-sdk/openai-compatible",
-      "name": "llama-secondary (summarize, secondary GPU)",
+      "name": "summarize",
       "api": "http://localhost:${WS_PORT_SECONDARY}/v1",
       "models": {
         "qwen3-4b-instruct-2507": {
@@ -37,7 +37,7 @@
     },
     "llama-embed": {
       "npm": "@ai-sdk/openai-compatible",
-      "name": "llama-embed (embeddings, secondary GPU)",
+      "name": "embed",
       "api": "http://localhost:${WS_PORT_EMBED}/v1",
       "models": {
         "multilingual-e5-large": {
@@ -50,7 +50,7 @@
     },
     "llama-coder": {
       "npm": "@ai-sdk/openai-compatible",
-      "name": "llama-coder (edit prediction, secondary GPU)",
+      "name": "edit-predictions",
       "api": "http://localhost:${WS_PORT_CODER}/v1",
       "models": {
         "qwen2.5-coder-3b-instruct": {
