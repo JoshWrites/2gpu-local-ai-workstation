@@ -99,6 +99,9 @@ A few real failure modes:
   sampler tuning exposed a missing path-based title path.
 - `fix-4-shipped.md`: the schema-required `description` for write and
   edit, plus a two-line `<tool> <path>` + description card title.
+- `fix-5-shipped.md`: 15-line code preview on the approval card,
+  rendered via fenced markdown with language-tagged syntax
+  highlighting.
 - `install-and-wire.md`: full install procedure.
 - `test-the-fix.sh`: smoke test against a captured fixture.
 

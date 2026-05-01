@@ -1,5 +1,5 @@
 diff --git a/packages/opencode/src/acp/agent.ts b/packages/opencode/src/acp/agent.ts
-index aff523a7e..6afbd2152 100644
+index aff523a7e..63f3fb699 100644
 --- a/packages/opencode/src/acp/agent.ts
 +++ b/packages/opencode/src/acp/agent.ts
 @@ -147,6 +147,8 @@ export class Agent implements ACPAgent {
@@ -11,7 +11,7 @@ index aff523a7e..6afbd2152 100644
    private permissionOptions: PermissionOption[] = [
      { optionId: "once", kind: "allow_once", name: "Allow once" },
      { optionId: "always", kind: "allow_always", name: "Always allow" },
-@@ -199,16 +201,78 @@ export class Agent implements ACPAgent {
+@@ -199,16 +201,130 @@ export class Agent implements ACPAgent {
            .then(async () => {
              const directory = session.cwd
  
@@ -66,14 +66,66 @@ index aff523a7e..6afbd2152 100644
 +            })()
 +
 +            // For non-execute file tools, send the description as a content
-+            // block. Bash already has its own visual treatment so we leave
-+            // its content untouched here.
++            // block, then a capped text preview of what is about to change.
++            // We use a text content block (not type: "diff") because Zed's
++            // diff renderer on the approval card does not collapse - a full
++            // file write expands the prompt to the file's height. A capped
++            // text preview keeps approval cards compact while still letting
++            // the user see what they are approving. Bash already has its
++            // own visual treatment so we leave its content untouched here.
 +            const promptContent: ToolCallContent[] = []
 +            if (permissionKind !== "execute" && promptPath && promptDescription) {
++              const newText = typeof md["newString"] === "string"
++                ? (md["newString"] as string)
++                : typeof md["content"] === "string"
++                  ? (md["content"] as string)
++                  : ""
++              const PREVIEW_LINES = 15
++              const lines = newText ? newText.split("\n") : []
++              const truncated = lines.length > PREVIEW_LINES
++              const remaining = truncated ? lines.length - PREVIEW_LINES : 0
++              // Headline block: description, plus a truncation note on a
++              // second line if applicable. Putting the note above the code
++              // preview keeps the code block visually clean - no stray
++              // trailer line that breaks the rendering.
++              const headlineLines = [promptDescription]
++              if (truncated) {
++                headlineLines.push(
++                  `(showing first ${PREVIEW_LINES} of ${lines.length} lines; ${remaining} more line${remaining === 1 ? "" : "s"} truncated)`,
++                )
++              }
 +              promptContent.push({
 +                type: "content",
-+                content: { type: "text", text: promptDescription },
++                content: { type: "text", text: headlineLines.join("\n") },
 +              })
++              if (newText) {
++                const body = truncated ? lines.slice(0, PREVIEW_LINES).join("\n") : newText
++                // Wrap the preview in a fenced code block so Zed's markdown
++                // renderer treats it as preformatted code (line breaks
++                // preserved, indentation kept, syntax-highlighted when the
++                // language tag is recognized). Without the fence, indented
++                // source like Python collapses into paragraphs and 4-space
++                // blocks render as nested cards. Tag derived from the file
++                // extension; unknown extensions get an untagged fence,
++                // which still preserves whitespace and line breaks.
++                const ext = promptPath.split(".").pop()?.toLowerCase() ?? ""
++                const langByExt: Record<string, string> = {
++                  py: "python", js: "javascript", ts: "typescript",
++                  tsx: "tsx", jsx: "jsx", go: "go", rs: "rust",
++                  rb: "ruby", java: "java", c: "c", cpp: "cpp", h: "c",
++                  hpp: "cpp", cs: "csharp", sh: "bash", bash: "bash",
++                  zsh: "bash", json: "json", yaml: "yaml", yml: "yaml",
++                  toml: "toml", md: "markdown", html: "html", css: "css",
++                  sql: "sql", lua: "lua", php: "php", swift: "swift",
++                  kt: "kotlin", scala: "scala", r: "r", dart: "dart",
++                }
++                const lang = langByExt[ext] ?? ""
++                const fenced = "```" + lang + "\n" + body + "\n```"
++                promptContent.push({
++                  type: "content",
++                  content: { type: "text", text: fenced },
++                })
++              }
 +            }
 +
              const res = await this.connection
@@ -93,7 +145,7 @@ index aff523a7e..6afbd2152 100644
                  },
                  options: this.permissionOptions,
                })
-@@ -279,7 +343,7 @@ export class Agent implements ACPAgent {
+@@ -279,7 +395,7 @@ export class Agent implements ACPAgent {
          const sessionId = session.id
  
          if (part.type === "tool") {
@@ -102,7 +154,7 @@ index aff523a7e..6afbd2152 100644
  
            switch (part.state.status) {
              case "pending":
-@@ -301,9 +365,12 @@ export class Agent implements ACPAgent {
+@@ -301,9 +417,12 @@ export class Agent implements ACPAgent {
                            toolCallId: part.callID,
                            status: "in_progress",
                            kind: toToolKind(part.tool),
@@ -116,7 +168,7 @@ index aff523a7e..6afbd2152 100644
                          },
                        })
                        .catch((error) => {
-@@ -312,6 +379,42 @@ export class Agent implements ACPAgent {
+@@ -312,6 +431,42 @@ export class Agent implements ACPAgent {
                      return
                    }
                    this.bashSnapshots.set(part.callID, hash)
@@ -159,7 +211,7 @@ index aff523a7e..6afbd2152 100644
                  }
                  content.push({
                    type: "content",
-@@ -321,6 +424,7 @@ export class Agent implements ACPAgent {
+@@ -321,6 +476,7 @@ export class Agent implements ACPAgent {
                    },
                  })
                }
@@ -167,7 +219,7 @@ index aff523a7e..6afbd2152 100644
                await this.connection
                  .sessionUpdate({
                    sessionId,
-@@ -329,10 +433,10 @@ export class Agent implements ACPAgent {
+@@ -329,10 +485,10 @@ export class Agent implements ACPAgent {
                      toolCallId: part.callID,
                      status: "in_progress",
                      kind: toToolKind(part.tool),
@@ -180,7 +232,7 @@ index aff523a7e..6afbd2152 100644
                    },
                  })
                  .catch((error) => {
-@@ -345,6 +449,7 @@ export class Agent implements ACPAgent {
+@@ -345,6 +501,7 @@ export class Agent implements ACPAgent {
                this.bashSnapshots.delete(part.callID)
                const kind = toToolKind(part.tool)
                const content: ToolCallContent[] = [
@@ -188,7 +240,7 @@ index aff523a7e..6afbd2152 100644
                  {
                    type: "content",
                    content: {
-@@ -399,31 +504,59 @@ export class Agent implements ACPAgent {
+@@ -399,31 +556,59 @@ export class Agent implements ACPAgent {
                  }
                }
  
@@ -267,7 +319,7 @@ index aff523a7e..6afbd2152 100644
                await this.connection
                  .sessionUpdate({
                    sessionId,
-@@ -432,9 +565,10 @@ export class Agent implements ACPAgent {
+@@ -432,9 +617,10 @@ export class Agent implements ACPAgent {
                      toolCallId: part.callID,
                      status: "failed",
                      kind: toToolKind(part.tool),
@@ -279,7 +331,7 @@ index aff523a7e..6afbd2152 100644
                        {
                          type: "content",
                          content: {
-@@ -534,6 +668,12 @@ export class Agent implements ACPAgent {
+@@ -534,6 +720,12 @@ export class Agent implements ACPAgent {
    async initialize(params: InitializeRequest): Promise<InitializeResponse> {
      log.info("initialize", { protocolVersion: params.protocolVersion })
  
@@ -292,7 +344,7 @@ index aff523a7e..6afbd2152 100644
      const authMethod: AuthMethod = {
        description: "Run `opencode auth login` in the terminal",
        name: "Login with opencode",
-@@ -669,7 +809,7 @@ export class Agent implements ACPAgent {
+@@ -669,7 +861,7 @@ export class Agent implements ACPAgent {
  
        for (const msg of messages ?? []) {
          log.debug("replay message", msg)
@@ -301,7 +353,7 @@ index aff523a7e..6afbd2152 100644
        }
  
        await sendUsageUpdate(this.connection, this.sdk, sessionId, directory)
-@@ -779,7 +919,7 @@ export class Agent implements ACPAgent {
+@@ -779,7 +971,7 @@ export class Agent implements ACPAgent {
  
        for (const msg of messages ?? []) {
          log.debug("replay message", msg)
@@ -310,7 +362,7 @@ index aff523a7e..6afbd2152 100644
        }
  
        await sendUsageUpdate(this.connection, this.sdk, sessionId, directory)
-@@ -827,21 +967,21 @@ export class Agent implements ACPAgent {
+@@ -827,21 +1019,21 @@ export class Agent implements ACPAgent {
      }
    }
  
@@ -335,7 +387,7 @@ index aff523a7e..6afbd2152 100644
              if (output) {
                runningContent.push({
                  type: "content",
-@@ -859,7 +999,7 @@ export class Agent implements ACPAgent {
+@@ -859,7 +1051,7 @@ export class Agent implements ACPAgent {
                    toolCallId: part.callID,
                    status: "in_progress",
                    kind: toToolKind(part.tool),
@@ -344,7 +396,7 @@ index aff523a7e..6afbd2152 100644
                    locations: toLocations(part.tool, part.state.input),
                    rawInput: part.state.input,
                    ...(runningContent.length > 0 && { content: runningContent }),
-@@ -874,6 +1014,7 @@ export class Agent implements ACPAgent {
+@@ -874,6 +1066,7 @@ export class Agent implements ACPAgent {
              this.bashSnapshots.delete(part.callID)
              const kind = toToolKind(part.tool)
              const content: ToolCallContent[] = [
@@ -352,7 +404,7 @@ index aff523a7e..6afbd2152 100644
                {
                  type: "content",
                  content: {
-@@ -937,7 +1078,7 @@ export class Agent implements ACPAgent {
+@@ -937,7 +1130,7 @@ export class Agent implements ACPAgent {
                    status: "completed",
                    kind,
                    content,
@@ -361,7 +413,7 @@ index aff523a7e..6afbd2152 100644
                    rawInput: part.state.input,
                    rawOutput: {
                      output: part.state.output,
-@@ -960,9 +1101,10 @@ export class Agent implements ACPAgent {
+@@ -960,9 +1153,10 @@ export class Agent implements ACPAgent {
                    toolCallId: part.callID,
                    status: "failed",
                    kind: toToolKind(part.tool),
@@ -373,7 +425,7 @@ index aff523a7e..6afbd2152 100644
                      {
                        type: "content",
                        content: {
-@@ -1113,22 +1255,112 @@ export class Agent implements ACPAgent {
+@@ -1113,22 +1307,112 @@ export class Agent implements ACPAgent {
      return output
    }
  
