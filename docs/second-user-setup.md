@@ -53,6 +53,10 @@ WS_USER_ROOT=/home/newuser/Documents/Repos/2gpu-local-ai-workstation
 WS_LIBRARY_ROOT=$WS_USER_ROOT/Library
 WS_ZED_PROFILE_DIR=/home/newuser/.local/share/zed-second-opinion
 WS_USER_MODELS_DIR=/home/newuser/models-experiments
+# Optional: extra skill directories opencode should scan beyond its
+# default ~/.claude/skills and ~/.agents/skills (colon-separated paths,
+# tildes expanded). E.g.:
+# WS_OPENCODE_SKILL_PATHS=/home/newuser/.claude/plugins/cache/claude-plugins-official/superpowers/5.0.7/skills
 EOF
 
 sudo -u newuser tee /home/newuser/.config/workstation/secrets.env > /dev/null << 'EOF'

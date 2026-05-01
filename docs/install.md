@@ -230,6 +230,14 @@ What to edit in each file:
   card is which device index.
 - `user.env`: set `WS_USER_ROOT` to your clone path (default
   assumes `~/Documents/Repos/2gpu-local-ai-workstation`).
+  Optional: set `WS_OPENCODE_SKILL_PATHS` to a colon-separated list
+  of extra skill directories you want opencode to scan beyond its
+  defaults (`~/.claude/skills` and `~/.agents/skills`). Useful for
+  deep paths the default scan does not reach -- the superpowers
+  plugin cache at
+  `~/.claude/plugins/cache/claude-plugins-official/superpowers/<version>/skills`
+  is a typical example. `opencode-session.sh` injects this into the
+  rendered `opencode.json` under `.skills.paths` on every launch.
 - `secrets.env`: set `WS_PROXMOX_USER` and `WS_PROXMOX_HOST` to
   match a remote you have SSH access to, if you use the
   opencode.json template's SSH-target permission rules. If you do

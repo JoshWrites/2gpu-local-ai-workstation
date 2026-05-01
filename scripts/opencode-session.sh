@@ -129,6 +129,35 @@ render_opencode_config() {
     return 1
   fi
 
+  # Inject user-configured skill directories into .skills.paths if
+  # WS_OPENCODE_SKILL_PATHS is set (colon-separated, like PATH). Stock
+  # opencode auto-discovers ~/.claude/skills and ~/.agents/skills via
+  # the EXTERNAL_DIRS scan, but only with the literal "skills/**/SKILL.md"
+  # pattern -- so a deeper layout like ~/.claude/plugins/.../skills/
+  # would never be reached without an explicit paths entry. The schema
+  # at packages/opencode/src/config/skills.ts wants an array of strings;
+  # we split on ":", strip blanks, and shovel into .skills.paths.
+  # Tilde-prefixed entries are expanded against $HOME so the user can
+  # write paths like "~/skills-personal" without pre-expanding.
+  if [[ -n "${WS_OPENCODE_SKILL_PATHS:-}" ]]; then
+    local skills_json
+    skills_json=$(printf '%s' "$WS_OPENCODE_SKILL_PATHS" | jq -R --arg home "$HOME" '
+      split(":")
+      | map(select(length > 0))
+      | map(if startswith("~/") then $home + .[1:] else . end)
+    ')
+    if [[ -z "$skills_json" || "$skills_json" == "[]" ]]; then
+      :
+    else
+      local merged="${tmp}.skills"
+      if jq --argjson paths "$skills_json" '.skills = (.skills // {}) | .skills.paths = $paths' "$tmp" > "$merged" 2>/dev/null; then
+        mv "$merged" "$tmp"
+      else
+        warn "could not inject WS_OPENCODE_SKILL_PATHS; using template defaults"
+      fi
+    fi
+  fi
+
   # Preserve runtime fields from the existing rendered file. Only fires
   # if the existing file is valid JSON; if it is not, we treat that as
   # a fresh-render case and use template defaults.
