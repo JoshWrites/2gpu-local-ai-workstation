@@ -51,3 +51,7 @@ logs/
 private/*
 !private/README.md
 !private/.gitignore
+
+
+# Personal/working plans (use docs/ for public docs)
+docs/superpowers/
