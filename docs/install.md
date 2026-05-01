@@ -74,6 +74,10 @@ through your distribution's package manager before starting step 1.
 - `envsubst` (from `gettext`).
 - `node` (Node.js, for one validation step in the regression
   script's JSONC parsing).
+- `pandoc` (required by the Library MCP's `library_export` tool, which
+  converts markdown to docx/odt/html/epub/rtf/latex). Install via
+  `sudo apt install pandoc`. Optional: `texlive-xetex` if you want
+  `library_export` to also produce PDF (`sudo apt install texlive-xetex`).
 
 **Editor and runtime:**
 
