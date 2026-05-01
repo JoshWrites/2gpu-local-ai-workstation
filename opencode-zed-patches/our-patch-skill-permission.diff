@@ -44,7 +44,28 @@
            const dir = path.dirname(info.location)
 --- a/packages/opencode/src/acp/agent.ts
 +++ b/packages/opencode/src/acp/agent.ts
-@@ -241,7 +241,32 @@
+@@ -221,7 +221,19 @@
+             })()
+ 
+             const permissionKind = toToolKind(permission.permission)
+-            const md = (toolInput ?? {}) as Record<string, unknown>
++            // Merge permission.metadata over toolInput. For most tools
++            // toolInput already contains everything we need (the model
++            // passes "description" as a tool arg). The `skill` tool is
++            // different: its only declared parameter is "name", so any
++            // description/token-estimate has to ride on
++            // permission.metadata. Spread metadata last so that, if
++            // both layers populate the same key, the explicit
++            // server-side metadata wins -- the tool argument is what
++            // the model said, the metadata is what the server measured.
++            const md = {
++              ...(toolInput ?? {}),
++              ...(permission.metadata ?? {}),
++            } as Record<string, unknown>
+             const promptDescription =
+               typeof md["description"] === "string" ? (md["description"] as string) : undefined
+             const promptCommand =
+@@ -241,7 +253,32 @@
              //     so we put the description in a separate content block instead
              //     of embedding it in the title with \n.
              //   other: description-or-command-or-bare-name (single line).
