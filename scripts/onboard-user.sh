@@ -98,6 +98,11 @@ WS_USER_ROOT=${TARGET_REPO}
 WS_LIBRARY_ROOT=\$WS_USER_ROOT/Library
 WS_ZED_PROFILE_DIR=${TARGET_HOME}/.local/share/zed-second-opinion
 WS_USER_MODELS_DIR=${TARGET_HOME}/models-experiments
+# Optional: extra skill directories opencode should scan beyond its
+# default ~/.claude/skills and ~/.agents/skills. Colon-separated paths;
+# tildes expanded against \$HOME at render time. Example below points
+# at the superpowers plugin cache.
+# WS_OPENCODE_SKILL_PATHS=${TARGET_HOME}/.claude/plugins/cache/claude-plugins-official/superpowers/5.0.7/skills
 EOF
   ok "user.env written"
 else

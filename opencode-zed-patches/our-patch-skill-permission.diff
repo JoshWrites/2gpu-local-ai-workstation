@@ -1,0 +1,117 @@
+--- a/packages/opencode/src/tool/skill.ts
++++ b/packages/opencode/src/tool/skill.ts
+@@ -29,11 +29,40 @@
+             throw new Error(`Skill "${params.name}" not found. Available skills: ${available || "none"}`)
+           }
+ 
++          // chars/4 heuristic, rounded to nearest 50, never below 50.
++          // Within ~10-15% of GLM/cl100k tokenizers for typical
++          // markdown/SKILL.md content -- accurate enough for "is this
++          // 800 or 8000 tokens" budgeting in the permission card,
++          // which is the only judgment the user is being asked to
++          // make. A real tokenizer would add weight for marginal
++          // precision the user does not need.
++          const approxTokens = (() => {
++            const len = info.content?.length ?? 0
++            if (!len) return 0
++            const raw = Math.max(1, Math.floor(len / 4))
++            const rounded = Math.round(raw / 50) * 50
++            return Math.max(50, rounded)
++          })()
++
++          // Send the description and token estimate up to the ACP
++          // permission card so the user can decide whether the skill
++          // is worth its context cost. Without this, the card renders
++          // a bare "skill" title with no description and no number,
++          // which leaves the user nothing to judge with. The metadata
++          // shape mirrors the keys the ACP server's promptDescription
++          // / promptTitle resolver looks up: "description" for the
++          // body, "name" / "tokens_estimated" for our skill-specific
++          // overlay in agent.ts.
+           yield* ctx.ask({
+             permission: "skill",
+             patterns: [params.name],
+             always: [params.name],
+-            metadata: {},
++            metadata: {
++              name: info.name,
++              description: info.description,
++              location: info.location,
++              tokens_estimated: approxTokens,
++            },
+           })
+ 
+           const dir = path.dirname(info.location)
+--- a/packages/opencode/src/acp/agent.ts
++++ b/packages/opencode/src/acp/agent.ts
+@@ -221,7 +221,19 @@
+             })()
+ 
+             const permissionKind = toToolKind(permission.permission)
+-            const md = (toolInput ?? {}) as Record<string, unknown>
++            // Merge permission.metadata over toolInput. For most tools
++            // toolInput already contains everything we need (the model
++            // passes "description" as a tool arg). The `skill` tool is
++            // different: its only declared parameter is "name", so any
++            // description/token-estimate has to ride on
++            // permission.metadata. Spread metadata last so that, if
++            // both layers populate the same key, the explicit
++            // server-side metadata wins -- the tool argument is what
++            // the model said, the metadata is what the server measured.
++            const md = {
++              ...(toolInput ?? {}),
++              ...(permission.metadata ?? {}),
++            } as Record<string, unknown>
+             const promptDescription =
+               typeof md["description"] === "string" ? (md["description"] as string) : undefined
+             const promptCommand =
+@@ -241,7 +253,31 @@
+             //     so we put the description in a separate content block instead
+             //     of embedding it in the title with \n.
+             //   other: description-or-command-or-bare-name (single line).
++            // Skill loads carry their own metadata shape: name (the
++            // skill identifier, e.g. "brainstorming") plus a token
++            // estimate. The default title resolver below would either
++            // surface the description as the bare title or fall through
++            // to the literal string "skill", neither of which lets the
++            // user judge cost. So skill gets a dedicated headline
++            // ("Load skill: <name> (~<N> tokens)") with the description
++            // pushed into a content block below -- Zed flattens \n in
++            // permission-card titles for non-execute kinds, so a
++            // two-line title would just truncate with an ellipsis.
++            const promptSkillName =
++              typeof md["name"] === "string" ? (md["name"] as string) : undefined
++            const promptSkillTokens =
++              typeof md["tokens_estimated"] === "number"
++                ? (md["tokens_estimated"] as number)
++                : undefined
++
+             const promptTitle = (() => {
++              if (permission.permission === "skill" && promptSkillName) {
++                const cost =
++                  typeof promptSkillTokens === "number"
++                    ? ` (~${promptSkillTokens.toLocaleString()} tokens)`
++                    : ""
++                return `Load skill: ${promptSkillName}${cost}`
++              }
+               if (permissionKind === "execute" && promptCommand) {
+                 return promptDescription ? `${promptCommand}\n${promptDescription}` : promptCommand
+               }
+@@ -260,6 +296,17 @@
+             // the user see what they are approving. Bash already has its
+             // own visual treatment so we leave its content untouched here.
+             const promptContent: ToolCallContent[] = []
++            // Skill loads: surface the description as a content block.
++            // The title carries name + token cost; the body is what
++            // the SKILL.md frontmatter says the skill is for. Without
++            // this the user sees only "Load skill: X (~N tokens)" and
++            // has to know what X is from memory.
++            if (permission.permission === "skill" && promptDescription) {
++              promptContent.push({
++                type: "content",
++                content: { type: "text", text: promptDescription },
++              })
++            }
+             if (permissionKind !== "execute" && promptPath && promptDescription) {
+               const newText = typeof md["newString"] === "string"
+                 ? (md["newString"] as string)
