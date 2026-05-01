@@ -13,7 +13,7 @@ means a bare tool name with no path - especially when the model
 `description` argument. Either way the user has no way to approve or
 deny informedly.
 
-Three patches in this repo fix that:
+Four patches in this repo fix that:
 
 - **agent.ts patch.** Looks up the actual tool input from the message
   store before sending the permission request, then derives a two-line
@@ -31,6 +31,17 @@ Three patches in this repo fix that:
   emit a description on every call, so the second line of the
   permission title is reliable - not a request the model can skip on
   a tight turn.
+- **skill-permission.ts patch.** Stock opencode already routes every
+  skill load through `permission.asked` with `permission: "skill"`,
+  but it sends an empty metadata object -- so the Zed permission card
+  renders a bare "skill" title with no description and no token cost,
+  giving the user nothing to judge with. This patch enriches the skill
+  tool's `ctx.ask({...})` call with `{name, description, location,
+  tokens_estimated}` (chars/4 heuristic), and extends the agent.ts
+  title resolver to recognize `permission: "skill"` and produce
+  "Load skill: \<name\> (~\<N\> tokens)" with the description on a
+  second line. Now the user can see what the skill is for and how
+  much context it will eat before clicking Allow.
 
 Apply the patches, rebuild opencode from source, install the resulting
 binary alongside the upstream one, and point Zed at the patched binary.
