@@ -45,13 +45,7 @@ section is the routing decision only.
   APIs. Prefer over `webfetch`, which floods context with raw
   HTML.
 - **`library_get_skill(name)`** -- for on-demand instruction
-  sets. Call with no name (or any unknown name) to discover what
-  is available across the user's configured skill directories
-  plus the Library's bundled set. The user can add their own
-  skill directories via `WS_SKILLS_DIRS` in `user.env`, so the
-  available list is not just what the Library ships -- treat
-  every listed skill as legitimately available regardless of
-  source.
+  sets. Call with no name to discover what is available.
 - **`library_convert(src_path, ...)`** -- for converting a
   binary doc (PDF, DOCX, image, etc.) to text on disk. Returns
   metadata only; the converted content does not enter context.

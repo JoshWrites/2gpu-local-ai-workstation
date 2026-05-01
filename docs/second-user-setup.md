@@ -53,7 +53,6 @@ WS_USER_ROOT=/home/newuser/Documents/Repos/2gpu-local-ai-workstation
 WS_LIBRARY_ROOT=$WS_USER_ROOT/Library
 WS_ZED_PROFILE_DIR=/home/newuser/.local/share/zed-second-opinion
 WS_USER_MODELS_DIR=/home/newuser/models-experiments
-# Optional: WS_SKILLS_DIRS=/home/newuser/skills-personal:/home/newuser/.claude/skills
 EOF
 
 sudo -u newuser tee /home/newuser/.config/workstation/secrets.env > /dev/null << 'EOF'
