@@ -2,16 +2,23 @@
 
 ## The Library MCP
 
-The `library` MCP server is the preferred path for three things:
+The `library` MCP server is the preferred path for five things:
 
 1. **Question-shaped file access** -- `library_read_file(path, query)`
 2. **Web research** -- `library_research(question)`
 3. **On-demand instruction sets** -- `library_get_skill(name)`
+4. **Full document conversion to disk** -- `library_convert(src_path, ...)`
+5. **Markdown export to binary formats** -- `library_export(src_path, ...)`
 
-All three tools share a common contract: they return a *summary layer* by
-default, with the option to escalate to *raw chunks* if the summary is
-insufficient. This protects primary-model context from being flooded with
-verbatim source material.
+The first three share a *summary layer* return contract: by default they
+return a summary, with the option to escalate to *raw chunks* if the
+summary is insufficient. This protects primary-model context from being
+flooded with verbatim source material.
+
+`library_convert` and `library_export` are different: they write the
+result to disk and return only metadata (path, byte count). The agent
+never sees the converted content. Use them when the user wants the full
+file, not a summary.
 
 ---
 
@@ -98,9 +105,59 @@ directly.
 
 ---
 
+## `library_convert` -- full binary doc to text on disk
+
+When the user wants the *full* converted document (e.g. "convert
+foo.docx to markdown", "give me the markdown of this PDF", "extract the
+text from this scanned page"), call `library_convert(src_path, ...)`
+instead of `read_file` or `read`.
+
+The Library reads the source bytes, sends them to the docling sidecar,
+and writes the result to disk. The response contains only metadata --
+src/dest path, output format, byte count. No content reaches your
+context, so this works for arbitrarily large documents at constant cost.
+
+**Supported source extensions:** `.pdf` `.docx` `.pptx` `.xlsx` `.epub`
+`.html` `.htm` `.png` `.jpg` `.jpeg` `.tiff` `.tif`. 50 MB cap per file.
+
+**Output formats:** `md` (default), `json`, `html`, `text`, `doctags`.
+
+**`dest_path` defaults** to `<src_dir>/<src_stem>.<ext>` -- e.g.
+`foo.docx` becomes `foo.md` in the same directory. Pass an explicit
+`dest_path` if the user wants it elsewhere.
+
+**`overwrite=False` by default.** If the destination exists, the call
+returns an error rather than clobbering. Only pass `overwrite=True`
+when the user has explicitly said to replace the existing file.
+
+Use `library_read_file` instead when the user asks a *question about*
+the file rather than asking for the full conversion.
+
+---
+
+## `library_export` -- markdown to binary doc on disk
+
+Inverse of `library_convert`. When the user wants to produce a `.docx`,
+`.pdf`, `.odt`, `.html`, `.epub`, etc. from markdown, call
+`library_export(src_path, output_format=...)`.
+
+Backed by `pandoc` (system binary). Same metadata-only return contract
+as `library_convert`.
+
+**Source formats accepted:** `.md` (default), `.markdown`, `.rst`,
+`.html`, `.tex`, `.org`, `.txt`. Other extensions are read as markdown.
+
+**Output formats:** `docx` (default), `odt`, `rtf`, `html`, `epub`,
+`pdf`, `latex`. PDF output requires `texlive-xetex` on the system.
+
+`dest_path` and `overwrite` behave the same as in `library_convert`.
+
+---
+
 ## The two-layer return contract
 
-All three tools return one of three shapes:
+The summary-layer tools (`library_research`, `library_read_file`,
+`library_get_skill`) return one of:
 
 ```
 { "layer": "summary",  "summary": "...", "sources": [...], "confidence": "high|medium|low",
@@ -121,6 +178,22 @@ All three tools return one of three shapes:
   *not* count as a new research round.
 - **If chunks still don't answer the question**, refine your query and
   call again. That *does* count as a new round.
+
+The disk-write tools (`library_convert`, `library_export`) return one of:
+
+```
+{ "layer": "converted", "src_path": "...", "dest_path": "...",
+  "output_format": "md", "bytes": 12345 }
+
+{ "layer": "exported",  "src_path": "...", "dest_path": "...",
+  "output_format": "docx", "bytes": 23456 }
+
+{ "layer": "error",     "error": "...", "can_escalate": false }
+```
+
+These do not have a chunks/summary layer -- the result is on disk, not
+in the response. Confirm the write to the user (path, byte count); do
+not read the file back into context unless they ask for its contents.
 
 ---
 
