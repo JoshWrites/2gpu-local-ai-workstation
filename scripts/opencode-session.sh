@@ -73,13 +73,15 @@ set +a
 # ── Paths and config derived from env ────────────────────────────────────────
 
 OPENCODE_BIN="${OPENCODE_BIN:-$HOME/.opencode/bin/opencode}"
-LLAMA_UNITS=(llama-primary llama-secondary llama-embed llama-coder)
-ENDPOINTS=(
-  "$WS_PORT_PRIMARY"
-  "$WS_PORT_SECONDARY"
-  "$WS_PORT_EMBED"
-  "$WS_PORT_CODER"
-)
+
+# Standard four units. llama-primary owns the 7900 XTX; the other three
+# share the 5700 XT. The opt-in llama-primary-experiment is NOT in this
+# list — it's a swap-in-for-llama-primary, mutually exclusive on Vulkan0.
+# The experiment-aware logic below detects it and treats it as a
+# replacement for llama-primary (not an addition).
+LLAMA_UNITS_BASE=(llama-primary llama-secondary llama-embed llama-coder)
+LLAMA_UNIT_EXPERIMENT=llama-primary-experiment
+
 WAIT_TIMEOUT_SEC=60
 
 OPENCODE_TEMPLATE="$REPO/configs/opencode/opencode.json.template"
@@ -213,6 +215,39 @@ render_opencode_config() {
 
 # ── Preflight ────────────────────────────────────────────────────────────────
 
+compute_active_units() {
+  # Detect whether the user has opted into the experimental primary
+  # (llama-primary-experiment.service, today: GPT-OSS-120B at 128K via HIP).
+  # The experiment is mutually exclusive with llama-primary on the 7900 XTX
+  # — both want Vulkan0 / the GPU's full VRAM. If we blindly start the
+  # standard four units while the experiment is loaded, llama-primary
+  # crashes during model load (no free VRAM) and the cascading host-memory
+  # pressure has been observed to OOM-kill the experiment (54 GB RSS).
+  #
+  # The right behavior: if the experiment is active, treat it as a drop-in
+  # replacement for llama-primary. Start (and wait on) the experiment plus
+  # the three secondary services, never llama-primary.
+
+  if systemctl is-active --quiet "$LLAMA_UNIT_EXPERIMENT" 2>/dev/null; then
+    log "experimental primary is active: substituting for llama-primary"
+    LLAMA_UNITS=("$LLAMA_UNIT_EXPERIMENT" llama-secondary llama-embed llama-coder)
+    ENDPOINTS=(
+      "$WS_PORT_EXPERIMENT"
+      "$WS_PORT_SECONDARY"
+      "$WS_PORT_EMBED"
+      "$WS_PORT_CODER"
+    )
+  else
+    LLAMA_UNITS=("${LLAMA_UNITS_BASE[@]}")
+    ENDPOINTS=(
+      "$WS_PORT_PRIMARY"
+      "$WS_PORT_SECONDARY"
+      "$WS_PORT_EMBED"
+      "$WS_PORT_CODER"
+    )
+  fi
+}
+
 pkill_rogue_servers() {
   # Kill any llama-server or ollama process not spawned by systemd (those
   # are OK -- systemctl stop will handle them on teardown). Shell-launched
@@ -320,6 +355,7 @@ render_opencode_config || {
   exit 1
 }
 
+compute_active_units
 pkill_rogue_servers
 ensure_units_loaded
 start_services

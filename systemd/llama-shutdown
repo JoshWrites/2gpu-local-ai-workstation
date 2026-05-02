@@ -41,23 +41,27 @@ if [[ ! -r /etc/workstation/system.env ]]; then
 fi
 . /etc/workstation/system.env
 
+# WS_PORT_EXPERIMENT may not exist in older system.env files.
+WS_PORT_EXPERIMENT="${WS_PORT_EXPERIMENT:-11444}"
+
 # ── Config ──────────────────────────────────────────────────────────────
 
 UNITS=(
   llama-primary.service
   llama-secondary.service
   llama-embed.service
-  llama-primary-moe.service
+  llama-primary-experiment.service
   llama-coder.service
 )
 
-# Service to port map (for connection counting). The four core units
-# read from system.env. The two alternate primary units share the
-# primary port by design (only one runs at a time, enforced via
-# Conflicts= in the unit files).
+# Service to port map (for connection counting). The two alternate primary
+# units (llama-primary and llama-primary-experiment) are mutually exclusive
+# on Vulkan0 and use distinct ports (the experimental one cannot share the
+# primary port because that would prevent A/B comparison, and it's an opt-in
+# alternative, not a swap-in replacement at the unit level).
 declare -A PORTS=(
   [llama-primary.service]=$WS_PORT_PRIMARY
-  [llama-primary-moe.service]=$WS_PORT_PRIMARY
+  [llama-primary-experiment.service]=$WS_PORT_EXPERIMENT
   [llama-secondary.service]=$WS_PORT_SECONDARY
   [llama-embed.service]=$WS_PORT_EMBED
   [llama-coder.service]=$WS_PORT_CODER
