@@ -497,7 +497,13 @@ Sources cited in >=2 research files OR discussed by name in working sessions tod
 - [`https://galileo.ai/blog/architectures-for-multi-agent-systems`](https://galileo.ai/blog/architectures-for-multi-agent-systems) -- `04-24/session-state-architectures-survey`
 - [`https://galileo.ai/blog/multi-agent-llm-systems-fail`](https://galileo.ai/blog/multi-agent-llm-systems-fail) -- `04-24/multi-model-handoff-prior-art`
 - [`https://galileo.ai/blog/why-multi-agent-systems-fail`](https://galileo.ai/blog/why-multi-agent-systems-fail) -- `04-24/session-state-architectures-survey`
+- [`https://github.com/ggml-org/llama.cpp/discussions/15396`](https://github.com/ggml-org/llama.cpp/discussions/15396) -- `05-03/from-one-model-to-an-agentic-stack`
+- [`https://github.com/ggml-org/llama.cpp/discussions/22411`](https://github.com/ggml-org/llama.cpp/discussions/22411) -- `05-03/from-one-model-to-an-agentic-stack`
+- [`https://github.com/ggml-org/llama.cpp/issues/15120`](https://github.com/ggml-org/llama.cpp/issues/15120) -- `05-03/from-one-model-to-an-agentic-stack`
+- [`https://github.com/ggml-org/llama.cpp/issues/17527`](https://github.com/ggml-org/llama.cpp/issues/17527) -- `05-03/from-one-model-to-an-agentic-stack`
+- [`https://github.com/ggml-org/llama.cpp/pull/15293`](https://github.com/ggml-org/llama.cpp/pull/15293) -- `05-03/from-one-model-to-an-agentic-stack`
 - [`https://healthark.ai/persistent-memory-for-llms-designing-a-multi-tier-context-system/`](https://healthark.ai/persistent-memory-for-llms-designing-a-multi-tier-context-system/) -- `04-24/session-as-artifact-and-temporal-retrieval-prior-art`
+- [`https://huggingface.co/blog/Doctor-Shotgun/llamacpp-moe-offload-guide`](https://huggingface.co/blog/Doctor-Shotgun/llamacpp-moe-offload-guide) -- `05-03/from-one-model-to-an-agentic-stack`
 - [`https://hungleai.substack.com/p/agree-or-disagree-a-review-of-multi`](https://hungleai.substack.com/p/agree-or-disagree-a-review-of-multi) -- `04-24/session-state-architectures-survey`
 - [`https://junie.jetbrains.com/docs/guidelines-and-memory.html`](https://junie.jetbrains.com/docs/guidelines-and-memory.html) -- `04-24/session-persistence-and-reassembly-prior-art`
 - [`https://klu.ai/glossary/humaneval-benchmark`](https://klu.ai/glossary/humaneval-benchmark) -- `04-24/front-and-passenger-dispatcher-prior-art`
@@ -537,6 +543,7 @@ Sources cited in >=2 research files OR discussed by name in working sessions tod
 - [`https://qubittool.com/blog/ai-agent-framework-comparison-2026`](https://qubittool.com/blog/ai-agent-framework-comparison-2026) -- `04-24/front-and-passenger-dispatcher-prior-art`
 - [`https://research.google/blog/accelerating-text-generation-with-confident-adaptive-language-modeling-calm/`](https://research.google/blog/accelerating-text-generation-with-confident-adaptive-language-modeling-calm/) -- `04-24/multi-model-handoff-prior-art`
 - [`https://research.google/blog/looking-back-at-speculative-decoding/`](https://research.google/blog/looking-back-at-speculative-decoding/) -- `04-24/multi-model-handoff-prior-art`
+- [`https://rocm.blogs.amd.com/ecosystems-and-partners/llama-cpp-oct2025/README.html`](https://rocm.blogs.amd.com/ecosystems-and-partners/llama-cpp-oct2025/README.html) -- `05-03/from-one-model-to-an-agentic-stack`
 - [`https://rocm.docs.amd.com/en/latest/how-to/rocm-for-ai/fine-tuning/multi-gpu-fine-tuning-and-inference.html`](https://rocm.docs.amd.com/en/latest/how-to/rocm-for-ai/fine-tuning/multi-gpu-fine-tuning-and-inference.html) -- `04-25/hobbyist-and-academic-transcript-index-prior-art`
 - [`https://rpwithai.com/how-to-manage-long-chats-on-sillytavern/`](https://rpwithai.com/how-to-manage-long-chats-on-sillytavern/) -- `04-25/hobbyist-and-academic-transcript-index-prior-art`
 - [`https://selfrefine.info/`](https://selfrefine.info/) -- `04-24/front-and-passenger-dispatcher-prior-art`
@@ -549,6 +556,7 @@ Sources cited in >=2 research files OR discussed by name in working sessions tod
 - [`https://towardsdatascience.com/why-crewais-manager-worker-architecture-fails-and-how-to-fix-it/`](https://towardsdatascience.com/why-crewais-manager-worker-architecture-fails-and-how-to-fix-it/) -- `04-24/front-and-passenger-dispatcher-prior-art`
 - [`https://venturebeat.com/ai/openais-swarm-ai-agent-framework-routines-and-handoffs`](https://venturebeat.com/ai/openais-swarm-ai-agent-framework-routines-and-handoffs) -- `04-24/multi-model-handoff-prior-art`
 - [`https://withmartian.com/post/introducing-routerbench`](https://withmartian.com/post/introducing-routerbench) -- `04-24/front-and-passenger-dispatcher-prior-art`
+- [`https://www.amd.com/en/blogs/2025/how-to-run-openai-gpt-oss-20b-120b-models-on-amd-ryzen-ai-radeon.html`](https://www.amd.com/en/blogs/2025/how-to-run-openai-gpt-oss-20b-120b-models-on-amd-ryzen-ai-radeon.html) -- `05-03/from-one-model-to-an-agentic-stack`
 - [`https://www.anthropic.com/research/automated-alignment-researchers`](https://www.anthropic.com/research/automated-alignment-researchers) -- `04-24/front-and-passenger-dispatcher-prior-art`
 - [`https://www.anthropic.com/research/constitutional-ai-harmlessness-from-ai-feedback`](https://www.anthropic.com/research/constitutional-ai-harmlessness-from-ai-feedback) -- `04-24/front-and-passenger-dispatcher-prior-art`
 - [`https://www.arsturn.com/blog/sillytavernai-lorebooks-with-gemini-2-5-a-complete-guide`](https://www.arsturn.com/blog/sillytavernai-lorebooks-with-gemini-2-5-a-complete-guide) -- `04-25/hobbyist-and-academic-transcript-index-prior-art`
@@ -581,5 +589,6 @@ Sources cited in >=2 research files OR discussed by name in working sessions tod
 - [`https://www.snowflake.com/en/engineering-blog/fast-speculative-decoding-vllm-arctic/`](https://www.snowflake.com/en/engineering-blog/fast-speculative-decoding-vllm-arctic/) -- `04-24/multi-model-handoff-prior-art`
 - [`https://www.spheron.network/blog/sglang-production-deployment-guide/`](https://www.spheron.network/blog/sglang-production-deployment-guide/) -- `04-24/session-persistence-and-reassembly-prior-art`
 - [`https://www.stephendiehl.com/posts/process_reward/`](https://www.stephendiehl.com/posts/process_reward/) -- `04-24/front-and-passenger-dispatcher-prior-art`
+- [`https://www.theregister.com/2025/08/24/llama_cpp_hands_on/`](https://www.theregister.com/2025/08/24/llama_cpp_hands_on/) -- `05-03/from-one-model-to-an-agentic-stack`
 - [`https://www.zansara.dev/posts/2025-06-02-can-you-really-interrupt-an-llm/`](https://www.zansara.dev/posts/2025-06-02-can-you-really-interrupt-an-llm/) -- `04-24/multi-model-handoff-prior-art`
 
