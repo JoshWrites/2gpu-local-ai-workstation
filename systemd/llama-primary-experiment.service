@@ -34,16 +34,26 @@ Description=llama-server EXPERIMENT (GPT-OSS-120B on 7900 XTX / HIP, port 11444,
 # code in chat instead of writing files. See configs/opencode/README.md
 # for the full reasoning.
 #
-# Tunables to sweep:
-#   --n-cpu-moe N    start at 26 (the Register's value for a 20GB GPU)
-#                    decrease until OOM, then back off. With 24GB on the 7900
-#                    XTX we should be able to push N lower than 26 — meaning
-#                    fewer expert layers exiled to CPU, more on the GPU,
-#                    higher tok/s.
-#   -c CONTEXT       start at 32768 to match the article; bump to 65536 or
-#                    90000 once N is settled if KV cache fits.
-#   -ub / -b         larger batches help CPU+GPU hybrid; default 4096 is a
-#                    reasonable starting point for MoE hybrid.
+# Tunables (current values are settled — see docs/research/gpt-oss-120b-moe-offload.md):
+#   --n-cpu-moe 28   N=26 didn't help (top-4-of-128 routing makes this lever
+#                    too coarse to extract speedup at the margin). N=28
+#                    leaves headroom for the compute buffer and KV.
+#   -c 131072        full n_ctx_train. Q8_0 KV at this depth = 2.45 GB.
+#   -ub 2048         large ubatch lights up the GPU on long prompts; 4.8x
+#                    prompt-eval speedup vs -ub 256 at 43K tokens.
+#   --swa-checkpoints 128 — long Zed sessions accumulate context past 38K
+#                    tokens fast. The default 32 fills up and starts
+#                    evicting on every new request, causing visible gen
+#                    tok/s dips when an eviction lands on a needed
+#                    position. 128 × ~48 MiB ≈ 6 GB DRAM, accommodatable
+#                    once --no-mmap is gone.
+#   --cache-reuse 256 — KV-shifting prefix reuse for tool-loop patterns.
+#
+# (Removed --no-mmap on 2026-05-02. With it, the 60 GB of weights were
+# pinned in RSS; the kernel had no eviction option under desktop-app
+# pressure and OOM-killed the experiment after long sessions. Without
+# it, cold expert pages can be evicted to disk-backed mapping under
+# pressure. Trade-off: occasional cold-page reload latency vs death.)
 #
 # Sampler flags here are GPT-OSS-recommended starting points — re-derive if
 # the model changes.
@@ -69,7 +79,7 @@ ExecStart=/usr/local/lib/llama.cpp-hip/llama-server \
   --jinja \
   -b 2048 -ub 2048 \
   --cache-reuse 256 \
-  --no-mmap \
+  --swa-checkpoints 128 \
   --temp 1.0 --top-p 1.0 --top-k 0 --min-p 0.0 \
   --host 127.0.0.1 --port 11444
 Restart=no
