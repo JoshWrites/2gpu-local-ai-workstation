@@ -83,3 +83,38 @@ runtime tweaks would get clobbered on next launch; if you find
 yourself wanting to preserve another field, add it to
 `PRESERVE_FIELDS` in `scripts/opencode-session.sh`.
 
+## The `llama-experiment` provider
+
+The template advertises an `llama-experiment` provider on
+`localhost:${WS_PORT_EXPERIMENT}` (default 11444). Today this slot is
+served by `systemd/llama-primary-experiment.service`, which runs
+GPT-OSS-120B with native 128K context via the HIP llama.cpp build.
+
+The experiment cannot run alongside `llama-primary` — both want the
+7900 XTX. The expected workflow is opt-in:
+
+```
+sudo systemctl stop llama-primary
+sudo systemctl start llama-primary-experiment
+# ...use it from Zed by picking "GPT-OSS-120B 128K" in the model picker...
+sudo systemctl stop llama-primary-experiment
+sudo systemctl start llama-primary
+```
+
+`opencode-session.sh` does NOT manage this service. It only renders
+the provider config and waits for the four standard endpoints. If
+`llama-experiment` isn't running when Zed asks for it, opencode gets
+a connection error and the rest of the stack keeps working.
+
+### Quirk: GPT-OSS uses Harmony channels
+
+Unlike most chat models, GPT-OSS routes its private reasoning into a
+separate `reasoning_content` field on the response, leaving `content`
+for the final answer. With small `max_tokens` budgets, the reasoning
+can consume the full budget and `content` returns empty. Set
+`max_tokens` generously (Zed defaults are usually fine; the template
+declares `output: 16384`).
+
+See `docs/research/gpt-oss-120b-moe-offload.md` for the full
+investigation, performance numbers, and the trip log of dead ends.
+

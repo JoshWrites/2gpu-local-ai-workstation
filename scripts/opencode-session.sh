@@ -60,6 +60,12 @@ if [[ ! -r "$HOME/.config/workstation/secrets.env" ]]; then
 fi
 . "$HOME/.config/workstation/secrets.env"
 
+# Defaults for vars the template references that may not be in older
+# system.env files. Keeps this script tolerant of installs that haven't
+# pulled the latest env example yet. If your system.env is current, these
+# are no-ops.
+WS_PORT_EXPERIMENT="${WS_PORT_EXPERIMENT:-11444}"
+
 # HOME is already exported by the parent shell, but the template uses
 # ${HOME} so we need it in envsubst's view too. Already there.
 set +a
@@ -122,6 +128,7 @@ render_opencode_config() {
   # Restrict to a named list so only our WS_* and HOME placeholders get
   # substituted; literal $names are left alone.
   local vars='${WS_PORT_PRIMARY} ${WS_PORT_SECONDARY} ${WS_PORT_EMBED} ${WS_PORT_CODER}'
+  vars+=' ${WS_PORT_EXPERIMENT}'
   vars+=' ${WS_LIBRARY_ROOT} ${WS_PROXMOX_USER} ${WS_PROXMOX_HOST} ${HOME}'
 
   if ! envsubst "$vars" < "$OPENCODE_TEMPLATE" > "$tmp" 2>/dev/null; then

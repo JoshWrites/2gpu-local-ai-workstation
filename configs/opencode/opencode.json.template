@@ -18,6 +18,23 @@
         }
       }
     },
+    "llama-experiment": {
+      "npm": "@ai-sdk/openai-compatible",
+      "name": "chat (experimental)",
+      "api": "http://localhost:${WS_PORT_EXPERIMENT}/v1",
+      "models": {
+        "gpt-oss-120b-mxfp4-00001-of-00003.gguf": {
+          "name": "GPT-OSS-120B 128K",
+          "attachment": false,
+          "reasoning": true,
+          "tool_call": true,
+          "limit": {
+            "context": 131072,
+            "output": 16384
+          }
+        }
+      }
+    },
     "llama-secondary": {
       "npm": "@ai-sdk/openai-compatible",
       "name": "summarize",
