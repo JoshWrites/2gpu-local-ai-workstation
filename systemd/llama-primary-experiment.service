@@ -20,6 +20,20 @@ Description=llama-server EXPERIMENT (GPT-OSS-120B on 7900 XTX / HIP, port 11444,
 #   systemctl stop llama-primary-experiment
 #   systemctl start llama-primary
 #
+# The opencode-session.sh and 2gpu-launch.sh launchers detect this unit's
+# active state and substitute it for llama-primary, so starting Zed while
+# the experiment is loaded does NOT start llama-primary on top (which
+# would crash GLM's load and OOM-kill the experiment via cascading
+# host-memory pressure).
+#
+# --alias gpt-oss-120b is load-bearing: opencode pattern-matches the
+# model id reported by /v1/models to enable GPT-OSS-specific request
+# handling (Harmony channels, tool definitions). Without the alias the
+# server reports the GGUF filename, opencode falls back to a generic
+# flow that does NOT attach tools to the request, and the model emits
+# code in chat instead of writing files. See configs/opencode/README.md
+# for the full reasoning.
+#
 # Tunables to sweep:
 #   --n-cpu-moe N    start at 26 (the Register's value for a 20GB GPU)
 #                    decrease until OOM, then back off. With 24GB on the 7900

@@ -101,10 +101,42 @@ sudo systemctl stop llama-primary-experiment
 sudo systemctl start llama-primary
 ```
 
-`opencode-session.sh` does NOT manage this service. It only renders
-the provider config and waits for the four standard endpoints. If
-`llama-experiment` isn't running when Zed asks for it, opencode gets
-a connection error and the rest of the stack keeps working.
+The launchers (`opencode-session.sh` and `2gpu-launch.sh`) detect when
+`llama-primary-experiment` is active and substitute it for
+`llama-primary` in their service-management logic, rather than blindly
+starting both. Without this, starting Zed while the experiment was
+loaded would crash llama-primary's load (no free VRAM) and the
+cascading host-memory pressure has been observed to OOM-kill the
+experiment (54 GB RSS). See `compute_active_units` in
+`scripts/opencode-session.sh` and the equivalent block in
+`scripts/2gpu-launch.sh`.
+
+If neither service is running when Zed asks for the experimental
+model, opencode gets a connection error on that one provider; the
+rest of the stack keeps working.
+
+### Why the model id is aliased to `gpt-oss-120b`
+
+The unit file passes `--alias gpt-oss-120b` to llama-server, and the
+template uses `gpt-oss-120b` (not the GGUF filename) as the model key.
+
+This matters: opencode pattern-matches the model id internally to
+enable GPT-OSS-specific request handling — Harmony channel parsing,
+correct system-prompt shape, and most importantly, attaching tool
+definitions to the request. The binary's strings include
+`gpt-oss-120b`, `gpt-oss-20b`, `harmony` etc. as recognized ids.
+
+Without the alias, the server reports the GGUF filename as the model
+id (`gpt-oss-120b-mxfp4-00001-of-00003.gguf`), opencode does not
+match the pattern, falls back to a generic openai-compatible flow,
+and **does not send tool definitions in the request** — so the model
+can't write files or call MCP tools and just emits code blocks in
+chat. This was observed during the first Zed test of this branch
+(see commit `dd05c5d` for the diagnosis).
+
+If you swap to a different GGUF for this slot, set the alias to
+whatever opencode pattern recognizes — typically the canonical
+huggingface model name without the quant/shard suffix.
 
 ### Quirk: GPT-OSS uses Harmony channels
 
