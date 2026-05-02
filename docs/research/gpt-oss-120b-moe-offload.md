@@ -1,15 +1,67 @@
 # GPT-OSS-120B MoE expert offload — experiment notes
 
-Phase 1 of the ik_llama.cpp investigation. Tests whether stock llama.cpp's
-`--n-cpu-moe` is enough to run a 60GB+ MoE model on 24GB VRAM + 64GB DRAM
-at usable tok/s — before considering whether the ik_llama.cpp fork is
-worth building.
+**Result (2026-05-02):** Working at **~20 tok/s gen, ~31 tok/s prompt eval**
+on the 7900 XTX with `--n-cpu-moe 28`, `-c 8192`. Matches The Register's
+reference number on similar hardware. Knobs not yet swept; this is a
+conservative starting point with substantial headroom.
 
 Reference: <https://www.theregister.com/2025/08/24/llama_cpp_hands_on/>
 got ~20 tok/s on a 20GB GPU + 64GB DDR4 with `--n-cpu-moe 26`.
 
 Model: `ggml-org/gpt-oss-120b-GGUF`, MXFP4 quant (~63GB total, 3 shards).
 Stored at `/var/lib/llama-models/gpt-oss-120b/`.
+
+## What worked
+
+- **Mainline llama.cpp built with HIP** (ROCm 7.2.1, gfx1100), installed
+  to `/usr/local/lib/llama.cpp-hip/` (separate from stock Vulkan at
+  `/usr/local/lib/llama.cpp/`).
+- `--n-cpu-moe 28`, `-c 8192`, `--flash-attn off`, `-b 2048 -ub 512`,
+  `--no-mmap`, `HIP_VISIBLE_DEVICES=1` (which is the 7900 XTX in HIP's
+  enumeration — note this is OPPOSITE of `rocminfo`'s ordering).
+- VRAM: 17 GB resident on the 7900 XTX (14.5 GB weights + ~2.5 GB
+  KV/compute). 24 GB ceiling has 7 GB headroom.
+- DRAM: 47 GB RSS, ~46 GB host buffer for CPU-resident expert weights.
+- Coexists fine with stock Vulkan llama-primary on the same physical
+  card (different backends, different VRAM regions).
+
+## What did NOT work and why
+
+### Stock Vulkan llama.cpp + `--n-cpu-moe`
+Stock llama.cpp Vulkan backend allocates a single host-visible Vulkan
+buffer to hold all CPU-resident expert weights — for GPT-OSS-120B at
+`--n-cpu-moe 28` that's 45.9 GB. RADV (Mesa Vulkan driver for AMD)
+refuses the allocation:
+```
+radv/amdgpu: Not enough memory for command submission.
+llama_model_load: error loading model: vk::Queue::submit: ErrorDeviceLost
+```
+This is a per-allocation/per-context limit in RADV, not a sizing/free-VRAM
+issue. Failed identically across `--n-cpu-moe` values (26, 28), context
+sizes (8K, 32K), and `--flash-attn` on/off.
+
+### ik_llama.cpp HIP build
+Bit-rotted under modern ROCm (7.2.1) — both tip-of-tree (`a8aecbf`) and
+the GPT-OSS-introducing PR #689 (`633e0617`) fail to build:
+- Missing `add_compile_definitions(GGML_CUDA_FUSION=...)` and
+  `GGML_CUDA_MIN_BATCH_OFFLOAD=...` in the HIP CMake block (in tip)
+- Undeclared `nv_bfloat16` — no HIP shim typedef in
+  `ggml/src/ggml-cuda/vendors/hip.h` (both tip and #689)
+
+Fixable but more engineering than the experiment warranted. Mainline
+llama.cpp's HIP path is well-maintained and has the same `--n-cpu-moe`
+flag we needed.
+
+## Performance on first run (no tuning yet)
+
+| Round | Prompt tok | Cached | Gen tok | Prompt tok/s | Gen tok/s |
+|------:|-----------:|-------:|--------:|-------------:|----------:|
+| 1 cold|         79 |      0 |     200 |        31.5  |     19.9  |
+| 2 warm|         79 |     74 |     200 |        14.3  |     20.1  |
+| 3 hot |         79 |     70 |     134 |        13.4  |     20.1  |
+
+(Generation tok/s is the meaningful metric — prompt eval on rounds 2–3
+only had 5–9 new tokens, so its per-token rate is misleading.)
 
 ## Setup
 
