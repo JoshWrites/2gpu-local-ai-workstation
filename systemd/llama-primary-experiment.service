@@ -31,7 +31,7 @@ Description=llama-server EXPERIMENT (GPT-OSS-120B on 7900 XTX / Vulkan0, port 11
 Type=simple
 EnvironmentFile=/etc/workstation/system.env
 ExecStart=/usr/local/lib/llama.cpp/llama-server \
-  -m ${WS_MODELS_DIR}/gpt-oss-120b/gpt-oss-120b-MXFP4.gguf \
+  -m ${WS_MODELS_DIR}/gpt-oss-120b/gpt-oss-120b-mxfp4-00001-of-00003.gguf \
   --device ${WS_GPU_PRIMARY_DEVICE} -ngl 999 --n-cpu-moe 26 \
   -c 32768 --flash-attn on \
   -ctk q8_0 -ctv q8_0 --jinja \
