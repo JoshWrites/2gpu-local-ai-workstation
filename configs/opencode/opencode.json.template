@@ -23,7 +23,7 @@
       "name": "chat (experimental)",
       "api": "http://localhost:${WS_PORT_EXPERIMENT}/v1",
       "models": {
-        "gpt-oss-120b-mxfp4-00001-of-00003.gguf": {
+        "gpt-oss-120b": {
           "name": "GPT-OSS-120B 128K",
           "attachment": false,
           "reasoning": true,
