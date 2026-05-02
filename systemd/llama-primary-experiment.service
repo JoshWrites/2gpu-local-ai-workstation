@@ -1,0 +1,49 @@
+[Unit]
+Description=llama-server EXPERIMENT (GPT-OSS-120B on 7900 XTX / Vulkan0, port 11444, MoE expert offload)
+# EXPERIMENTAL — phase-1 of the ik_llama.cpp / MoE offload investigation.
+# Runs the stock /usr/local/lib/llama.cpp/llama-server (Vulkan, b8799), same
+# binary as llama-primary.service. Only the model + offload flags differ.
+#
+# Cannot coexist with llama-primary.service (both want Vulkan0). Workflow:
+#   systemctl stop llama-primary
+#   systemctl start llama-primary-experiment
+#   ...test, measure tok/s...
+#   systemctl stop llama-primary-experiment
+#   systemctl start llama-primary
+#
+# Tunables to sweep:
+#   --n-cpu-moe N    start at 26 (the Register's value for a 20GB GPU)
+#                    decrease until OOM, then back off. With 24GB on the 7900
+#                    XTX we should be able to push N lower than 26 — meaning
+#                    fewer expert layers exiled to CPU, more on the GPU,
+#                    higher tok/s.
+#   -c CONTEXT       start at 32768 to match the article; bump to 65536 or
+#                    90000 once N is settled if KV cache fits.
+#   -ub / -b         larger batches help CPU+GPU hybrid; default 4096 is a
+#                    reasonable starting point for MoE hybrid.
+#
+# Sampler flags here are GPT-OSS-recommended starting points — re-derive if
+# the model changes.
+#   - temp 1.0, top_p 1.0, top_k 0, min_p 0.0 (GPT-OSS recommended)
+#   - Adjust per Hugging Face model card if needed.
+
+[Service]
+Type=simple
+EnvironmentFile=/etc/workstation/system.env
+ExecStart=/usr/local/lib/llama.cpp/llama-server \
+  -m ${WS_MODELS_DIR}/gpt-oss-120b/gpt-oss-120b-MXFP4.gguf \
+  --device ${WS_GPU_PRIMARY_DEVICE} -ngl 999 --n-cpu-moe 26 \
+  -c 32768 --flash-attn on \
+  -ctk q8_0 -ctv q8_0 --jinja \
+  -b 4096 -ub 4096 \
+  --no-mmap \
+  --temp 1.0 --top-p 1.0 --top-k 0 --min-p 0.0 \
+  --host 127.0.0.1 --port 11444
+Restart=no
+KillSignal=SIGTERM
+TimeoutStopSec=15
+StandardOutput=journal
+StandardError=journal
+
+# Restart=no on purpose: this is an experiment. If it OOMs or crashes we want
+# to see the failure and adjust flags, not have systemd loop-restart it.
