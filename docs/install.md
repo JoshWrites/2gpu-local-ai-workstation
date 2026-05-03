@@ -227,7 +227,11 @@ What to edit in each file:
   paths, and ports match your hardware. The defaults match the
   umbrella's reference deployment (7900 XTX as Vulkan0, 5700 XT as
   Vulkan1) -- run `vulkaninfo --summary` if you are not sure which
-  card is which device index.
+  card is which device index. **Set `WS_LLAMA_USERS`** to the
+  space-separated list of local usernames who should have
+  passwordless `systemctl start/stop` of the llama-* units --
+  install-systemd-units.sh renders this list into the polkit rule
+  at install time.
 - `user.env`: set `WS_USER_ROOT` to your clone path (default
   assumes `~/Documents/Repos/2gpu-local-ai-workstation`).
   Optional: set `WS_OPENCODE_SKILL_PATHS` to a colon-separated list
@@ -286,54 +290,38 @@ For deeper context on what each piece does, see
 ls -la /etc/systemd/system/llama-*.service
 ls -la /usr/local/bin/llama-shutdown
 ls -la /etc/polkit-1/rules.d/10-llama-services.rules
-systemctl is-enabled llama-primary.service
+systemctl is-enabled llama-primary-router.service
 ```
 
 The first three should exist. `is-enabled` should report `disabled`
 (intentional; services are not enabled at boot).
 
-### Step 6: Configure the polkit rule for your user
+### Step 6: polkit rule -- already rendered
 
-The polkit rule ships with `allowedUsers = ["your-username-here"]`
-as a placeholder. Edit it to list your actual local username (or
-multiple usernames, comma-separated):
+The install script in Step 5 read `WS_LLAMA_USERS` from
+`/etc/workstation/system.env` and rendered the polkit rule's
+`allowedUsers` array from that list at install time. There's nothing
+to edit by hand. If you need to change the user list later, update
+`WS_LLAMA_USERS` and re-run `scripts/install-systemd-units.sh`.
 
-```
-sudo $EDITOR /etc/polkit-1/rules.d/10-llama-services.rules
-```
-
-Find the line that reads:
+**Verify:** as one of the listed users (not via sudo), run:
 
 ```
-var allowedUsers = ["your-username-here"];
+systemctl start llama-primary-router.service
 ```
 
-And change it to your username:
+It should start without prompting for a password. If it prompts:
+- Confirm `WS_LLAMA_USERS` contains your username:
+  `grep WS_LLAMA_USERS /etc/workstation/system.env`
+- Confirm the polkit rule has the rendered list:
+  `sudo grep allowedUsers /etc/polkit-1/rules.d/10-llama-services.rules`
+- Confirm the unit name being started is in the rule's
+  `allowedUnits` array (line just above `allowedUsers`).
+
+Stop the service after verifying:
 
 ```
-var allowedUsers = ["alice"];
-```
-
-Or for multi-user setups:
-
-```
-var allowedUsers = ["alice", "bob"];
-```
-
-Save. polkit picks up rule changes without a reload.
-
-**Verify:** as your normal user (not via sudo), run:
-
-```
-systemctl start llama-primary.service
-```
-
-It should start without prompting for a password. If it prompts, the
-polkit rule is not granting passwordless start; re-check the
-`allowedUsers` array spelling. Stop the service after verifying:
-
-```
-systemctl stop llama-primary.service
+systemctl stop llama-primary-router.service
 ```
 
 (or `llama-shutdown --force` to stop everything that started.)
@@ -615,7 +603,7 @@ Expected output:
 [llama-shutdown] no active connections - watching for 30s to confirm idleness
 ......
 [llama-shutdown] idle for 30s - stopping llama-* services
-[llama-shutdown]   stopping llama-primary.service
+[llama-shutdown]   stopping llama-primary-router.service
 [llama-shutdown]   stopping llama-secondary.service
 [llama-shutdown]   stopping llama-embed.service
 [llama-shutdown]   stopping llama-coder.service
