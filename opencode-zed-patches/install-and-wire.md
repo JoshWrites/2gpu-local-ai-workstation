@@ -11,7 +11,7 @@ How to build the patched opencode, install it, and wire Zed to use it.
 | Build artifact (per-user staging) | `~/.local/bin/opencode-patched` | Build output before the system install. Useful as a fallback. |
 | Build tree | `/tmp/opencode-build/opencode/` | Sparse clone for rebuilding. Disposable. |
 | Isolated bun 1.3.13 | `/tmp/bun-1313/bin/bun` | Required to build (stock bun on most distros lags behind). Disposable. |
-| Source patches | `our-patch-agent.diff`, `our-patch-bash.diff`, `our-patch-tools.diff`, `our-patch-skill-permission.diff` | Four diffs in this repo. Apply against opencode v1.14.28. |
+| Source patches | `our-patch-agent.diff`, `our-patch-bash.diff`, `our-patch-tools.diff`, `our-patch-skill-permission.diff`, `our-patch-router-swap.diff` | Five diffs in this repo. Apply in order against opencode v1.14.28. |
 
 ## How Zed picks up the patched binary
 
@@ -32,7 +32,8 @@ Edit the right file:
     "args": ["acp"],
     "env": {
       "OPENCODE_BIN": "/usr/local/bin/opencode-patched",
-      "OPENCODE_DISABLE_CHANNEL_DB": "1"
+      "OPENCODE_DISABLE_CHANNEL_DB": "1",
+      "OPENCODE_MODEL_SWAP_SCRIPT": "/path/to/scripts/model-swap.sh"
     }
   }
 }
