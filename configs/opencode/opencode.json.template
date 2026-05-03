@@ -80,6 +80,9 @@
   "agent": {
     "compaction": {
       "model": "llama-primary/gpt-oss-120b"
+    },
+    "title": {
+      "model": "llama-secondary/qwen3-4b-instruct-2507"
     }
   },
   "mcp": {
