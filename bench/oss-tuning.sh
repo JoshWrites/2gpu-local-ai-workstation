@@ -177,14 +177,18 @@ load_preset() {
 # max_tokens.
 run_one() {
   local preset="$1" run="$2" label="$3" prompt_file="$4" max_tokens="$5"
-  local payload tmpfile
+  local tmpfile payload_file
   tmpfile="$(mktemp)"
-  # Build request via jq to handle prompt escaping safely.
-  payload="$(jq -n \
+  payload_file="$(mktemp)"
+  # Build request via jq with --rawfile to keep large prompts off argv
+  # (130 KB long-needle prompt blows ARG_MAX otherwise). Write payload
+  # to disk and feed curl with -d @file for the same reason.
+  jq -n \
     --arg model "$preset" \
-    --arg content "$(cat "$prompt_file")" \
+    --rawfile content "$prompt_file" \
     --argjson max "$max_tokens" \
-    '{model:$model, messages:[{role:"user",content:$content}], max_tokens:$max, stream:false}')"
+    '{model:$model, messages:[{role:"user",content:$content}], max_tokens:$max, stream:false}' \
+    > "$payload_file"
 
   local vram_before dram_before
   vram_before="$(vram_used_mb)"
@@ -196,7 +200,7 @@ run_one() {
     --max-time "$GEN_TIMEOUT_SEC" \
     "$ROUTER_URL/v1/chat/completions" \
     -H 'Content-Type: application/json' \
-    -d "$payload")"
+    -d "@$payload_file")"
   t1="$(date +%s%3N)"
   wall_ms=$(( t1 - t0 ))
 
@@ -207,7 +211,7 @@ run_one() {
   if [[ "$http_status" != "200" ]]; then
     err "HTTP $http_status for $preset/$label run $run"
     cat "$tmpfile" >&2
-    rm -f "$tmpfile"
+    rm -f "$tmpfile" "$payload_file"
     echo "$preset,$run,$label,$wall_ms,ERR,ERR,ERR,ERR,ERR,ERR,ERR,$vram_after,$dram_after"
     return 1
   fi
