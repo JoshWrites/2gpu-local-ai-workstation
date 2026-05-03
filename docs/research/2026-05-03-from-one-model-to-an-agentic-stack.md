@@ -340,6 +340,182 @@ held at 16.88 tok/s ± 1.56 across 52 measured requests with context
 depths from 852 to 44,620 tokens. No degradation by depth, no OOM, no
 slowdown.
 
+## Phase 8 (2026-05-03) -- the UX day
+
+The May 2 evening produced a working but rough integration. May 3 was
+spent turning it into something a user can sit down at and trust. The
+day's output was almost entirely **operator UX** -- not new
+performance, not new architecture, but the layer of polish that makes
+the difference between "this works if you know how to drive it" and
+"this works."
+
+### From experiment-aware launcher to router mode
+
+The Phase-7 substitution dance (`compute_active_units` in two
+launchers, two mutually-exclusive systemd units fighting over the
+primary GPU) was a workaround for a deeper limitation: llama-server
+historically hosted one model per process. **Mainline llama.cpp PR
+[#16653](https://github.com/ggml-org/llama.cpp/pull/16653) (2025-12-15)
+added router mode** -- a single llama-server can declare multiple
+models in an INI preset and load them on demand from
+`POST /models/load`. Hugging Face wrote the
+[explainer](https://huggingface.co/blog/ggml-org/model-management-in-llamacpp)
+and Glukhov posted a
+[walkthrough](https://medium.com/@rosgluk/llama-server-router-mode-dynamic-model-switching-without-restarts-4e7d6fb19906)
+during April 2026; both came across the desk after the May 2 build was
+already running.
+
+Replacing the two-unit Vulkan-GLM-and-HIP-OSS design with one router
+unit collapsed the architecture by about 50 lines. The router lives at
+[`systemd/llama-primary-router.service`](../../systemd/llama-primary-router.service);
+all per-model tuning is in
+[`configs/workstation/llama-router.ini`](../../configs/workstation/llama-router.ini).
+GLM also picked up a 2.4x speedup running on the HIP build instead of
+its prior Vulkan path -- ~30 → ~72 tok/s -- because we no longer had
+to keep Vulkan around for any reason. Verification numbers in
+[`docs/research/2026-05-03-router-mode-validation.md`](2026-05-03-router-mode-validation.md).
+
+### Building the swap UX
+
+Router mode mechanically supports swapping; making it a usable
+experience was its own project. The shape that emerged:
+
+```
+User picks model in Zed footer dropdown
+  -> User types and sends a message
+  -> opencode-acp's prompt loop checks if target is loaded
+  -> Not loaded: forks scripts/model-swap.sh
+  -> yad confirm dialog (--center --on-top --sticky) +
+     notify-send banner
+  -> User clicks Swap
+  -> yad pulsate progress, polling /models for status=loaded
+  -> ~35 s for GLM, ~4 min for OSS
+  -> Message goes through on the now-loaded model
+```
+
+Five separate operational issues had to be solved before this worked
+end-to-end:
+
+1. **`OPENCODE_MODEL_SWAP_SCRIPT` env var must be set** in Zed's
+   isolated profile. Without it, picking a not-loaded model 400s
+   silently with no user feedback. Wired in
+   `~/.local/share/zed-second-opinion/config/settings.json`.
+2. **Compaction agent must be the largest-context model in the pool.**
+   Today that's gpt-oss-120b (`agent.compaction.model` in the
+   opencode template). Without the pin, opencode's compaction routes
+   to whichever model the user picked, which fails with
+   `ContextOverflowError` if the pick was the smaller model and the
+   session is large.
+3. **Title agent must be pinned to the always-loaded secondary
+   sidecar** (Qwen3-4B on the 5700 XT). Title generation forks via
+   `Effect.forkIn(scope)` parallel to the main loop and races with
+   the swap popup; pinning it to a model that isn't part of the swap
+   takes it out of the race.
+4. **Picker change in Zed sends no RPC to opencode.** The dropdown is
+   a client-side widget; the model selection is bundled into the next
+   `POST /session/.../message`. Discovered by enumerating every RPC
+   opencode-acp received during a picker-change session. Documented
+   honestly in code comments and in the
+   [research note](2026-05-03-router-mode-swap-implementation.md).
+   Consequence: the swap popup fires at message-send time, not at
+   pick time. There is one extra step where the user has typed but
+   the popup hasn't appeared. The dead-code
+   `unstable_setSessionModel` hook stays in
+   `our-patch-router-swap.diff` for forward-compat if Zed ever adds
+   the setter RPC.
+5. **Popup must be foreground.** Default yad behaviour put the dialog
+   behind Zed; users typed messages thinking nothing happened. Fixed
+   with `--center --on-top --sticky` plus `notify-send -u critical`
+   for a tray banner that's hard to miss.
+
+### Auto-fit A/B: settled, autofit lost
+
+`--fit on` (PR #16653, same release as router mode) auto-probes free
+VRAM and computes per-tensor placement, including expert offload to
+CPU for MoE models. The hand-tuned `--n-cpu-moe 28` baseline predates
+auto-fit by months. Worth a one-off A/B.
+
+The
+[bench harness](../../bench/oss-tuning.sh) ran 3 iterations × short
+prompt against each preset:
+
+| | gen tok/s (mean) | gen tok/s (stddev) | load time | VRAM peak |
+|---|---:|---:|---:|---:|
+| baseline (`--n-cpu-moe 28`) | 19.75 | 0.40 | 2:42 | 20.3 GB |
+| auto-fit (`--fit on`) | **5.57** | **3.51** | 7:35 | **24.3 GB** |
+
+Auto-fit is 3.5x slower on average and erratic (one run dropped to
+1.80 tok/s). It also pushed VRAM essentially to the 24 GB ceiling --
+the "more weights on GPU is faster" intuition lost to "leave room for
+the KV cache." Reverted, with
+[the bench note](2026-05-03-oss-autofit-bench.md) capturing the
+numbers so this experiment doesn't have to be rediscovered.
+
+### Operator polish
+
+Six smaller fixes that each fixed a real broken thing:
+
+- **AGENTS.md symlink at repo root.** opencode's `findUp("AGENTS.md")`
+  walks from cwd upward. The agent rules at
+  `configs/opencode/AGENTS.md` sit *below* the repo root, so when Zed
+  opens the repo (cwd = repo root), `findUp` never descended into
+  `configs/`. Symlinking the file at the repo root fixes the
+  resolution for all models, not just OSS. Caught when OSS appeared
+  to "regress" -- it hadn't; *no* model had been reading the rules.
+- **polkit allowlist updated and templated.** The repo template
+  shipped with `["your-username-here"]` as a placeholder, which would
+  have locked out both real users on `cp`. Reworked
+  `systemd/polkit/10-llama-services.rules` to ship with a
+  `__WS_LLAMA_USERS__` token; `scripts/install-systemd-units.sh`
+  reads `WS_LLAMA_USERS` from `/etc/workstation/system.env`, validates
+  each name (alphanumerics + underscore + hyphen), emits a JSON
+  array, and substitutes only the code-line occurrence so comments
+  stay readable. Real usernames never enter the repo. Also added the
+  new router unit to the allowlist and kept the old names for
+  rollback safety.
+- **Picker tightened to validated chat models only.** Dropped
+  `llama-embed` and `llama-coder` from the opencode template (Library
+  MCP and Zed's edit-predictions reach those services directly, not
+  through the opencode provider registry). Renamed the
+  `llama-secondary` provider's display from "summarize" to "internal"
+  and the model name to "Qwen3-4B (title agent -- do not select for
+  chat)" so users see why a 4B model is in the picker. Added
+  `"disabled_providers": ["opencode"]` to suppress OpenCode Zen's
+  free-tier models -- opencode bypasses the env-key check
+  specifically for the `opencode` provider id at
+  `provider.ts:152-174`, registering Big Pickle and GPT-5 Nano with
+  a hardcoded `apiKey: "public"`. Per
+  [opencode.ai/docs/zen](https://opencode.ai/docs/zen), Big Pickle is
+  a "stealth model... your prompts may be used to improve the
+  model" -- a real privacy consequence for casual selection.
+- **Title agent and compaction agent pins.** Both surfaced as
+  silent-400 failures in live testing before the pins landed. The
+  pins are now load-bearing -- if either is wrong, swaps break.
+- **swa-checkpoints from 128 (May 2 night) back down to 64.** The
+  May 2 bump to 128 hung after an 8-hour session; midpoint 64
+  resolved both the thrashing of the original 32 and the runaway
+  scan of 128.
+- **Bench harness for future model A/Bs.** `bench/oss-tuning.sh`
+  swaps presets via `/models/load`, runs fixed prompts N times,
+  outputs CSV. Throwaway-grade but the right shape for the next
+  preset comparison.
+
+### What this day proved
+
+End-to-end UX works. Pick a model in the picker → send a message →
+popup appears front-and-center → confirm → progress dialog → answer
+arrives. That is the flow a daily user gets, and it survives the
+edge cases that surfaced during testing. The architecture from
+Phase 1-5 is unchanged; this day's work was making the user's
+fingertips meet the architecture without friction.
+
+The honest scope-claim: nothing on this day was a research result.
+Router mode is upstream. The swap UX is yad + bash + a 5th opencode
+patch. The auto-fit revert is a negative result. The picker cleanup
+is config. None of it would be a publishable contribution. All of it
+is the difference between a stack that runs and a stack that's
+*pleasant to use.*
+
 ## What this evening proved (and what it didn't)
 
 ### What was demonstrated
@@ -389,23 +565,30 @@ Three things specifically:
 
 ## Open work
 
-The build is functional but not finished. Next directions:
+The build is functional and pleasant. Open items remaining:
 
-- **Promotion path for GPT-OSS-120B.** Currently a swap-in alternate
-  primary. Open question: is it the new daily driver, or does it stay
-  as the deep-reasoning option you switch to deliberately? The
-  trade-off is roughly: GLM at ~30 tok/s for fast iteration vs
-  GPT-OSS at ~17 tok/s for 128K context and stronger long-input
-  reasoning.
-- **Second-user / remote-laptop integration.** The current launcher
-  fixes are local-user only. The remote-laptop launcher
-  (`2gpu-remote-launch`) needs the same experiment-awareness.
+- **Promotion path for GPT-OSS-120B.** Same question as before --
+  daily driver, or deep-reasoning fallback? The router-mode swap UX
+  changes the trade-off: switching costs ~4 minutes once per workday
+  rather than a service restart, which makes "use OSS deliberately
+  for the hard problem" practical in a way it wasn't on May 2.
+- **Pre-swap compaction orchestration.** With `--models-max 1` the
+  router can't hold OSS loaded for compaction *while* loading GLM
+  for inference. A future router with `--models-max 2` and explicit
+  compaction-vs-inference selection would let us orchestrate this;
+  today, opencode's `agent.compaction.model = gpt-oss-120b` pin
+  handles the post-swap case where compaction would otherwise route
+  to the wrong model.
+- **Remote-user popup forwarding.** The yad swap dialog runs on the
+  workstation's local display. SSH'd-in remote users (Anny's
+  workflow) won't see it. Deferred.
+- **Second-user / remote-laptop integration.** The launcher
+  simplification (Phase 8) cleaned up `2gpu-launch.sh` and
+  `opencode-session.sh`, but the remote-laptop variant still needs
+  the matching update.
 - **Library MCP measurements at scale.** The 42.8x number is anchored
-  on three calls. Worth a longer-run study to characterize the
-  distribution of compaction ratios across query types.
-- **Skill loader exercise.** Tonight's session showed only one `skill`
-  tool call; the on-demand skill system (post-skill-permission patch)
-  is largely untested under real load. Worth a deliberate session.
+  on three calls. Worth a longer-run study.
+- **Skill loader exercise.** Still largely untested under real load.
 
 ## Citations
 

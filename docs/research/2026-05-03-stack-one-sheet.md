@@ -27,7 +27,7 @@ benchmark throughput.
 |    weights on DRAM:   45.9 GB (28 of 36 layers' MoE experts) |
 |    KV cache (Q8_0):    2.5 GB                                |
 |    compute buffer:     1.8 GB                                |
-|    SWA checkpoints:    6.0 GB (DRAM, 128 slots)              |
+|    SWA checkpoints:    3.0 GB (DRAM, 64 slots)               |
 |                                                              |
 |  Single accumulating conversation, tuned for amortized cost  |
 |  across multi-hour sessions, not peak benchmark throughput.  |
@@ -172,10 +172,15 @@ the discipline:
 - **The Library MCP as a type-conversion boundary**: stateless work
   becomes compressed payloads before crossing into the agent's
   accumulating state.
-- **Reversible service swapping** at the workflow level: GLM-4.7-Flash
-  (faster default) and GPT-OSS-120B (heavy reasoning) are mutually
-  exclusive on the primary GPU; the launcher detects which is active
-  and substitutes.
+- **Router-mode primary with on-demand swap UX.** A single
+  llama-server (mainline router mode, PR #16653) hosts both GLM-4.7
+  -Flash (fast default) and GPT-OSS-120B (heavy reasoning) on the
+  same port, loading on demand. Picking a not-loaded model in Zed's
+  footer triggers a yad confirm dialog, a progress popup, and the
+  swap completes in ~35 s for GLM or ~4 min for OSS before the
+  message goes through. The mechanic is mainline llama.cpp; the UX
+  layer is a 5th opencode patch plus `scripts/model-swap.sh`. See
+  [`2026-05-03-router-mode-swap-implementation.md`](2026-05-03-router-mode-swap-implementation.md).
 
 The architecture predates this measurement run by months -- see
 [`2026-05-03-from-one-model-to-an-agentic-stack.md`](2026-05-03-from-one-model-to-an-agentic-stack.md)
@@ -208,9 +213,12 @@ for the build history.
 
 `https://github.com/JoshWrites/2gpu-local-ai-workstation`
 
-Branches relevant to this measurement:
-- `main` -- baseline (GLM-4.7-Flash primary, four-service stack)
-- `experiment-ik-llama-moe` -- 128K context investigation, llama.cpp HIP build
-- `opencode-gpt-oss-120b` -- opencode integration with the experimental primary
+The router-mode + UX work landed on `main` on 2026-05-03 via the
+`oss-tuning` branch (which itself fast-forwarded `router-mode-swap`).
 
-Detailed build/design history: [`2026-05-03-from-one-model-to-an-agentic-stack.md`](2026-05-03-from-one-model-to-an-agentic-stack.md).
+Detailed build/design history:
+[`2026-05-03-from-one-model-to-an-agentic-stack.md`](2026-05-03-from-one-model-to-an-agentic-stack.md)
+-- in particular Phase 8 for the router-mode UX day (2026-05-03).
+
+Implementation notes for the swap UX, separate research note:
+[`2026-05-03-router-mode-swap-implementation.md`](2026-05-03-router-mode-swap-implementation.md).
