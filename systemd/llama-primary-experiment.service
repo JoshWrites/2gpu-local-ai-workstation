@@ -41,12 +41,13 @@ Description=llama-server EXPERIMENT (GPT-OSS-120B on 7900 XTX / HIP, port 11444,
 #   -c 131072        full n_ctx_train. Q8_0 KV at this depth = 2.45 GB.
 #   -ub 2048         large ubatch lights up the GPU on long prompts; 4.8x
 #                    prompt-eval speedup vs -ub 256 at 43K tokens.
-#   --swa-checkpoints 128 — long Zed sessions accumulate context past 38K
-#                    tokens fast. The default 32 fills up and starts
-#                    evicting on every new request, causing visible gen
-#                    tok/s dips when an eviction lands on a needed
-#                    position. 128 × ~48 MiB ≈ 6 GB DRAM, accommodatable
-#                    once --no-mmap is gone.
+#   --swa-checkpoints 64 — default 32 was too small (eviction thrashing
+#                    at ~38K context); 128 caused an 8-hour-session hang
+#                    where the checkpoint-match loop completed but the
+#                    post-scan path wedged the HTTP server (see
+#                    /tmp/llama-hang-2026-05-03-0743.log for the
+#                    diagnostics). 64 is the midpoint and still big
+#                    enough that long Zed sessions don't thrash.
 #   --cache-reuse 256 — KV-shifting prefix reuse for tool-loop patterns.
 #
 # (Removed --no-mmap on 2026-05-02. With it, the 60 GB of weights were
@@ -55,10 +56,21 @@ Description=llama-server EXPERIMENT (GPT-OSS-120B on 7900 XTX / HIP, port 11444,
 # it, cold expert pages can be evicted to disk-backed mapping under
 # pressure. Trade-off: occasional cold-page reload latency vs death.)
 #
-# Sampler flags here are GPT-OSS-recommended starting points — re-derive if
-# the model changes.
-#   - temp 1.0, top_p 1.0, top_k 0, min_p 0.0 (GPT-OSS recommended)
-#   - Adjust per Hugging Face model card if needed.
+# Sampler flags match OpenAI's official recommendation for GPT-OSS-120B.
+# Re-derive if the model changes.
+#   - temp 1.0, top_p 1.0, top_k 0 -- GPT-OSS was RL-trained at temp 1.0;
+#     reducing it degrades the analysis channel where tool decisions are
+#     formed (per OpenAI staff confirmation on HF discussion #21).
+#   - min_p 0.01 -- long-session safety net. Clips the deepest tail (<1%
+#     of top probability) which is where late-context degeneration lives.
+#     0.0 is also safe; 0.05+ starts interfering with the analysis channel.
+#   - repeat-penalty 1.0, presence-penalty 0.0, frequency-penalty 0.0 --
+#     EXPLICITLY pinned to neutral. GPT-OSS Harmony tokens (<|channel|>,
+#     <|message|>, <|end|>, <|return|>) appear every turn; any non-zero
+#     repetition penalty corrupts tool calls and causes loops. Opencode's
+#     OpenAI-compatible client may send non-zero defaults; pinning here
+#     means llama.cpp ignores those and uses the values declared above.
+#   - Do NOT enable DRY or XTC samplers; both interact badly with Harmony.
 
 [Service]
 Type=simple
@@ -79,8 +91,9 @@ ExecStart=/usr/local/lib/llama.cpp-hip/llama-server \
   --jinja \
   -b 2048 -ub 2048 \
   --cache-reuse 256 \
-  --swa-checkpoints 128 \
-  --temp 1.0 --top-p 1.0 --top-k 0 --min-p 0.0 \
+  --swa-checkpoints 64 \
+  --temp 1.0 --top-p 1.0 --top-k 0 --min-p 0.01 \
+  --repeat-penalty 1.0 --presence-penalty 0.0 --frequency-penalty 0.0 \
   --host 127.0.0.1 --port 11444
 Restart=no
 KillSignal=SIGTERM
