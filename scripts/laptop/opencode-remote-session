@@ -39,10 +39,12 @@ log "remote cwd: $REMOTE_CWD"
 
 ALREADY_MOUNTED=0
 # -n: don't consume our stdin (Zed pipes ACP JSON to us)
-# Check mount liveness with a timeout: a stale FUSE mount hangs on ls, so we
-# use `timeout` to detect it and force-remount rather than hanging opencode.
+# Check both: (a) mountpoint -q proves it IS a mount, not just an empty dir
+# (plain `ls` of an empty mountpoint also succeeds, hiding "not mounted"
+# from us); and (b) `timeout 3 ls` proves the FUSE backend is responsive,
+# not stale.
 if ssh -n -o BatchMode=yes -o ConnectTimeout=5 "${WORKSTATION_USER}@${WORKSTATION_HOST}" \
-    "timeout 3 ls '${MOUNT_POINT}/' >/dev/null 2>&1" 2>/dev/null; then
+    "mountpoint -q '${MOUNT_POINT}' && timeout 3 ls '${MOUNT_POINT}/' >/dev/null 2>&1" 2>/dev/null; then
   log "SSHFS already mounted and alive at workstation:${MOUNT_POINT}"
   ALREADY_MOUNTED=1
 else
