@@ -1,0 +1,57 @@
+[Unit]
+Description=llama-server primary (router mode, HIP/gfx1100, port 11434)
+# Replaces the prior two-unit design (llama-primary.service for GLM on
+# Vulkan + llama-primary-experiment.service for GPT-OSS-120B on HIP)
+# with one router-mode process that swaps between models on demand.
+#
+# Architecturally:
+#   - Same port (11434) bound for the lifetime of the service. Models
+#     are children, swapped by the router via /models/load.
+#   - --models-max 1 enforces mutex on the 7900 XTX (only one primary
+#     model loads at a time -- both fight for VRAM).
+#   - --no-models-autoload means models load explicitly via the API,
+#     not on first request. opencode + scripts/model-swap.sh drive
+#     the load timing so we can show progress UI.
+#   - HIP_VISIBLE_DEVICES=1 pins this to the 7900 XTX (gfx1100). HIP
+#     enumerates 5700 XT (gfx1010) at index 0 and 7900 XTX at index 1
+#     -- the inverse of rocminfo. We did NOT compile gfx1010 kernels
+#     into this build.
+#
+# Per-model flags live in /etc/workstation/llama-router.ini, NOT here.
+# That file is the source of truth for tuning; this unit just points
+# at it and runs the router. See
+# docs/research/2026-05-03-router-mode-validation.md for the
+# validation that produced this design.
+#
+# Old units (llama-primary.service, llama-primary-experiment.service)
+# are masked, not deleted. If router mode hits a problem we can't
+# diagnose quickly, `systemctl unmask llama-primary` brings the prior
+# Vulkan-GLM stack back as a fallback.
+
+[Service]
+Type=simple
+EnvironmentFile=/etc/workstation/system.env
+
+# HIP_VISIBLE_DEVICES=1 -> only expose the 7900 XTX (gfx1100) to llama-server.
+# CRITICAL: HIP enumerates differently from rocminfo. Without this
+# constraint, llama-server picks the 5700 XT (gfx1010) by default,
+# which we did NOT compile kernels for.
+Environment="HIP_VISIBLE_DEVICES=1"
+
+# Split-KV mode for MoE prompt-eval. ~13% prompt-eval improvement on
+# 30B+ MoE models per Doctor-Shotgun's HF guide. Validated in the
+# 2026-05-02 tuning session.
+Environment="LLAMA_SET_ROWS=1"
+
+ExecStart=/usr/local/lib/llama.cpp-hip/llama-server \
+  --models-preset /etc/workstation/llama-router.ini \
+  --models-max 1 \
+  --no-models-autoload \
+  --host 127.0.0.1 --port ${WS_PORT_PRIMARY}
+
+Restart=on-failure
+RestartSec=5s
+KillSignal=SIGTERM
+TimeoutStopSec=15
+StandardOutput=journal
+StandardError=journal

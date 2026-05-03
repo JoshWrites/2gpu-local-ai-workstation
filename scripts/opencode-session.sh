@@ -60,12 +60,6 @@ if [[ ! -r "$HOME/.config/workstation/secrets.env" ]]; then
 fi
 . "$HOME/.config/workstation/secrets.env"
 
-# Defaults for vars the template references that may not be in older
-# system.env files. Keeps this script tolerant of installs that haven't
-# pulled the latest env example yet. If your system.env is current, these
-# are no-ops.
-WS_PORT_EXPERIMENT="${WS_PORT_EXPERIMENT:-11444}"
-
 # HOME is already exported by the parent shell, but the template uses
 # ${HOME} so we need it in envsubst's view too. Already there.
 set +a
@@ -74,15 +68,19 @@ set +a
 
 OPENCODE_BIN="${OPENCODE_BIN:-$HOME/.opencode/bin/opencode}"
 
-# Standard four units. llama-primary owns the 7900 XTX; the other three
-# share the 5700 XT. The opt-in llama-primary-experiment is NOT in this
-# list — it's a swap-in-for-llama-primary, mutually exclusive on Vulkan0.
-# The experiment-aware logic below detects it and treats it as a
-# replacement for llama-primary (not an addition).
-LLAMA_UNITS_BASE=(llama-primary llama-secondary llama-embed llama-coder)
-LLAMA_UNIT_EXPERIMENT=llama-primary-experiment
+# The four units that compose the running stack. llama-primary-router
+# replaces the prior pair (llama-primary on Vulkan + llama-primary-experiment
+# on HIP) with a single router-mode process that swaps between models on
+# demand. See systemd/llama-primary-router.service for the design and
+# docs/research/2026-05-03-router-mode-validation.md for the validation.
+LLAMA_UNITS=(llama-primary-router llama-secondary llama-embed llama-coder)
 
-WAIT_TIMEOUT_SEC=60
+# 15-minute timeout. Router-mode launches in seconds (no model loaded
+# at startup) but a model-swap that fires on first use can take 5+ min
+# for the GPT-OSS-120B path. The popup fires asynchronously via
+# scripts/model-swap.sh; this timeout only guards the router process
+# itself, not model loads.
+WAIT_TIMEOUT_SEC=900
 
 OPENCODE_TEMPLATE="$REPO/configs/opencode/opencode.json.template"
 OPENCODE_CONFIG="$HOME/.config/opencode/opencode.json"
@@ -130,7 +128,6 @@ render_opencode_config() {
   # Restrict to a named list so only our WS_* and HOME placeholders get
   # substituted; literal $names are left alone.
   local vars='${WS_PORT_PRIMARY} ${WS_PORT_SECONDARY} ${WS_PORT_EMBED} ${WS_PORT_CODER}'
-  vars+=' ${WS_PORT_EXPERIMENT}'
   vars+=' ${WS_LIBRARY_ROOT} ${WS_PROXMOX_USER} ${WS_PROXMOX_HOST} ${HOME}'
 
   if ! envsubst "$vars" < "$OPENCODE_TEMPLATE" > "$tmp" 2>/dev/null; then
@@ -215,38 +212,17 @@ render_opencode_config() {
 
 # ── Preflight ────────────────────────────────────────────────────────────────
 
-compute_active_units() {
-  # Detect whether the user has opted into the experimental primary
-  # (llama-primary-experiment.service, today: GPT-OSS-120B at 128K via HIP).
-  # The experiment is mutually exclusive with llama-primary on the 7900 XTX
-  # — both want Vulkan0 / the GPU's full VRAM. If we blindly start the
-  # standard four units while the experiment is loaded, llama-primary
-  # crashes during model load (no free VRAM) and the cascading host-memory
-  # pressure has been observed to OOM-kill the experiment (54 GB RSS).
-  #
-  # The right behavior: if the experiment is active, treat it as a drop-in
-  # replacement for llama-primary. Start (and wait on) the experiment plus
-  # the three secondary services, never llama-primary.
-
-  if systemctl is-active --quiet "$LLAMA_UNIT_EXPERIMENT" 2>/dev/null; then
-    log "experimental primary is active: substituting for llama-primary"
-    LLAMA_UNITS=("$LLAMA_UNIT_EXPERIMENT" llama-secondary llama-embed llama-coder)
-    ENDPOINTS=(
-      "$WS_PORT_EXPERIMENT"
-      "$WS_PORT_SECONDARY"
-      "$WS_PORT_EMBED"
-      "$WS_PORT_CODER"
-    )
-  else
-    LLAMA_UNITS=("${LLAMA_UNITS_BASE[@]}")
-    ENDPOINTS=(
-      "$WS_PORT_PRIMARY"
-      "$WS_PORT_SECONDARY"
-      "$WS_PORT_EMBED"
-      "$WS_PORT_CODER"
-    )
-  fi
-}
+# Endpoint ports for readiness checks. All four use the standard primary
+# port for primary; router mode means the same port serves whichever
+# model is currently loaded. The router process itself is up immediately
+# at startup (no model loaded yet); model-swap.sh handles model loads
+# on demand.
+ENDPOINTS=(
+  "$WS_PORT_PRIMARY"
+  "$WS_PORT_SECONDARY"
+  "$WS_PORT_EMBED"
+  "$WS_PORT_CODER"
+)
 
 pkill_rogue_servers() {
   # Kill any llama-server or ollama process not spawned by systemd (those
@@ -355,7 +331,6 @@ render_opencode_config || {
   exit 1
 }
 
-compute_active_units
 pkill_rogue_servers
 ensure_units_loaded
 start_services

@@ -57,37 +57,24 @@ fi
 
 # ── Config derived from env ─────────────────────────────────────────────────
 
-# WS_PORT_EXPERIMENT may not exist in older system.env files.
-WS_PORT_EXPERIMENT="${WS_PORT_EXPERIMENT:-11444}"
+# Router-mode primary: one llama-server process bound to port 11434, swaps
+# between models on demand. Replaces the prior two-unit design (Vulkan-GLM +
+# HIP-OSS). See systemd/llama-primary-router.service and
+# docs/research/2026-05-03-router-mode-validation.md.
+LLAMA_UNITS=(llama-primary-router llama-secondary llama-embed llama-coder)
+ENDPOINTS=(
+  "$WS_PORT_PRIMARY"
+  "$WS_PORT_SECONDARY"
+  "$WS_PORT_EMBED"
+  "$WS_PORT_CODER"
+)
+PRIMARY_UNIT="llama-primary-router.service"
 
-# If the user has opted into the experimental primary
-# (llama-primary-experiment.service, today: GPT-OSS-120B at 128K via HIP),
-# substitute it for llama-primary. The two are mutually exclusive on the
-# 7900 XTX — starting llama-primary while the experiment is loaded crashes
-# the load (no free VRAM) and the cascading host-memory pressure has been
-# observed to OOM-kill the experiment (54 GB RSS).
-if systemctl is-active --quiet llama-primary-experiment 2>/dev/null; then
-  LLAMA_UNITS=(llama-primary-experiment llama-secondary llama-embed llama-coder)
-  ENDPOINTS=(
-    "$WS_PORT_EXPERIMENT"
-    "$WS_PORT_SECONDARY"
-    "$WS_PORT_EMBED"
-    "$WS_PORT_CODER"
-  )
-  PRIMARY_UNIT="llama-primary-experiment.service"
-else
-  LLAMA_UNITS=(llama-primary llama-secondary llama-embed llama-coder)
-  ENDPOINTS=(
-    "$WS_PORT_PRIMARY"
-    "$WS_PORT_SECONDARY"
-    "$WS_PORT_EMBED"
-    "$WS_PORT_CODER"
-  )
-  PRIMARY_UNIT="llama-primary.service"
-fi
-EXPECTED_READY=60
-WARN_READY=75
-HARD_TIMEOUT=180
+# Router-mode startup is fast (no model loaded yet); first model load is
+# what takes minutes. The router itself just needs to bind the port.
+EXPECTED_READY=15
+WARN_READY=30
+HARD_TIMEOUT=900
 
 ZED_DATA_DIR="$WS_ZED_PROFILE_DIR"
 ZED_BIN="$HOME/.local/bin/zed"

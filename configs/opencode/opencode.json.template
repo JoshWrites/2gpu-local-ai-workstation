@@ -15,14 +15,7 @@
             "context": 65536,
             "output": 8192
           }
-        }
-      }
-    },
-    "llama-experiment": {
-      "npm": "@ai-sdk/openai-compatible",
-      "name": "chat (experimental)",
-      "api": "http://localhost:${WS_PORT_EXPERIMENT}/v1",
-      "models": {
+        },
         "gpt-oss-120b": {
           "name": "GPT-OSS-120B 128K",
           "attachment": false,
