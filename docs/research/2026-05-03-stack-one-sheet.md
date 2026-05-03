@@ -33,9 +33,26 @@ benchmark throughput.
 |  across multi-hour sessions, not peak benchmark throughput.  |
 +--------------------------------------------------------------+
               ^                     |
-              | tool calls          | summaries (~325 tokens
-              |                     |  per research call)
+              | summaries           | tool calls (research,
+              | (~325 tokens        |  read_file, convert,
+              |  per research call) |  export, context_usage)
               |                     v
++--------------------------------------------------------------+
+|  LIBRARY MCP -- the boundary between tiers                   |
+|                                                              |
+|  Owns the type conversion: stateless raw output IN,          |
+|  compressed summary OUT. Fans tool calls out to the          |
+|  stateless workers below; aggregates, chunks, ranks, and     |
+|  summarizes their results before returning to the agent.     |
+|                                                              |
+|  Without it, raw research output overflows the 128K window   |
+|  after ~10 webfetches.                                       |
++--------------------------------------------------------------+
+              ^                     |
+              | raw worker          | worker calls (search,
+              | output              |  fetch, embed, summarize,
+              | (HTML, text,        |  convert)
+              |  embeddings)        v
 +--------------------------------------------------------------+
 |  STATELESS SERVICES TIER -- 5700 XT (8 GB) + CPU sidecars    |
 |                                                              |
@@ -48,22 +65,15 @@ benchmark throughput.
 |    docling-serve -- DOCX/PDF/image -> text                   |
 |    pandoc -- markdown -> DOCX/PDF/EPUB                       |
 |    SearxNG (when running) -- web search                      |
-|    HTML extraction, chunking, ranking (in Library)           |
+|    HTML extraction, chunking, ranking (in Library workers)   |
 |                                                              |
 |  Each task pure: same input -> same output, no shared state. |
 +--------------------------------------------------------------+
-              ^                     |
-              | calls               | summarized payloads
-              |                     |
-+--------------------------------------------------------------+
-|  LIBRARY MCP -- the boundary between tiers                   |
-|                                                              |
-|  Receives stateless calls (research, read_file, convert,     |
-|  export, context_usage), fans out to stateless workers,      |
-|  compresses output before returning to the stateful agent.   |
-|  Without it, raw research output overflows the 128K window   |
-|  after ~10 webfetches.                                       |
-+--------------------------------------------------------------+
+
+Edit-prediction (Qwen2.5-Coder on the 5700 XT) is the one
+exception to the Library-as-boundary rule -- Zed talks to it
+directly on a latency budget that can't tolerate an extra hop.
+Everything else routes through Library.
 ```
 
 ## Effective parameter capacity served simultaneously
