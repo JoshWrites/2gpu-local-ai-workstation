@@ -29,6 +29,8 @@ polkit.addRule(function(action, subject) {
     var allowedUnits = [
         "llama-primary.service",
         "llama-primary-moe.service",
+        "llama-primary-router.service",
+        "llama-primary-experiment.service",
         "llama-secondary.service",
         "llama-embed.service",
         "llama-coder.service",
