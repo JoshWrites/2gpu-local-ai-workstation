@@ -1,0 +1,140 @@
+#!/usr/bin/env bash
+# 2gpu-remote-launch: wake the workstation, start the AI stack, open Zed.
+#
+# Lifecycle:
+#   1. Send WoL magic packet to the workstation.
+#   2. Poll SSH until the workstation responds (up to 120s).
+#   3. SSH in and start llama services.
+#      If already running, this is a fast no-op.
+#   4. Open Zed locally with the isolated 2GPU remote profile.
+#
+# Zed's terminal is where opencode-remote-session is invoked from
+# a project directory.
+
+set -euo pipefail
+
+WORKSTATION_HOST="10.100.102.182"
+WORKSTATION_USER="anny"
+WORKSTATION_MAC="04:d9:f5:87:31:49"
+WORKSTATION_BROADCAST="10.100.102.255"
+SSH_TIMEOUT=120
+ZED_PROFILE_DIR="$HOME/.local/share/zed-2gpu-remote"
+ZED_BIN="$HOME/.local/bin/zed"
+ENDPOINTS=(11434 11435 11437 11438)
+
+log()    { printf "\e[36m[2gpu-remote]\e[0m %s\n" "$*" >&2; }
+err()    { printf "\e[31m[2gpu-remote]\e[0m ERROR: %s\n" "$*" >&2; }
+notify() { notify-send --app-name="2GPU Remote" "$1" "${2:-}" 2>/dev/null || true; }
+have_yad() { command -v yad >/dev/null 2>&1; }
+
+workstation_ssh_up() {
+  ssh -o BatchMode=yes -o ConnectTimeout=3 \
+    "${WORKSTATION_USER}@${WORKSTATION_HOST}" "true" 2>/dev/null
+}
+
+llama_all_up() {
+  ssh -o BatchMode=yes -o ConnectTimeout=3 \
+    "${WORKSTATION_USER}@${WORKSTATION_HOST}" \
+    "for p in ${ENDPOINTS[*]}; do curl -fs --max-time 1 http://127.0.0.1:\$p/v1/models >/dev/null 2>&1 || exit 1; done" \
+    2>/dev/null
+}
+
+# ── Fast path: workstation up and llama already running ──────────────────────
+
+if workstation_ssh_up && llama_all_up; then
+  log "workstation up, llama already running — opening Zed"
+  notify "2GPU Remote" "Stack already running. Opening Zed."
+  mkdir -p "$ZED_PROFILE_DIR"
+  exec "$ZED_BIN" --user-data-dir "$ZED_PROFILE_DIR"
+fi
+
+# ── Send WoL ─────────────────────────────────────────────────────────────────
+
+log "sending WoL to $WORKSTATION_MAC on $WORKSTATION_BROADCAST"
+wakeonlan -i "$WORKSTATION_BROADCAST" "$WORKSTATION_MAC" 2>/dev/null || \
+  wakeonlan "$WORKSTATION_MAC" 2>/dev/null || \
+  { err "wakeonlan not found; install with: sudo apt-get install wakeonlan"; exit 1; }
+notify "2GPU Remote" "Waking workstation…"
+
+# ── Wait for SSH + show splash ────────────────────────────────────────────────
+
+START=$(date +%s)
+DEADLINE=$(( START + SSH_TIMEOUT ))
+YAD_PID=""
+SPLASH_FIFO=""
+FILL_PID=""
+
+if have_yad; then
+  SPLASH_FIFO=$(mktemp -u)
+  mkfifo "$SPLASH_FIFO"
+  (
+    echo "Sending WoL to workstation..."
+    while ! workstation_ssh_up 2>/dev/null; do
+      echo "  waiting for SSH… $(( $(date +%s) - START ))s"
+      sleep 3
+    done
+    echo "SSH up — starting AI stack (llama-primary/secondary/embed/coder)..."
+    ssh -o BatchMode=yes "${WORKSTATION_USER}@${WORKSTATION_HOST}" \
+      "journalctl -u llama-primary -f --since=now -o cat 2>/dev/null" \
+      | grep --line-buffered -E "ROCm|load_tensors|llama_context|server is listening|error|failed|Aborted|Killed" \
+      2>/dev/null &
+    JOURNAL_PID=$!
+    while ! llama_all_up 2>/dev/null; do sleep 2; done
+    kill $JOURNAL_PID 2>/dev/null || true
+    echo "Ready."
+  ) > "$SPLASH_FIFO" &
+  FILL_PID=$!
+
+  yad --title="2GPU Remote - starting" \
+      --text="<b>Waking workstation + loading AI stack</b>\nWoL → SSH → llama-primary/secondary/embed/coder" \
+      --text-info \
+      --tail \
+      --width=700 --height=350 \
+      --button="Cancel:1" \
+      --no-escape \
+      --on-top \
+      --fontname="monospace 9" \
+      < "$SPLASH_FIFO" &
+  YAD_PID=$!
+fi
+
+# ── Poll SSH ──────────────────────────────────────────────────────────────────
+
+SSH_UP=0
+while (( $(date +%s) < DEADLINE )); do
+  if workstation_ssh_up; then
+    SSH_UP=1
+    break
+  fi
+  sleep 3
+done
+
+if [[ $SSH_UP -eq 0 ]]; then
+  [[ -n "$YAD_PID" ]]     && kill "$YAD_PID"     2>/dev/null || true
+  [[ -n "$SPLASH_FIFO" ]] && rm -f "$SPLASH_FIFO" || true
+  err "workstation did not respond to SSH within ${SSH_TIMEOUT}s"
+  notify "2GPU Remote - failed" "Workstation did not come up within ${SSH_TIMEOUT}s."
+  exit 1
+fi
+
+# ── Start llama services ──────────────────────────────────────────────────────
+
+log "SSH up — starting llama services..."
+ssh -o BatchMode=yes "${WORKSTATION_USER}@${WORKSTATION_HOST}" \
+  "systemctl start llama-primary.service llama-secondary.service llama-embed.service llama-coder.service"
+
+ENDPOINT_DEADLINE=$(( $(date +%s) + 90 ))
+while (( $(date +%s) < ENDPOINT_DEADLINE )); do
+  if llama_all_up; then break; fi
+  sleep 2
+done
+
+ELAPSED=$(( $(date +%s) - START ))
+[[ -n "$YAD_PID" ]]     && kill "$YAD_PID"     2>/dev/null || true
+[[ -n "$FILL_PID" ]]    && kill "$FILL_PID"     2>/dev/null || true
+[[ -n "$SPLASH_FIFO" ]] && rm -f "$SPLASH_FIFO" || true
+
+notify "2GPU Remote - ready" "Stack up in ${ELAPSED}s. Opening Zed."
+log "opening Zed (isolated profile: $ZED_PROFILE_DIR)"
+mkdir -p "$ZED_PROFILE_DIR"
+exec "$ZED_BIN" --user-data-dir "$ZED_PROFILE_DIR"

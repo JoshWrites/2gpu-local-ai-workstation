@@ -281,26 +281,24 @@ ssh <user>@<workstation-ip> 'hostname'
 
 ### B5. Install the laptop-side scripts
 
-Place `2gpu-remote-launch` and `opencode-remote-session` in `~/bin/` and make
-them executable. Place `setup-laptop.sh` somewhere convenient and run it; it
-creates the Zed isolated profile and the `.desktop` entry.
+The laptop scripts live in the repo at `scripts/laptop/`. The simplest path
+is to clone the repo on the laptop and symlink the scripts into `~/bin/`,
+which lets `git pull` upgrade them in-place when the workstation side
+changes:
 
-> TODO: these scripts do not yet live in the repo. They currently sit at
-> `/tmp/2gpu-remote-launch`, `/tmp/opencode-remote-session`, and
-> `/tmp/setup-laptop.sh` on the workstation. They should move to
-> `scripts/laptop/` in the umbrella repo so future remote users can fetch
-> them via the user's clone. See `docs/repo-issues.md`.
+```
+git clone https://github.com/JoshWrites/2gpu-local-ai-workstation.git ~/Documents/Repos/2gpu-local-ai-workstation
+mkdir -p ~/bin
+ln -sf ~/Documents/Repos/2gpu-local-ai-workstation/scripts/laptop/2gpu-remote-launch ~/bin/2gpu-remote-launch
+ln -sf ~/Documents/Repos/2gpu-local-ai-workstation/scripts/laptop/opencode-remote-session ~/bin/opencode-remote-session
+chmod +x ~/Documents/Repos/2gpu-local-ai-workstation/scripts/laptop/2gpu-remote-launch
+chmod +x ~/Documents/Repos/2gpu-local-ai-workstation/scripts/laptop/opencode-remote-session
+```
 
 Both scripts hardcode `WORKSTATION_HOST`, `WORKSTATION_USER`, and (for
-`2gpu-remote-launch`) `WORKSTATION_MAC` and `WORKSTATION_BROADCAST`. Edit
-them for the new user before installing.
-
-```
-mkdir -p ~/bin
-mv ~/Downloads/2gpu-remote-launch ~/bin/
-mv ~/Downloads/opencode-remote-session ~/bin/
-chmod +x ~/bin/2gpu-remote-launch ~/bin/opencode-remote-session
-```
+`2gpu-remote-launch`) `WORKSTATION_MAC` and `WORKSTATION_BROADCAST` near the
+top. Edit them for your machine before first use. These should eventually
+become env vars sourced from a per-user file -- see `docs/repo-issues.md`.
 
 ### B6. Run setup-laptop.sh
 

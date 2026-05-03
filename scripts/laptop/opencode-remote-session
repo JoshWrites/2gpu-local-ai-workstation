@@ -1,0 +1,98 @@
+#!/usr/bin/env bash
+# opencode-remote-session: mount this laptop's home onto the workstation
+# via SSHFS, translate the current working directory, and run opencode
+# there under anny's workstation account.
+#
+# Invoke from inside a project directory on the laptop. The cwd is
+# translated from the laptop path to the SSHFS mount path on the
+# workstation before opencode starts.
+#
+# SSHFS mount persists for the session. On EXIT, it is unmounted.
+# If the mount already exists from a previous session, it is reused.
+
+set -euo pipefail
+
+WORKSTATION_HOST="10.100.102.182"
+WORKSTATION_USER="anny"
+LAPTOP_HOME="$HOME"
+MOUNT_POINT="/mnt/anny-laptop"
+OPENCODE_SESSION="/home/anny/Documents/Repos/2gpu-local-ai-workstation/scripts/opencode-session.sh"
+
+log()  { printf "\e[36m[opencode-remote]\e[0m %s\n" "$*" >&2; }
+err()  { printf "\e[31m[opencode-remote]\e[0m ERROR: %s\n" "$*" >&2; }
+
+# ── Translate cwd to workstation mount path ──────────────────────────────────
+# /home/anny/projects/foo → /mnt/anny-laptop/projects/foo
+
+LOCAL_CWD="$(pwd)"
+if [[ "$LOCAL_CWD" != "$LAPTOP_HOME"* ]]; then
+  err "cwd '$LOCAL_CWD' is not under HOME '$LAPTOP_HOME'"
+  err "opencode-remote-session must be run from inside your home directory."
+  exit 1
+fi
+RELATIVE_PATH="${LOCAL_CWD#$LAPTOP_HOME}"
+REMOTE_CWD="${MOUNT_POINT}${RELATIVE_PATH}"
+log "local cwd:  $LOCAL_CWD"
+log "remote cwd: $REMOTE_CWD"
+
+# ── Mount laptop home onto workstation via SSHFS (reverse mount) ─────────────
+
+ALREADY_MOUNTED=0
+# -n: don't consume our stdin (Zed pipes ACP JSON to us)
+if ssh -n -o BatchMode=yes -o ConnectTimeout=5 "${WORKSTATION_USER}@${WORKSTATION_HOST}" \
+    "mountpoint -q '${MOUNT_POINT}'" 2>/dev/null; then
+  log "SSHFS already mounted at workstation:${MOUNT_POINT}"
+  ALREADY_MOUNTED=1
+else
+  log "mounting laptop home onto workstation at ${MOUNT_POINT}..."
+  # Use WireGuard IP so the workstation can reach us even with AP client isolation
+  LAPTOP_IP=$(ip -4 addr show wg0 2>/dev/null | awk '/inet / {sub(/\/.*/, "", $2); print $2}')
+  if [[ -z "$LAPTOP_IP" ]]; then
+    err "WireGuard interface wg0 not found or has no IP — is the VPN connected?"
+    exit 1
+  fi
+  log "laptop WireGuard IP: $LAPTOP_IP"
+  ssh -n -o BatchMode=yes "${WORKSTATION_USER}@${WORKSTATION_HOST}" \
+    "sshfs -o idmap=user,allow_other,reconnect \
+       '${WORKSTATION_USER}@${LAPTOP_IP}:${LAPTOP_HOME}' '${MOUNT_POINT}'"
+fi
+
+# ── Unmount on exit ──────────────────────────────────────────────────────────
+
+cleanup() {
+  if [[ "$ALREADY_MOUNTED" -eq 0 ]]; then
+    log "unmounting ${MOUNT_POINT} from workstation..."
+    ssh -o BatchMode=yes "${WORKSTATION_USER}@${WORKSTATION_HOST}" \
+      "fusermount -u '${MOUNT_POINT}' 2>/dev/null || true" || true
+  fi
+}
+trap cleanup EXIT
+
+# ── Run opencode on workstation in translated cwd ────────────────────────────
+#
+# Env vars passed through to opencode-session.sh:
+#   OPENCODE_BIN                 the patched binary
+#   OPENCODE_DISABLE_CHANNEL_DB  required for the patched binary
+#   OPENCODE_MODEL_SWAP_SCRIPT   triggers the swap script when the user picks a
+#                                not-loaded model (router-mode UX, 2026-05-03)
+#   WS_REMOTE_SESSION=1          marks this as a remote session so the swap
+#                                script uses chat-message progress instead of
+#                                yad popup (which the laptop user can't see)
+#
+# The path /home/anny/Documents/Repos/.../scripts/model-swap-remote.sh is the
+# workstation-side wrapper; it dispatches to model-swap.sh for local users
+# and emits chat progress for remote users.
+
+REMOTE_REPO="/home/${WORKSTATION_USER}/Documents/Repos/2gpu-local-ai-workstation"
+SWAP_SCRIPT="${REMOTE_REPO}/scripts/model-swap-remote.sh"
+
+log "launching opencode on workstation in ${REMOTE_CWD}..."
+exec ssh \
+  -o BatchMode=yes \
+  "${WORKSTATION_USER}@${WORKSTATION_HOST}" \
+  "cd '${REMOTE_CWD}' && \
+   OPENCODE_BIN=/usr/local/bin/opencode-patched \
+   OPENCODE_DISABLE_CHANNEL_DB=1 \
+   OPENCODE_MODEL_SWAP_SCRIPT='${SWAP_SCRIPT}' \
+   WS_REMOTE_SESSION=1 \
+   '${OPENCODE_SESSION}' acp"
