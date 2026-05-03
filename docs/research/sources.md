@@ -497,6 +497,9 @@ Sources cited in >=2 research files OR discussed by name in working sessions tod
 - [`https://galileo.ai/blog/architectures-for-multi-agent-systems`](https://galileo.ai/blog/architectures-for-multi-agent-systems) -- `04-24/session-state-architectures-survey`
 - [`https://galileo.ai/blog/multi-agent-llm-systems-fail`](https://galileo.ai/blog/multi-agent-llm-systems-fail) -- `04-24/multi-model-handoff-prior-art`
 - [`https://galileo.ai/blog/why-multi-agent-systems-fail`](https://galileo.ai/blog/why-multi-agent-systems-fail) -- `04-24/session-state-architectures-survey`
+- [`https://github.com/anomalyco/opencode/issues/2979`](https://github.com/anomalyco/opencode/issues/2979) -- `05-03/router-mode-validation`
+- [`https://github.com/ggml-org/llama.cpp/blob/master/tools/server/README.md`](https://github.com/ggml-org/llama.cpp/blob/master/tools/server/README.md) -- `05-03/router-mode-validation`
+- [`https://github.com/ggml-org/llama.cpp/discussions/10431`](https://github.com/ggml-org/llama.cpp/discussions/10431) -- `05-03/router-mode-validation`
 - [`https://github.com/ggml-org/llama.cpp/discussions/15396`](https://github.com/ggml-org/llama.cpp/discussions/15396) -- `05-03/from-one-model-to-an-agentic-stack`
 - [`https://github.com/ggml-org/llama.cpp/discussions/22411`](https://github.com/ggml-org/llama.cpp/discussions/22411) -- `05-03/from-one-model-to-an-agentic-stack`
 - [`https://github.com/ggml-org/llama.cpp/issues/15120`](https://github.com/ggml-org/llama.cpp/issues/15120) -- `05-03/from-one-model-to-an-agentic-stack`
@@ -504,6 +507,7 @@ Sources cited in >=2 research files OR discussed by name in working sessions tod
 - [`https://github.com/ggml-org/llama.cpp/pull/15293`](https://github.com/ggml-org/llama.cpp/pull/15293) -- `05-03/from-one-model-to-an-agentic-stack`
 - [`https://healthark.ai/persistent-memory-for-llms-designing-a-multi-tier-context-system/`](https://healthark.ai/persistent-memory-for-llms-designing-a-multi-tier-context-system/) -- `04-24/session-as-artifact-and-temporal-retrieval-prior-art`
 - [`https://huggingface.co/blog/Doctor-Shotgun/llamacpp-moe-offload-guide`](https://huggingface.co/blog/Doctor-Shotgun/llamacpp-moe-offload-guide) -- `05-03/from-one-model-to-an-agentic-stack`
+- [`https://huggingface.co/blog/ggml-org/model-management-in-llamacpp`](https://huggingface.co/blog/ggml-org/model-management-in-llamacpp) -- `05-03/router-mode-validation`
 - [`https://hungleai.substack.com/p/agree-or-disagree-a-review-of-multi`](https://hungleai.substack.com/p/agree-or-disagree-a-review-of-multi) -- `04-24/session-state-architectures-survey`
 - [`https://junie.jetbrains.com/docs/guidelines-and-memory.html`](https://junie.jetbrains.com/docs/guidelines-and-memory.html) -- `04-24/session-persistence-and-reassembly-prior-art`
 - [`https://klu.ai/glossary/humaneval-benchmark`](https://klu.ai/glossary/humaneval-benchmark) -- `04-24/front-and-passenger-dispatcher-prior-art`
@@ -518,6 +522,7 @@ Sources cited in >=2 research files OR discussed by name in working sessions tod
 - [`https://lmcache.ai/tech_report.pdf`](https://lmcache.ai/tech_report.pdf) -- `04-24/session-persistence-and-reassembly-prior-art`
 - [`https://lmstudio.ai/docs/app/basics/rag`](https://lmstudio.ai/docs/app/basics/rag) -- `04-25/hobbyist-and-academic-transcript-index-prior-art`
 - [`https://medium.com/@michael.hannecke/the-model-router-running-a-team-of-local-llms-instead-of-one-big-one-fd75eeec9d39`](https://medium.com/@michael.hannecke/the-model-router-running-a-team-of-local-llms-instead-of-one-big-one-fd75eeec9d39) -- `04-24/multi-model-handoff-prior-art`
+- [`https://medium.com/@rosgluk/llama-server-router-mode-dynamic-model-switching-without-restarts-4e7d6fb19906`](https://medium.com/@rosgluk/llama-server-router-mode-dynamic-model-switching-without-restarts-4e7d6fb19906) -- `05-03/router-mode-validation`
 - [`https://mem0.ai/blog/mem0-the-token-efficient-memory-algorithm`](https://mem0.ai/blog/mem0-the-token-efficient-memory-algorithm) -- `04-24/session-as-artifact-and-temporal-retrieval-prior-art`
 - [`https://microsoft.github.io/autogen/0.2/docs/Use-Cases/agent_chat/`](https://microsoft.github.io/autogen/0.2/docs/Use-Cases/agent_chat/) -- `04-24/session-state-architectures-survey`
 - [`https://minihf.com/posts/2025-07-22-on-chatgpt-psychosis-and-llm-sycophancy/`](https://minihf.com/posts/2025-07-22-on-chatgpt-psychosis-and-llm-sycophancy/) -- `04-24/session-persistence-and-reassembly-prior-art`
