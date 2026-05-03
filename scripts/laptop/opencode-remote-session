@@ -39,11 +39,16 @@ log "remote cwd: $REMOTE_CWD"
 
 ALREADY_MOUNTED=0
 # -n: don't consume our stdin (Zed pipes ACP JSON to us)
+# Check mount liveness with a timeout: a stale FUSE mount hangs on ls, so we
+# use `timeout` to detect it and force-remount rather than hanging opencode.
 if ssh -n -o BatchMode=yes -o ConnectTimeout=5 "${WORKSTATION_USER}@${WORKSTATION_HOST}" \
-    "mountpoint -q '${MOUNT_POINT}'" 2>/dev/null; then
-  log "SSHFS already mounted at workstation:${MOUNT_POINT}"
+    "timeout 3 ls '${MOUNT_POINT}/' >/dev/null 2>&1" 2>/dev/null; then
+  log "SSHFS already mounted and alive at workstation:${MOUNT_POINT}"
   ALREADY_MOUNTED=1
 else
+  # Clean up any stale/zombie mount before remounting
+  ssh -n -o BatchMode=yes -o ConnectTimeout=5 "${WORKSTATION_USER}@${WORKSTATION_HOST}" \
+    "fusermount -u '${MOUNT_POINT}' 2>/dev/null || true" 2>/dev/null || true
   log "mounting laptop home onto workstation at ${MOUNT_POINT}..."
   # Use WireGuard IP so the workstation can reach us even with AP client isolation
   LAPTOP_IP=$(ip -4 addr show wg0 2>/dev/null | awk '/inet / {sub(/\/.*/, "", $2); print $2}')
