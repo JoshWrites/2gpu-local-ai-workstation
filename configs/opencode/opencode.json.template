@@ -30,11 +30,11 @@
     },
     "llama-secondary": {
       "npm": "@ai-sdk/openai-compatible",
-      "name": "summarize",
+      "name": "internal",
       "api": "http://localhost:${WS_PORT_SECONDARY}/v1",
       "models": {
         "qwen3-4b-instruct-2507": {
-          "name": "Qwen3-4B-Instruct-2507 32K",
+          "name": "Qwen3-4B (title agent -- do not select for chat)",
           "attachment": false,
           "reasoning": false,
           "tool_call": true,
@@ -44,39 +44,10 @@
           }
         }
       }
-    },
-    "llama-embed": {
-      "npm": "@ai-sdk/openai-compatible",
-      "name": "embed",
-      "api": "http://localhost:${WS_PORT_EMBED}/v1",
-      "models": {
-        "multilingual-e5-large": {
-          "name": "multilingual-e5-large (1024-dim)",
-          "attachment": false,
-          "reasoning": false,
-          "tool_call": false
-        }
-      }
-    },
-    "llama-coder": {
-      "npm": "@ai-sdk/openai-compatible",
-      "name": "edit-predictions",
-      "api": "http://localhost:${WS_PORT_CODER}/v1",
-      "models": {
-        "qwen2.5-coder-3b-instruct": {
-          "name": "Qwen2.5-Coder-3B-Instruct 4K",
-          "attachment": false,
-          "reasoning": false,
-          "tool_call": true,
-          "limit": {
-            "context": 4096,
-            "output": 1024
-          }
-        }
-      }
     }
   },
   "model": "llama-primary/glm-4.7-flash",
+  "disabled_providers": ["opencode"],
   "agent": {
     "compaction": {
       "model": "llama-primary/gpt-oss-120b"
