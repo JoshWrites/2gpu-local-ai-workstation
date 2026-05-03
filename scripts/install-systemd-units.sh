@@ -77,6 +77,12 @@ sudo install -m 0755 "$LLAMA_SHUTDOWN_SRC" "$LLAMA_SHUTDOWN_DST"
 # services without sudo. Every llama unit must be listed in the rule's
 # allowedUnits array; missing units silently fall through to the
 # password prompt and break the launcher's polite-start path.
+#
+# The template ships with __WS_LLAMA_USERS__ as a placeholder for the
+# allowedUsers list. We render it from WS_LLAMA_USERS in system.env so
+# real usernames never enter the repo. WS_LLAMA_USERS is space-separated;
+# we validate each token (alphanumerics, underscore, hyphen) and emit a
+# JSON array.
 
 POLKIT_SRC="$UNIT_SRC/polkit/10-llama-services.rules"
 POLKIT_DST="/etc/polkit-1/rules.d/10-llama-services.rules"
@@ -85,7 +91,39 @@ if [[ ! -f "$POLKIT_SRC" ]]; then
   echo "ERROR: $POLKIT_SRC missing from repo" >&2
   exit 1
 fi
-sudo install -m 0644 "$POLKIT_SRC" "$POLKIT_DST"
+
+# shellcheck disable=SC1091
+source /etc/workstation/system.env
+if [[ -z "${WS_LLAMA_USERS:-}" ]]; then
+  echo "ERROR: WS_LLAMA_USERS not set in /etc/workstation/system.env" >&2
+  echo "       Add it (see configs/workstation/system.env.example)." >&2
+  exit 1
+fi
+
+POLKIT_USERS_JSON="["
+first=1
+for user in $WS_LLAMA_USERS; do
+  if [[ ! "$user" =~ ^[A-Za-z0-9_-]+$ ]]; then
+    echo "ERROR: WS_LLAMA_USERS contains invalid username: '$user'" >&2
+    exit 1
+  fi
+  if (( first )); then first=0; else POLKIT_USERS_JSON+=", "; fi
+  POLKIT_USERS_JSON+="\"$user\""
+done
+POLKIT_USERS_JSON+="]"
+
+POLKIT_TMP="$(mktemp)"
+trap 'rm -f "$POLKIT_TMP"' EXIT
+# Replace only the code-line occurrence of the placeholder, not comments
+# that reference the literal token name.
+sed "s|var allowedUsers = __WS_LLAMA_USERS__;|var allowedUsers = ${POLKIT_USERS_JSON};|" \
+  "$POLKIT_SRC" > "$POLKIT_TMP"
+if grep -q "__WS_LLAMA_USERS__" "$POLKIT_TMP" && \
+   ! grep -qE "var allowedUsers = \[" "$POLKIT_TMP"; then
+  echo "ERROR: polkit template substitution failed (placeholder not replaced)" >&2
+  exit 1
+fi
+sudo install -m 0644 "$POLKIT_TMP" "$POLKIT_DST"
 
 # ── sysctl drop-in ────────────────────────────────────────────────────────
 

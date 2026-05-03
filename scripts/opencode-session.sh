@@ -67,14 +67,20 @@ set +a
 # ── Paths and config derived from env ────────────────────────────────────────
 
 OPENCODE_BIN="${OPENCODE_BIN:-$HOME/.opencode/bin/opencode}"
-LLAMA_UNITS=(llama-primary llama-secondary llama-embed llama-coder)
-ENDPOINTS=(
-  "$WS_PORT_PRIMARY"
-  "$WS_PORT_SECONDARY"
-  "$WS_PORT_EMBED"
-  "$WS_PORT_CODER"
-)
-WAIT_TIMEOUT_SEC=60
+
+# The four units that compose the running stack. llama-primary-router
+# replaces the prior pair (llama-primary on Vulkan + llama-primary-experiment
+# on HIP) with a single router-mode process that swaps between models on
+# demand. See systemd/llama-primary-router.service for the design and
+# docs/research/2026-05-03-router-mode-validation.md for the validation.
+LLAMA_UNITS=(llama-primary-router llama-secondary llama-embed llama-coder)
+
+# 15-minute timeout. Router-mode launches in seconds (no model loaded
+# at startup) but a model-swap that fires on first use can take 5+ min
+# for the GPT-OSS-120B path. The popup fires asynchronously via
+# scripts/model-swap.sh; this timeout only guards the router process
+# itself, not model loads.
+WAIT_TIMEOUT_SEC=900
 
 OPENCODE_TEMPLATE="$REPO/configs/opencode/opencode.json.template"
 OPENCODE_CONFIG="$HOME/.config/opencode/opencode.json"
@@ -205,6 +211,18 @@ render_opencode_config() {
 }
 
 # ── Preflight ────────────────────────────────────────────────────────────────
+
+# Endpoint ports for readiness checks. All four use the standard primary
+# port for primary; router mode means the same port serves whichever
+# model is currently loaded. The router process itself is up immediately
+# at startup (no model loaded yet); model-swap.sh handles model loads
+# on demand.
+ENDPOINTS=(
+  "$WS_PORT_PRIMARY"
+  "$WS_PORT_SECONDARY"
+  "$WS_PORT_EMBED"
+  "$WS_PORT_CODER"
+)
 
 pkill_rogue_servers() {
   # Kill any llama-server or ollama process not spawned by systemd (those

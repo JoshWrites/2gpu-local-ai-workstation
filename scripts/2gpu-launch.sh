@@ -57,17 +57,24 @@ fi
 
 # ── Config derived from env ─────────────────────────────────────────────────
 
-LLAMA_UNITS=(llama-primary llama-secondary llama-embed llama-coder)
+# Router-mode primary: one llama-server process bound to port 11434, swaps
+# between models on demand. Replaces the prior two-unit design (Vulkan-GLM +
+# HIP-OSS). See systemd/llama-primary-router.service and
+# docs/research/2026-05-03-router-mode-validation.md.
+LLAMA_UNITS=(llama-primary-router llama-secondary llama-embed llama-coder)
 ENDPOINTS=(
   "$WS_PORT_PRIMARY"
   "$WS_PORT_SECONDARY"
   "$WS_PORT_EMBED"
   "$WS_PORT_CODER"
 )
-PRIMARY_UNIT="llama-primary.service"   # the one whose journal we tail in the splash
-EXPECTED_READY=60
-WARN_READY=75
-HARD_TIMEOUT=180
+PRIMARY_UNIT="llama-primary-router.service"
+
+# Router-mode startup is fast (no model loaded yet); first model load is
+# what takes minutes. The router itself just needs to bind the port.
+EXPECTED_READY=15
+WARN_READY=30
+HARD_TIMEOUT=900
 
 ZED_DATA_DIR="$WS_ZED_PROFILE_DIR"
 ZED_BIN="$HOME/.local/bin/zed"

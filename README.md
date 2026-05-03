@@ -14,9 +14,10 @@ more-than-pretty-lights repo.
 
 This module's outputs: a runnable agentic-coding stack on a 7900 XTX +
 5700 XT machine, plus the documentation describing how it was built.
-This module's assumptions: ROCm 7.2.1, llama.cpp Vulkan build,
-Ubuntu 24.04, opencode v1.14.28-derived patched binary, Zed editor
-with isolated profile.
+This module's assumptions: ROCm 7.2.1, llama.cpp built two ways
+(HIP for the primary GPU's router-mode unit, Vulkan for the secondary
+sidecars), Ubuntu 24.04, opencode v1.14.28-derived patched binary
+(5 patches), Zed editor with isolated profile.
 
 Common failure context: if a service refuses to start, check
 /etc/workstation/system.env exists (Phase 1 invariant). If a path
@@ -51,8 +52,12 @@ If you have similar hardware (specifically: an asymmetric two-GPU
 Linux box where the smaller GPU still has ~8 GB and the larger one
 has ~24 GB), you can run this stack and get:
 
-- Local chat model on the big card. GLM-4.7-Flash by default;
-  swap any 16-22 GB Q4 model.
+- Local chat model on the big card via llama.cpp router mode -- one
+  llama-server hosting GLM-4.7-Flash (~30 GB, fast default) and
+  GPT-OSS-120B (116B-param MoE, 128K context, expert-offload to DRAM)
+  on the same port, swapping on demand. Picking a not-loaded model
+  in Zed's footer triggers a yad confirm dialog and a progress popup;
+  the swap completes in ~35 s for GLM or ~4 min for OSS.
 - Three sidecars on the small card, all loaded at once: a 4B
   summarizer, a multilingual embedding model, and a 3B coder model
   for editor edit-prediction. Total ~8.1 GB used, validated under
@@ -60,8 +65,13 @@ has ~24 GB), you can run this stack and get:
 - A Library MCP server that does retrieval (web research, code-aware
   file mining, on-demand skill injection) and returns summaries by
   default to protect chat-model context.
-- A patched opencode binary that makes Zed's agent panel actually
-  show what bash command it wants to run before you approve it.
+- A patched opencode binary (5 patches) that makes Zed's agent panel
+  actually show what bash command it wants to run before you approve
+  it, makes file-write/edit cards informative, surfaces skill-load
+  permission requests with name and token cost, and triggers the
+  router-mode swap UX when you pick a not-loaded model. See
+  `docs/research/2026-05-03-zed-ux-improvements.md` for the full
+  walkthrough.
 - A launcher that brings the whole stack up when you click a desktop
   icon, with a yad splash that shows progress, and shuts services
   down politely when nothing is using them.
@@ -95,13 +105,15 @@ Software:
 - Ubuntu 24.04 or similar. The systemd units and polkit rule
   assume systemd 255+.
 - ROCm 7.2 or later, Vulkan loader installed.
-- llama.cpp built with Vulkan backend (the binary path is hardcoded
-  in unit files; Phase 2 of this project moved the binary to
-  `/usr/local/lib/llama.cpp/llama-server` for system-wide
-  consistency).
+- llama.cpp built two ways:
+  - **HIP** at `/usr/local/lib/llama.cpp-hip/llama-server` -- the
+    primary GPU's router-mode unit, hosts GLM and OSS on demand.
+  - **Vulkan** at `/usr/local/lib/llama.cpp/llama-server` -- the
+    three sidecar units on the 5700 XT (secondary, embed, coder).
 - bun runtime, for opencode build steps.
-- Zed editor.
-- jq, curl, ss, rocm-smi (probably already installed).
+- Zed editor with `acp-beta` feature flag enabled.
+- yad (for the model-swap popup), notify-send, jq, curl, ss,
+  rocm-smi (probably already installed except yad).
 
 Disk:
 - ~120 GB free for the model catalog. The setup uses GLM-4.7-Flash
@@ -126,25 +138,36 @@ The shape of the install:
 
 1. Clone this repo (with `--recurse-submodules` so Library
    submodule comes along).
-2. Build llama.cpp with Vulkan and install at
-   `/usr/local/lib/llama.cpp/llama-server`.
-3. Pull the four model GGUFs to `/var/lib/llama-models/`.
-4. Install the three env files (system.env, user.env, secrets.env).
-5. Run `scripts/install-systemd-units.sh`. Installs the four
-   `llama-*` units, the polite-shutdown coordinator, and the
-   polkit rule.
-6. Edit the polkit rule to list your local username(s).
-7. Build the patched opencode binary.
+2. Build llama.cpp twice -- Vulkan at
+   `/usr/local/lib/llama.cpp/llama-server` (sidecars) and HIP at
+   `/usr/local/lib/llama.cpp-hip/llama-server` (router).
+3. Pull the model GGUFs to `/var/lib/llama-models/`.
+4. Install the env files. Set `WS_LLAMA_USERS` in
+   `/etc/workstation/system.env` to the space-separated list of
+   local usernames who should have passwordless llama-* control.
+5. Install the router-mode preset INI at
+   `/etc/workstation/llama-router.ini` (sourced from
+   `configs/workstation/llama-router.ini`).
+6. Run `scripts/install-systemd-units.sh`. Installs the four
+   `llama-*` units (one router + three sidecars), the
+   polite-shutdown coordinator, and the polkit rule. The polkit
+   rule's `allowedUsers` array is rendered from `WS_LLAMA_USERS`
+   at install time, so real usernames never enter the repo.
+7. Build the patched opencode binary (5 patches).
 8. Bootstrap the Library MCP venv with `uv sync`.
-9. Set up Zed's isolated profile.
-10. Symlink AGENTS.md into the opencode config dir.
+9. Set up Zed's isolated profile, including
+   `OPENCODE_MODEL_SWAP_SCRIPT` env var pointing at
+   `scripts/model-swap.sh`.
+10. Symlink AGENTS.md (the repo root has a symlink for
+    opencode's `findUp()`; the global copy in `~/.config/opencode/`
+    is also fine).
 11. Install the desktop entry.
 12. Run `bench/regression.sh` to verify everything is in place.
 
-Then click the desktop icon. The launcher brings the four llama
-services up with a progress splash, opens Zed in the isolated
-profile, and Library gets registered in opencode.json automatically
-through the render-at-launch templating.
+Then click the desktop icon. The launcher brings the llama services
+up with a progress splash and opens Zed in the isolated profile.
+Library gets registered in opencode.json automatically through the
+render-at-launch templating.
 
 For the deeper context behind each piece:
 
@@ -165,10 +188,23 @@ A few real failure modes:
   the units install. Do step 2 first.
 - **A llama service starts but does not respond on its port.** Check
   the service's journal for the actual exec command:
-  `journalctl -u llama-primary.service -n 50`. The most common cause
-  is a wrong path in the unit's ExecStart line; env-var interpolation
-  is shown literally in `systemctl show` output even when the runtime
-  values are correct.
+  `journalctl -u llama-primary-router.service -n 50`. The most common
+  cause is a wrong path in the unit's ExecStart line; env-var
+  interpolation is shown literally in `systemctl show` output even
+  when the runtime values are correct. For the primary router, also
+  check `/etc/workstation/llama-router.ini` exists and parses
+  (`curl http://localhost:11434/models` should list both presets).
+- **Picking a model in Zed gives a silent failure with no popup.**
+  The `OPENCODE_MODEL_SWAP_SCRIPT` env var is missing from Zed's
+  isolated profile config. Without it, the patched opencode falls
+  through to a plain 400 error. Add it to
+  `~/.local/share/zed-second-opinion/config/settings.json` under
+  `agent_servers.opencode.command.env`.
+- **Every Zed launch prompts for the admin password.** The polkit
+  allowlist at `/etc/polkit-1/rules.d/10-llama-services.rules` is
+  missing the unit name being started. Re-run
+  `scripts/install-systemd-units.sh` -- it re-renders the rule from
+  the template and `WS_LLAMA_USERS`.
 - **Zed agent panel says "Configuration is invalid."** The rendered
   `~/.config/opencode/opencode.json` got something wrong. Re-run the
   render manually by triggering `scripts/opencode-session.sh` from a
@@ -201,25 +237,31 @@ A few real failure modes:
 ├── scripts/
 │   ├── 2gpu-launch.sh             desktop-entry target
 │   ├── opencode-session.sh        wrapper opencode is launched through
-│   ├── install-systemd-units.sh   one-time machine setup
-│   └── (benches and helpers)
+│   ├── install-systemd-units.sh   one-time machine setup (renders polkit rule)
+│   ├── model-swap.sh              yad swap UX, called by the router-swap patch
+│   └── (other helpers)
 ├── systemd/                       canonical sources for system units
-│   ├── llama-primary.service
+│   ├── llama-primary-router.service   one llama-server, multiple models
+│   ├── llama-primary.service          (legacy, masked, kept for rollback)
+│   ├── llama-primary-experiment.service (legacy, masked, kept for rollback)
 │   ├── llama-secondary.service
 │   ├── llama-embed.service
 │   ├── llama-coder.service
 │   ├── llama-shutdown             the polite-shutdown coordinator
-│   └── polkit/10-llama-services.rules
+│   └── polkit/10-llama-services.rules  template (allowedUsers rendered at install)
 ├── configs/
 │   ├── opencode/
-│   │   ├── AGENTS.md              global agent rules (symlinked into ~/.config)
+│   │   ├── AGENTS.md              global agent rules (also symlinked at repo root)
 │   │   └── opencode.json.template render-at-launch template
 │   └── workstation/
-│       ├── system.env.example     root-owned, hardware/service shape
+│       ├── llama-router.ini       per-model llama-server flags (router source of truth)
+│       ├── primary-pool.json      registry model-swap.sh reads
+│       ├── system.env.example     root-owned, hardware/service shape (incl. WS_LLAMA_USERS)
 │       ├── user.env.example       per-user paths
 │       └── secrets.env.example    machine-specific values, gitignored
 ├── bench/
-│   └── regression.sh              30-assertion health check
+│   ├── regression.sh              30-assertion health check
+│   └── oss-tuning.sh              preset A/B harness (router /models/load + curl)
 ├── opencode-zed-patches/          patches against opencode v1.14.28
 ├── Library/                       submodule: Library MCP server
 ├── archive/                       historical artifacts

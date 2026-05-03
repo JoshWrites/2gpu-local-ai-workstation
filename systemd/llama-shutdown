@@ -44,20 +44,19 @@ fi
 # ── Config ──────────────────────────────────────────────────────────────
 
 UNITS=(
-  llama-primary.service
+  llama-primary-router.service
   llama-secondary.service
   llama-embed.service
-  llama-primary-moe.service
   llama-coder.service
 )
 
-# Service to port map (for connection counting). The four core units
-# read from system.env. The two alternate primary units share the
-# primary port by design (only one runs at a time, enforced via
-# Conflicts= in the unit files).
+# Service to port map (for connection counting). The router unit serves
+# whichever primary model is currently loaded on the standard primary port.
+# Old llama-primary.service and llama-primary-experiment.service are
+# masked, not deleted -- if they ever come back as fallback they'd
+# advertise themselves on different ports and need separate entries here.
 declare -A PORTS=(
-  [llama-primary.service]=$WS_PORT_PRIMARY
-  [llama-primary-moe.service]=$WS_PORT_PRIMARY
+  [llama-primary-router.service]=$WS_PORT_PRIMARY
   [llama-secondary.service]=$WS_PORT_SECONDARY
   [llama-embed.service]=$WS_PORT_EMBED
   [llama-coder.service]=$WS_PORT_CODER

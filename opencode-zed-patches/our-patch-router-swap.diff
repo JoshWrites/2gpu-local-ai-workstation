@@ -1,0 +1,141 @@
+--- a/packages/opencode/src/session/prompt.ts
++++ b/packages/opencode/src/session/prompt.ts
+@@ -1328,6 +1328,75 @@
+             }).pipe(Effect.ignore, Effect.forkIn(scope))
+ 
+           const model = yield* getModel(lastUser.model.providerID, lastUser.model.modelID, sessionID)
++
++          // Workstation router-mode integration: if the resolved model
++          // points at the local llama-server router and that model is
++          // not currently loaded, fork scripts/model-swap.sh and wait
++          // for it to load (or the user to cancel).
++          //
++          // Detection: the model's api.url has a host of localhost.
++          // We then probe /models for the modelID's status. If
++          // 'unloaded', run the swap script. If 'loading', also wait.
++          // If 'loaded' or unknown (different backend), skip.
++          //
++          // This is the on-message safety net. The companion patch in
++          // acp/agent.ts:unstable_setSessionModel fires the swap
++          // script earlier (on picker change) so the popup appears
++          // immediately. If that fast-path was somehow missed (script
++          // crashed, popup dismissed, race), this on-message check
++          // catches it.
++          //
++          // The OPENCODE_MODEL_SWAP_SCRIPT env var must be set to enable;
++          // points at the workstation's scripts/model-swap.sh.
++          const swapScript = process.env["OPENCODE_MODEL_SWAP_SCRIPT"]
++          if (swapScript) {
++            const apiUrl = model.api?.url ?? ""
++            const routerMatch = apiUrl.match(/^(https?:\/\/(?:127\.0\.0\.1|localhost):\d+)/)
++            if (routerMatch) {
++              const routerBase = routerMatch[1]
++              const status = yield* Effect.tryPromise({
++                try: () =>
++                  fetch(`${routerBase}/models`, { signal: AbortSignal.timeout(3000) })
++                    .then((r) => (r.ok ? r.json() : null))
++                    .then((d: any) => {
++                      if (!d?.data) return null as string | null
++                      const m = d.data.find((x: any) => x.id === lastUser.model.modelID)
++                      return (m?.status?.value ?? null) as string | null
++                    }),
++                catch: () => new Error("router /models probe failed"),
++              }).pipe(Effect.catch(() => Effect.succeed(null as string | null)))
++
++              if (status === "unloaded" || status === "loading") {
++                yield* Effect.logInfo(
++                  `model-swap: ${lastUser.model.modelID} status=${status}, invoking ${swapScript}`,
++                )
++                const exitCode = yield* Effect.tryPromise({
++                  try: () =>
++                    new Promise<number>((resolve) => {
++                      const { spawn } = require("child_process")
++                      const child = spawn(swapScript, [lastUser.model.modelID], {
++                        stdio: "inherit",
++                        env: { ...process.env, OPENCODE_ROUTER_BASE: routerBase },
++                      })
++                      child.on("exit", (code: number | null) => resolve(code ?? 1))
++                      child.on("error", () => resolve(1))
++                    }),
++                  catch: () => new Error("model-swap.sh spawn failed"),
++                }).pipe(Effect.catch(() => Effect.succeed(1)))
++                if (exitCode !== 0) {
++                  yield* Effect.logInfo(`model-swap cancelled or failed (exit ${exitCode})`)
++                  yield* bus.publish(Session.Event.Error, {
++                    sessionID,
++                    error: new NamedError.Unknown({
++                      message: `Model swap cancelled or failed for ${lastUser.model.modelID}. Send another message to retry.`,
++                    }).toObject(),
++                  })
++                  break
++                }
++              }
++            }
++          }
++
+           const task = tasks.pop()
+ 
+           if (task?.type === "subtask") {
+--- a/packages/opencode/src/acp/agent.ts
++++ b/packages/opencode/src/acp/agent.ts
+@@ -1624,6 +1624,60 @@
+     this.sessionManager.setModel(session.id, selection.model)
+     this.sessionManager.setVariant(session.id, selection.variant)
+ 
++    // Workstation router-mode integration: fire model-swap.sh
++    // immediately on picker change so the popup appears NOW, not when
++    // the next message is sent. This complements the on-message check
++    // in session/prompt.ts (our-patch-router-swap.diff): together they
++    // give the user "see popup as soon as I pick the model" UX with a
++    // safety net if the fast-path is somehow missed.
++    //
++    // Detached fork: the script may take 4+ minutes (OSS load). We
++    // cannot block this RPC -- Zed waits for the response. Spawn
++    // detached, return normally. If the user sends a message before
++    // the load finishes, the on-message check sees status=loading
++    // and waits.
++    //
++    // Gated on OPENCODE_MODEL_SWAP_SCRIPT env var matching the
++    // on-message patch's gate.
++    const swapScript = process.env["OPENCODE_MODEL_SWAP_SCRIPT"]
++    if (swapScript) {
++      try {
++        // Find the provider in the list and pull its api url from the
++        // first model's api info (all models in a provider share an api url).
++        const provider = providers.find((p: any) => p.id === selection.model.providerID)
++        const firstModelKey = provider ? Object.keys(provider.models ?? {})[0] : undefined
++        const apiUrl =
++          firstModelKey && provider?.models?.[firstModelKey]?.api?.url
++            ? (provider.models[firstModelKey].api.url as string)
++            : ""
++        const routerMatch = apiUrl.match(/^(https?:\/\/(?:127\.0\.0\.1|localhost):\d+)/)
++        if (routerMatch) {
++          const routerBase = routerMatch[1]
++          const status = await fetch(`${routerBase}/models`, { signal: AbortSignal.timeout(3000) })
++            .then((r) => (r.ok ? r.json() : null))
++            .then((d: any) => {
++              if (!d?.data) return null
++              const m = d.data.find((x: any) => x.id === selection.model.modelID)
++              return m?.status?.value ?? null
++            })
++            .catch(() => null)
++
++          if (status === "unloaded") {
++            // eslint-disable-next-line @typescript-eslint/no-require-imports
++            const { spawn } = require("child_process")
++            const child = spawn(swapScript, [selection.model.modelID], {
++              detached: true,
++              stdio: "ignore",
++              env: { ...process.env, OPENCODE_ROUTER_BASE: routerBase },
++            })
++            child.unref()
++          }
++        }
++      } catch {
++        // Best-effort. The on-message patch is the safety net.
++      }
++    }
++
+     const entries = sortProvidersByName(providers)
+     const availableVariants = modelVariantsFromProviders(entries, selection.model)
+ 

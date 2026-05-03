@@ -83,3 +83,70 @@ runtime tweaks would get clobbered on next launch; if you find
 yourself wanting to preserve another field, add it to
 `PRESERVE_FIELDS` in `scripts/opencode-session.sh`.
 
+## The `llama-experiment` provider
+
+The template advertises an `llama-experiment` provider on
+`localhost:${WS_PORT_EXPERIMENT}` (default 11444). Today this slot is
+served by `systemd/llama-primary-experiment.service`, which runs
+GPT-OSS-120B with native 128K context via the HIP llama.cpp build.
+
+The experiment cannot run alongside `llama-primary` — both want the
+7900 XTX. The expected workflow is opt-in:
+
+```
+sudo systemctl stop llama-primary
+sudo systemctl start llama-primary-experiment
+# ...use it from Zed by picking "GPT-OSS-120B 128K" in the model picker...
+sudo systemctl stop llama-primary-experiment
+sudo systemctl start llama-primary
+```
+
+The launchers (`opencode-session.sh` and `2gpu-launch.sh`) detect when
+`llama-primary-experiment` is active and substitute it for
+`llama-primary` in their service-management logic, rather than blindly
+starting both. Without this, starting Zed while the experiment was
+loaded would crash llama-primary's load (no free VRAM) and the
+cascading host-memory pressure has been observed to OOM-kill the
+experiment (54 GB RSS). See `compute_active_units` in
+`scripts/opencode-session.sh` and the equivalent block in
+`scripts/2gpu-launch.sh`.
+
+If neither service is running when Zed asks for the experimental
+model, opencode gets a connection error on that one provider; the
+rest of the stack keeps working.
+
+### Why the model id is aliased to `gpt-oss-120b`
+
+The unit file passes `--alias gpt-oss-120b` to llama-server, and the
+template uses `gpt-oss-120b` (not the GGUF filename) as the model key.
+
+This matters: opencode pattern-matches the model id internally to
+enable GPT-OSS-specific request handling — Harmony channel parsing,
+correct system-prompt shape, and most importantly, attaching tool
+definitions to the request. The binary's strings include
+`gpt-oss-120b`, `gpt-oss-20b`, `harmony` etc. as recognized ids.
+
+Without the alias, the server reports the GGUF filename as the model
+id (`gpt-oss-120b-mxfp4-00001-of-00003.gguf`), opencode does not
+match the pattern, falls back to a generic openai-compatible flow,
+and **does not send tool definitions in the request** — so the model
+can't write files or call MCP tools and just emits code blocks in
+chat. This was observed during the first Zed test of this branch
+(see commit `dd05c5d` for the diagnosis).
+
+If you swap to a different GGUF for this slot, set the alias to
+whatever opencode pattern recognizes — typically the canonical
+huggingface model name without the quant/shard suffix.
+
+### Quirk: GPT-OSS uses Harmony channels
+
+Unlike most chat models, GPT-OSS routes its private reasoning into a
+separate `reasoning_content` field on the response, leaving `content`
+for the final answer. With small `max_tokens` budgets, the reasoning
+can consume the full budget and `content` returns empty. Set
+`max_tokens` generously (Zed defaults are usually fine; the template
+declares `output: 16384`).
+
+See `docs/research/gpt-oss-120b-moe-offload.md` for the full
+investigation, performance numbers, and the trip log of dead ends.
+

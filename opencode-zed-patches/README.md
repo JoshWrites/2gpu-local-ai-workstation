@@ -13,7 +13,7 @@ means a bare tool name with no path - especially when the model
 `description` argument. Either way the user has no way to approve or
 deny informedly.
 
-Four patches in this repo fix that:
+Five patches in this repo fix that:
 
 - **agent.ts patch.** Looks up the actual tool input from the message
   store before sending the permission request, then derives a two-line
@@ -42,6 +42,17 @@ Four patches in this repo fix that:
   "Load skill: \<name\> (~\<N\> tokens)" with the description on a
   second line. Now the user can see what the skill is for and how
   much context it will eat before clicking Allow.
+- **router-swap.ts patch.** Detects when the resolved model for a turn
+  points at the local llama-server router (`http://127.0.0.1:<port>`)
+  and is currently `unloaded` or `loading` per `/models`. Forks
+  `scripts/model-swap.sh` (path from `OPENCODE_MODEL_SWAP_SCRIPT` env
+  var) with the target model id and waits for it to exit. The script
+  shows a yad confirm dialog + progress popup and either loads the
+  target or returns 1 (cancel). On cancel, opencode publishes a
+  Session.Event.Error with a clear message; on success, the loop
+  continues normally. Without this patch, Zed's model-picker change
+  causes a silent 400 from the router because `--no-models-autoload`
+  is set on llama-primary-router.
 
 Apply the patches, rebuild opencode from source, install the resulting
 binary alongside the upstream one, and point Zed at the patched binary.
@@ -102,6 +113,10 @@ A few real failure modes:
 - `our-patch-bash.diff`: the bash.ts patch.
 - `our-patch-tools.diff`: the write/edit schema patch (and matching
   test fixtures).
+- `our-patch-skill-permission.diff`: the skill-permission card patch.
+- `our-patch-router-swap.diff`: the router-mode model-swap trigger
+  patch -- detects when the user picks an unloaded primary model and
+  forks scripts/model-swap.sh to handle the load with progress UI.
 - `the-fix.md`: a plain-language description of the agent.ts patch and
   why it works.
 - `fix-2-shipped.md`: the production state after the bash polish landed

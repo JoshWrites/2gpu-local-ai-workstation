@@ -1,0 +1,32 @@
+{
+  "_comment": "Registry for the primary-model swap pool. Each entry describes a model that llama-router.ini knows how to load. The id matches the [section] name in llama-router.ini and the model id at the API level. model-swap.sh reads this to compose its yad popup, predict memory, and pick the larger-context model for compaction. Add an entry here when you add a model to llama-router.ini.",
+
+  "models": {
+    "gpt-oss-120b": {
+      "display_name": "GPT-OSS-120B 128K",
+      "description": "Frontier reasoning, 128K context, MoE expert offload to system RAM",
+      "context_tokens": 131072,
+      "vram_required_mb": 19000,
+      "dram_required_mb": 48000,
+      "expected_load_seconds": 240,
+      "expected_gen_tok_per_sec": 17
+    },
+    "glm-4.7-flash": {
+      "display_name": "GLM-4.7-Flash 64K",
+      "description": "Fast generalist, 64K context, fully GPU-resident",
+      "context_tokens": 65536,
+      "vram_required_mb": 21500,
+      "dram_required_mb": 0,
+      "expected_load_seconds": 35,
+      "expected_gen_tok_per_sec": 72
+    }
+  },
+
+  "_notes": {
+    "vram_required_mb": "Includes weights + KV cache + compute buffer. Measured live, not theoretical.",
+    "dram_required_mb": "Host-side RAM the model needs for MoE expert offload. 0 for fully-GPU-resident models.",
+    "expected_load_seconds": "Cold load from SSD. Used for the 'this will take ~N min' line in the popup.",
+    "expected_gen_tok_per_sec": "Steady-state generation. Used to estimate re-eval time after a model swap.",
+    "compaction_agent": "model-swap.sh picks whichever model has the highest context_tokens as the compaction agent. Today that is gpt-oss-120b. Pinned in opencode.json template via agent.compaction.model."
+  }
+}

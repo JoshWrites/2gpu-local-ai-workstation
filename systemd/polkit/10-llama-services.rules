@@ -9,14 +9,14 @@
 // would prompt for a sudo password, which is bad UX for a per-session
 // launcher.
 //
-// Customize before install: edit the allowedUsers array below to list
-// the local accounts that should have passwordless control. The default
-// lists a single placeholder; replace with your own username(s).
+// This file is a TEMPLATE. The allowedUsers array contains the literal
+// token __WS_LLAMA_USERS__ which install-systemd-units.sh substitutes
+// at install time using WS_LLAMA_USERS from /etc/workstation/system.env.
+// Editing this template directly does not affect installed behavior;
+// edit system.env (or its example) and reinstall.
 //
 // Install location: /etc/polkit-1/rules.d/10-llama-services.rules
 // Owned by: root, mode 0644.
-// Sourced from: this file in the umbrella repo. The install script in
-// scripts/install-systemd-units.sh installs it via sudo.
 
 polkit.addRule(function(action, subject) {
     if (action.id !== "org.freedesktop.systemd1.manage-units") {
@@ -29,6 +29,8 @@ polkit.addRule(function(action, subject) {
     var allowedUnits = [
         "llama-primary.service",
         "llama-primary-moe.service",
+        "llama-primary-router.service",
+        "llama-primary-experiment.service",
         "llama-secondary.service",
         "llama-embed.service",
         "llama-coder.service",
@@ -36,10 +38,11 @@ polkit.addRule(function(action, subject) {
     if (allowedUnits.indexOf(unit) === -1) {
         return;
     }
-    // EDIT THIS: list the local usernames that should have passwordless
-    // start/stop/restart for the llama services. Add or remove entries
-    // as needed for your machine.
-    var allowedUsers = ["your-username-here"];
+    // The token __WS_LLAMA_USERS__ is replaced at install time with a
+    // JSON array of usernames from WS_LLAMA_USERS in system.env. Do not
+    // edit by hand on the installed copy -- edit system.env and rerun
+    // scripts/install-systemd-units.sh.
+    var allowedUsers = __WS_LLAMA_USERS__;
     if (allowedUsers.indexOf(subject.user) !== -1) {
         return polkit.Result.YES;
     }

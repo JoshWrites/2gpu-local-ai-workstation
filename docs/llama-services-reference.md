@@ -49,12 +49,24 @@ GPU via Vulkan device index, each independently restartable.
 
 ### The four roles
 
-| Service | Role | GPU | Port | Default model | Context |
-|---|---|---|---|---|---|
-| `llama-primary` | Chat | 7900 XTX (Vulkan0) | 11434 | GLM-4.7-Flash UD-Q4_K_XL | 64K |
-| `llama-secondary` | Summarize | 5700 XT (Vulkan1) | 11435 | Qwen3-4B-Instruct-2507 Q4_K_M | 32K |
-| `llama-embed` | Embed | 5700 XT (Vulkan1) | 11437 | multilingual-e5-large Q8_0 | 512 |
-| `llama-coder` | Edit prediction | 5700 XT (Vulkan1) | 11438 | Qwen2.5-Coder-3B-Instruct Q4_K_M | 4K |
+| Service | Role | GPU | Backend | Port | Default model | Context |
+|---|---|---|---|---|---|---|
+| `llama-primary-router` | Chat | 7900 XTX | HIP (gfx1100) | 11434 | router mode: GLM-4.7-Flash + GPT-OSS-120B | 64K / 128K |
+| `llama-secondary` | Summarize / title | 5700 XT (Vulkan1) | Vulkan | 11435 | Qwen3-4B-Instruct-2507 Q4_K_M | 32K |
+| `llama-embed` | Embed | 5700 XT (Vulkan1) | Vulkan | 11437 | multilingual-e5-large Q8_0 | 512 |
+| `llama-coder` | Edit prediction | 5700 XT (Vulkan1) | Vulkan | 11438 | Qwen2.5-Coder-3B-Instruct Q4_K_M | 4K |
+
+The primary unit is **router-mode** -- one llama-server hosts both
+GLM and OSS via `--models-preset /etc/workstation/llama-router.ini`,
+loading on demand from `POST /models/load` (no model loaded at start;
+`--no-models-autoload`, `--models-max 1`). Per-model flags live in
+the INI, not in the unit file. See
+`configs/workstation/llama-router.ini` for the source of truth.
+
+The two legacy primary units -- `llama-primary.service`
+(Vulkan-GLM-only) and `llama-primary-experiment.service`
+(HIP-OSS-only) -- are masked at `/etc/systemd/system/` but kept in
+the repo at `systemd/` for rollback.
 
 The role names are descriptive, not prescriptive. Each service
 serves an OpenAI-compatible HTTP API; the role name is what the

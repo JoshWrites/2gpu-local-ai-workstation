@@ -1,0 +1,105 @@
+[Unit]
+Description=llama-server EXPERIMENT (GPT-OSS-120B on 7900 XTX / HIP, port 11444, MoE expert offload)
+# EXPERIMENTAL — MoE expert offload investigation, phase 2.
+# Runs mainline ggml-org/llama.cpp built with HIP (ROCm 7.2.1) for gfx1100.
+# Stock Vulkan path failed: RADV cannot allocate the 45 GB host-visible
+# Vulkan buffer that --n-cpu-moe requires for expert weights. HIP uses
+# hipHostMalloc and doesn't have the same per-allocation ceiling.
+#
+# (ik_llama.cpp fork was the original phase-2 plan but its HIP build is
+# bit-rotted under modern ROCm — see docs/research/gpt-oss-120b-moe-offload.md
+# for the full investigation log.)
+#
+# Binary at /usr/local/lib/llama.cpp-hip/llama-server, separate from the
+# stock Vulkan /usr/local/lib/llama.cpp/ used by llama-primary.service.
+#
+# Cannot coexist with llama-primary.service (both want Vulkan0). Workflow:
+#   systemctl stop llama-primary
+#   systemctl start llama-primary-experiment
+#   ...test, measure tok/s...
+#   systemctl stop llama-primary-experiment
+#   systemctl start llama-primary
+#
+# The opencode-session.sh and 2gpu-launch.sh launchers detect this unit's
+# active state and substitute it for llama-primary, so starting Zed while
+# the experiment is loaded does NOT start llama-primary on top (which
+# would crash GLM's load and OOM-kill the experiment via cascading
+# host-memory pressure).
+#
+# --alias gpt-oss-120b is load-bearing: opencode pattern-matches the
+# model id reported by /v1/models to enable GPT-OSS-specific request
+# handling (Harmony channels, tool definitions). Without the alias the
+# server reports the GGUF filename, opencode falls back to a generic
+# flow that does NOT attach tools to the request, and the model emits
+# code in chat instead of writing files. See configs/opencode/README.md
+# for the full reasoning.
+#
+# Tunables (current values are settled — see docs/research/gpt-oss-120b-moe-offload.md):
+#   --n-cpu-moe 28   N=26 didn't help (top-4-of-128 routing makes this lever
+#                    too coarse to extract speedup at the margin). N=28
+#                    leaves headroom for the compute buffer and KV.
+#   -c 131072        full n_ctx_train. Q8_0 KV at this depth = 2.45 GB.
+#   -ub 2048         large ubatch lights up the GPU on long prompts; 4.8x
+#                    prompt-eval speedup vs -ub 256 at 43K tokens.
+#   --swa-checkpoints 64 — default 32 was too small (eviction thrashing
+#                    at ~38K context); 128 caused an 8-hour-session hang
+#                    where the checkpoint-match loop completed but the
+#                    post-scan path wedged the HTTP server (see
+#                    /tmp/llama-hang-2026-05-03-0743.log for the
+#                    diagnostics). 64 is the midpoint and still big
+#                    enough that long Zed sessions don't thrash.
+#   --cache-reuse 256 — KV-shifting prefix reuse for tool-loop patterns.
+#
+# (Removed --no-mmap on 2026-05-02. With it, the 60 GB of weights were
+# pinned in RSS; the kernel had no eviction option under desktop-app
+# pressure and OOM-killed the experiment after long sessions. Without
+# it, cold expert pages can be evicted to disk-backed mapping under
+# pressure. Trade-off: occasional cold-page reload latency vs death.)
+#
+# Sampler flags match OpenAI's official recommendation for GPT-OSS-120B.
+# Re-derive if the model changes.
+#   - temp 1.0, top_p 1.0, top_k 0 -- GPT-OSS was RL-trained at temp 1.0;
+#     reducing it degrades the analysis channel where tool decisions are
+#     formed (per OpenAI staff confirmation on HF discussion #21).
+#   - min_p 0.01 -- long-session safety net. Clips the deepest tail (<1%
+#     of top probability) which is where late-context degeneration lives.
+#     0.0 is also safe; 0.05+ starts interfering with the analysis channel.
+#   - repeat-penalty 1.0, presence-penalty 0.0, frequency-penalty 0.0 --
+#     EXPLICITLY pinned to neutral. GPT-OSS Harmony tokens (<|channel|>,
+#     <|message|>, <|end|>, <|return|>) appear every turn; any non-zero
+#     repetition penalty corrupts tool calls and causes loops. Opencode's
+#     OpenAI-compatible client may send non-zero defaults; pinning here
+#     means llama.cpp ignores those and uses the values declared above.
+#   - Do NOT enable DRY or XTC samplers; both interact badly with Harmony.
+
+[Service]
+Type=simple
+EnvironmentFile=/etc/workstation/system.env
+# HIP_VISIBLE_DEVICES=1 → only expose the 7900 XTX (gfx1100) to llama-server.
+# CRITICAL: HIP enumerates differently from rocminfo. rocm-smi and HIP runtime
+# both put the 5700 XT at index 0 and the 7900 XTX at index 1, while rocminfo
+# puts them in the reverse order. Without this constraint, llama-server picks
+# the 5700 XT (gfx1010) by default, which we did NOT compile kernels for.
+Environment="HIP_VISIBLE_DEVICES=1"
+Environment="LLAMA_SET_ROWS=1"
+ExecStart=/usr/local/lib/llama.cpp-hip/llama-server \
+  -m ${WS_MODELS_DIR}/gpt-oss-120b/gpt-oss-120b-mxfp4-00001-of-00003.gguf \
+  --alias gpt-oss-120b \
+  -ngl 999 --n-cpu-moe 28 \
+  -c 131072 --flash-attn on \
+  -ctk q8_0 -ctv q8_0 \
+  --jinja \
+  -b 2048 -ub 2048 \
+  --cache-reuse 256 \
+  --swa-checkpoints 64 \
+  --temp 1.0 --top-p 1.0 --top-k 0 --min-p 0.01 \
+  --repeat-penalty 1.0 --presence-penalty 0.0 --frequency-penalty 0.0 \
+  --host 127.0.0.1 --port 11444
+Restart=no
+KillSignal=SIGTERM
+TimeoutStopSec=15
+StandardOutput=journal
+StandardError=journal
+
+# Restart=no on purpose: this is an experiment. If it OOMs or crashes we want
+# to see the failure and adjust flags, not have systemd loop-restart it.

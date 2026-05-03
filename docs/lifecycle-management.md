@@ -230,17 +230,26 @@ not delay or fail the user's login.
 
 ### Why polkit, not sudo
 
-Local users need to start, stop, and restart the four llama units
+Local users need to start, stop, and restart the llama units
 without typing a password every time. `sudo systemctl start
-llama-primary` works, but the per-launch password prompt is bad UX
-and discourages the polite-shutdown habit (users hold services up
-indefinitely rather than re-type their password).
+llama-primary-router` works, but the per-launch password prompt is
+bad UX and discourages the polite-shutdown habit (users hold
+services up indefinitely rather than re-type their password).
 
-The polkit rule at `systemd/polkit/10-llama-services.rules` grants
-configured local users passwordless control of exactly the four
-llama units. Other systemctl actions still require sudo. The rule's
-`allowedUsers` array is a customization point -- edit it to list
-the local accounts on your machine that should have access.
+The polkit rule at `systemd/polkit/10-llama-services.rules` is a
+**template**. `scripts/install-systemd-units.sh` reads
+`WS_LLAMA_USERS` from `/etc/workstation/system.env` (a
+space-separated list of usernames), validates each entry, emits a
+JSON array, and substitutes the rendered list into the rule before
+copying to `/etc/polkit-1/rules.d/`. Real usernames never enter the
+repo. The rule grants those users passwordless control of exactly
+the listed llama units (router, secondary, embed, coder; plus the
+legacy primary names for rollback). Other systemctl actions still
+require sudo.
+
+To add or remove a user: update `WS_LLAMA_USERS` in
+`/etc/workstation/system.env`, then re-run
+`scripts/install-systemd-units.sh`.
 
 The pre-publish version of the rule lists `["your-username-here"]`;
 real deployments edit that to the actual usernames.
@@ -307,7 +316,7 @@ polkit rule's `allowedUsers` array.
   opencode/zed process older than 30 seconds. `pgrep -af opencode`
   and `pgrep -af zed` show the survivors.
 - **The launcher's splash hangs past 180 seconds:**
-  `journalctl -u llama-primary.service -n 100`. Common causes:
+  `journalctl -u llama-primary-router.service -n 100`. Common causes:
   cold disk page cache (model takes longer than usual to load),
   GPU driver hung from a previous session, GGUF file missing or
   corrupted.
