@@ -11,15 +11,6 @@
       "expected_load_seconds": 240,
       "expected_gen_tok_per_sec": 17
     },
-    "gpt-oss-120b-autofit": {
-      "display_name": "GPT-OSS-120B 128K (autofit)",
-      "description": "Same weights as gpt-oss-120b but with --fit on instead of hand-tuned --n-cpu-moe 28. Bench-only, do not select for normal use until A/B settles.",
-      "context_tokens": 131072,
-      "vram_required_mb": 19000,
-      "dram_required_mb": 48000,
-      "expected_load_seconds": 240,
-      "expected_gen_tok_per_sec": 17
-    },
     "glm-4.7-flash": {
       "display_name": "GLM-4.7-Flash 64K",
       "description": "Fast generalist, 64K context, fully GPU-resident",
