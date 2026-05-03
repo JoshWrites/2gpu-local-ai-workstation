@@ -77,6 +77,11 @@
     }
   },
   "model": "llama-primary/glm-4.7-flash",
+  "agent": {
+    "compaction": {
+      "model": "llama-primary/gpt-oss-120b"
+    }
+  },
   "mcp": {
     "library": {
       "type": "local",
