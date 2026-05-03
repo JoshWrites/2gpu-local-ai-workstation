@@ -318,9 +318,22 @@ yad_confirm_swap() {
     time_estimate="~$((total_sec / 60)) min"
   fi
 
+  # System notification first -- gives the user something to react to
+  # even if the yad popup ends up behind the active window. KDE/GNOME
+  # both render this as a tray banner; urgency=critical keeps it
+  # visible until clicked.
+  if command -v notify-send >/dev/null 2>&1; then
+    notify-send -u critical -i dialog-question \
+      "Model swap requested" \
+      "$current_display → $TARGET_DISPLAY (${time_estimate})" || true
+  fi
+
   yad --window-icon=dialog-question \
       --title="Switch model" \
       --width=520 \
+      --center \
+      --on-top \
+      --sticky \
       --text="<b>Switch primary model?</b>\n\n  <b>From:</b> $current_display\n  <b>To:</b> $TARGET_DISPLAY\n  <small>$TARGET_DESC</small>\n\n<b>Cost:</b> $time_estimate (load + re-evaluation)\n  Load: ~${TARGET_LOAD_SEC}s\n  Re-eval session ($session_tokens tokens): ~${reeval_sec}s\n  $needs_compaction\n\n<b>Memory check:</b>\n  $vram_check\n  $dram_check\n" \
       --button="Cancel:1" \
       --button="Swap:0"
@@ -334,6 +347,9 @@ yad_progress_pipe() {
       --window-icon=dialog-information \
       --title="Loading $TARGET_DISPLAY" \
       --width=420 \
+      --center \
+      --on-top \
+      --sticky \
       --auto-close \
       --no-buttons \
       --text="Loading $TARGET_DISPLAY..." \
@@ -423,7 +439,7 @@ main() {
     log "$TARGET is already loaded; nothing to do"
     yad --info --title="Already loaded" \
         --text="<b>$TARGET_DISPLAY</b> is already the active model." \
-        --button="OK:0" --width=320 || true
+        --button="OK:0" --width=320 --center --on-top || true
     exit 0
   fi
 
@@ -462,14 +478,23 @@ main() {
     wait "$YAD_PID" 2>/dev/null || true
     yad --info --title="Loaded" \
         --text="<b>$TARGET_DISPLAY</b> is now active." \
-        --button="OK:0" --width=320 --timeout=5 --timeout-indicator=bottom || true
+        --button="OK:0" --width=320 --center --on-top \
+        --timeout=5 --timeout-indicator=bottom || true
+    if command -v notify-send >/dev/null 2>&1; then
+      notify-send -u low -i dialog-information \
+        "Model loaded" "$TARGET_DISPLAY is now active" || true
+    fi
     exit 0
   else
     err "load did not complete cleanly"
     kill "$YAD_PID" 2>/dev/null || true
     yad --error --title="Load failed" \
         --text="Loading <b>$TARGET_DISPLAY</b> did not complete. Check journalctl -u llama-primary-router for details." \
-        --button="OK:0" --width=420 || true
+        --button="OK:0" --width=420 --center --on-top || true
+    if command -v notify-send >/dev/null 2>&1; then
+      notify-send -u critical -i dialog-error \
+        "Model load failed" "$TARGET_DISPLAY did not load" || true
+    fi
     exit 1
   fi
 }
