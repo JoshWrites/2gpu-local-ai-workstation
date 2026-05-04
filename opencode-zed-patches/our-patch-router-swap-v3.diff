@@ -1,5 +1,5 @@
 diff --git a/packages/opencode/src/acp/agent.ts b/packages/opencode/src/acp/agent.ts
-index 8114004..f692a02 100644
+index 8114004..2bb1fd7 100644
 --- a/packages/opencode/src/acp/agent.ts
 +++ b/packages/opencode/src/acp/agent.ts
 @@ -46,7 +46,8 @@ import { MessageV2 } from "@/session/message-v2"
@@ -99,7 +99,7 @@ index 8114004..f692a02 100644
              if (permissionKind !== "execute" && promptPath && promptDescription) {
                const newText = typeof md["newString"] === "string"
                  ? (md["newString"] as string)
-@@ -1621,8 +1695,51 @@ export class Agent implements ACPAgent {
+@@ -1621,8 +1695,64 @@ export class Agent implements ACPAgent {
        .then((x) => x.data!.providers)
  
      const selection = parseModelSelection(params.modelId, providers)
@@ -143,8 +143,21 @@ index 8114004..f692a02 100644
 +            annotations: { audience: ["assistant"] },
 +          },
 +        ],
-+      }).catch((error) => {
++      }).catch(async (error) => {
 +        log.error("synthetic /models dispatch failed", { error, target: selection.model.modelID })
++        // Surface a chat-visible error so the user has an actionable signal.
++        // Otherwise a failed dispatch looks like "I picked a model and nothing
++        // happened" with only the log capturing why.
++        await (this.connection as any).sessionUpdate({
++          sessionId: params.sessionId,
++          update: {
++            sessionUpdate: "agent_message_chunk",
++            content: {
++              type: "text",
++              text: `Could not dispatch /models for ${selection.model.modelID}. Type \`/models ${selection.model.modelID}\` to retry.`,
++            },
++          },
++        }).catch(() => {})
 +      })
 +    } else {
 +      this.sessionManager.setModel(session.id, selection.model)
@@ -153,7 +166,7 @@ index 8114004..f692a02 100644
  
      const entries = sortProvidersByName(providers)
      const availableVariants = modelVariantsFromProviders(entries, selection.model)
-@@ -1856,6 +1973,320 @@ export class Agent implements ACPAgent {
+@@ -1856,6 +1986,320 @@ export class Agent implements ACPAgent {
            { throwOnError: true },
          )
          break
