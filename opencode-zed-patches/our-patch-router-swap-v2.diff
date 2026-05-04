@@ -335,7 +335,7 @@ index 0000000..fdcb0dd
 +  sessionContexts.delete(sessionId)
 +}
 diff --git a/packages/opencode/src/session/prompt.ts b/packages/opencode/src/session/prompt.ts
-index 861f728..73ae6af 100644
+index 861f728..415a25f 100644
 --- a/packages/opencode/src/session/prompt.ts
 +++ b/packages/opencode/src/session/prompt.ts
 @@ -52,6 +52,7 @@ import { InstanceState } from "@/effect"
@@ -346,7 +346,7 @@ index 861f728..73ae6af 100644
  
  // @ts-ignore
  globalThis.AI_SDK_LOG_WARNINGS = false
-@@ -1328,6 +1329,318 @@ NOTE: At any point in time through this workflow you should feel free to ask the
+@@ -1328,6 +1329,328 @@ NOTE: At any point in time through this workflow you should feel free to ask the
              }).pipe(Effect.ignore, Effect.forkIn(scope))
  
            const model = yield* getModel(lastUser.model.providerID, lastUser.model.modelID, sessionID)
@@ -512,6 +512,16 @@ index 861f728..73ae6af 100644
 +              }).pipe(Effect.catch(() => Effect.succeed(undefined)))
 +            }
 +
++            // TODO(stage-2): cancellation leak. If the user aborts the
++            // session mid-load, this Effect.tryPromise won't kill the
++            // spawned `model-swap.sh --execute` child. The router
++            // continues the load to completion, and the on-exit handler
++            // posts a tool_call_update to a session that may have moved
++            // on. Same shape as the existing bash tool's limitation
++            // (tool/bash.ts has the same problem). Fix by wrapping in
++            // Effect.acquireRelease with a child.kill('SIGTERM') in the
++            // release path. Mirror the pattern from tool/bash.ts when
++            // that file gets the same treatment in Stage 2.
 +            const execExit = yield* Effect.tryPromise({
 +              try: () =>
 +                new Promise<number>((resolve) => {
