@@ -563,6 +563,168 @@ Three things specifically:
    stability over a long session). Tonight gave the architecture
    its first hard performance data.
 
+## Phase 9 (2026-05-04) -- the swap UX moves into the chat panel
+
+Phase 8 ended with router-mode swaps gated by a yad popup on the
+workstation's local display. That worked for Josh sitting at the
+desk; it didn't work for Anny on her laptop (no display reachable),
+and it didn't compose with future "agent at coffee shop"
+configurations. The popup also sat outside Zed -- the user's
+attention had to leave the agent panel to confirm a swap.
+
+Phase 9's goal: a single confirm-card UX that lives inside the chat
+panel, works identically for local and remote users, and is reachable
+both via the model-picker dropdown and via a typed slash command.
+
+### v2 was the wrong shape
+
+The first attempt (commits `a20f592` through `51af14b`) put the swap
+flow in the picker handler (`unstable_setSessionModel`). The handler
+ran a JSON preflight and stashed the result in a module-level Map
+(`acp/pending-swap.ts`). The on-message check in `session/prompt.ts`
+read the Map, raised an ACP `permission.ask`, and ran the load.
+
+The split was forced by ACP scoping: `permission.ask` only works
+inside session-scoped Effect generators, which the picker RPC handler
+isn't. So state had to cross the picker → prompt-loop boundary.
+
+Live test of v2 produced a yad popup -- the legacy fallback path. The
+on-message check wasn't finding the stashed entry. We never diagnosed
+the precise cause; the architecture was the underlying issue.
+
+### v3: collapse to a slash command
+
+The redesign moved everything into the slash-command dispatch
+(`switch (cmd.name)` in `acp/agent.ts`), which already runs in
+session scope with `this.connection`, `this.sessionManager`, and
+`this.sdk` all reachable. One handler:
+
+- `/models` -- list all router-known models with status and registry
+  presence.
+- `/models <id>` -- preflight, raise the confirm card, on Allow run
+  `--execute`, on Deny revert.
+- Picker pick -- emit a synthetic `/models <id>` chat message via
+  `this.prompt({...})` with `annotations.audience: ["assistant"]`
+  (the `synthetic: true` translation that compaction summaries and
+  system reminders already use). Same handler runs.
+
+No shared module. No on-message branching. The whole feature is one
+case branch plus a renderer.
+
+The bash data layer split cleanly into modes: `model-swap.sh
+--preflight <id>` emits JSON for the card, `--execute <id>` does the
+quiet load with `[swap]` heartbeats, `--list` enumerates router state
++ registry. The yad popup path stays for terminal use during
+incidents (Stage 3 will remove it).
+
+### What measured up live
+
+Build `0.0.0--202605041505`, levine's isolated profile. All five
+typed `/models` paths verified end-to-end:
+
+- `/models` (bare) -- listing renders correctly with descriptions
+  and a "⚠ not in registry" annotation when applicable.
+- `/models <currently-loaded>` -- short-circuits with `<id> is
+  already loaded.`
+- `/models <not-in-registry>` -- emits `<id> is not in the model
+  registry. Edit primary-pool.json to register it.` (free path,
+  not in the original spec).
+- `/models <unloaded>` + Reject -- card renders with title `current →
+  target`, ✓/⚠/✗ resource lines, trailer; click reject; chat shows
+  `Cancelled — staying on <previous>.`
+- `/models <unloaded>` + Allow -- card; click Allow; foldable
+  terminal block streams `[swap] Loading...`, heartbeats every ~30s,
+  bookend `✓ <id> loaded (Ns)`. Verified gpt-oss-120b load at ~186s
+  and glm-4.7-flash at ~30s.
+
+Stage 2 (anny's `model-swap-remote.sh` cutover) shipped together
+with Stage 1 because v3's design forced it: the slash-command
+handler unconditionally calls `--preflight` on whatever script
+`OPENCODE_MODEL_SWAP_SCRIPT` points at. A one-line passthrough
+(`exec model-swap.sh "$@"` for flag-mode invocations) made anny's
+flow uniform with levine's.
+
+### What didn't work
+
+Three known limitations documented in `opencode-zed-patches/fix-7-shipped.md`:
+
+1. **Picker label stays stale after a typed swap.** ACP exposes
+   `configOptions.currentModelId` only in RPC responses, never via
+   push notification. After `/models gpt-oss-120b` succeeds, Zed's
+   footer still shows GLM. Chat actually routes to gpt-oss; the
+   context-window tooltip updates correctly (the `usage_update`
+   notification carries `size`); only the picker label is wrong.
+   Workaround: re-pick from the dropdown to force Zed's UI to
+   refresh. Real fix needs an ACP message type for current-model
+   updates -- upstream Zed work.
+
+2. **Picker pick is silent.** Selecting a different model from Zed's
+   dropdown produces nothing -- no chat message, no card, no swap.
+   The `this.prompt({...})` synthetic-prompt dispatch isn't reaching
+   the slash-command handler. Possible causes (not diagnosed):
+   `this.prompt()` may bypass the slash-command parser the way
+   `this.sdk.session.prompt()` does; the `audience: ["assistant"]`
+   → `synthetic: true` translation may not be firing; the async
+   lifecycle may be dropping the promise. Workaround: type
+   `/models <id>` in chat. Investigation deferred to fix-8.
+
+3. **Cancel-mid-load doesn't kill the spawn.** Same shape as the
+   bash tool's existing limitation. Fix path is clear (wrap in
+   `Effect.acquireRelease` with `child.kill('SIGTERM')`); both
+   should be fixed together when bash gets the same treatment.
+
+### Two slash-command-mechanics learnings worth keeping
+
+**Adding a built-in slash command requires TWO edits.** The
+`switch (cmd.name)` case branch alone isn't enough -- opencode's
+slash-command parser rejects unknown commands BEFORE the switch
+runs. The fix is to also push `{name: "models", description: "..."}`
+into `availableCommands` (around line 1615 of `acp/agent.ts`,
+alongside the existing `compact` registration). The `if
+(!names.has(...))` guard lets a user-defined MCP-prompt of the same
+name take precedence. Saved as a memory note for future patches
+(`reference_opencode_slash_commands.md`).
+
+**The `synthetic: true` flag is delivered via `annotations.audience:
+["assistant"]`** in the part. Any other route appears to bypass the
+translation. The synthetic flag matters because it keeps the
+synthetic-prompt text out of LLM context entirely -- Zed sees the
+message bubble, the model never does.
+
+### AGENTS.md gets a first-message banner
+
+Cosmetic gap in #1 (picker label stale) made it useful to give the
+model the truth about its identity. AGENTS.md now instructs:
+
+> If this is the first user message AND it's a greeting / capability
+> question / unclear, your response MUST start with: "Running
+> <your-model-id>. Use `/models` to change models. The GUI model
+> selector is broken; ignore it."
+
+Solves the "I just opened a panel, what am I talking to?" moment
+without an opencode patch. The model's own self-identification is
+canonical; the picker label is documented as cosmetic.
+
+### What Phase 9 proved
+
+- The `/models` slash-command shape is the right one. Single handler,
+  in session scope, no cross-package state, works identically for
+  local and remote users.
+- Splitting the bash data layer into `--preflight` / `--execute` /
+  `--list` modes was reusable across the v2 dead end and the v3
+  redesign. Worth doing first before the TS work because the JSON
+  schema is the contract.
+- The v2 picker-handler approach is recoverable in repo history
+  (`opencode-zed-patches/our-patch-router-swap-v2.diff` is kept as
+  reference). Useful for future "what if we tried..." moments.
+- ACP has gaps. Picker-label staleness and picker-pick silence are
+  both ACP-protocol-shaped problems, not opencode bugs. The right
+  fixes are upstream Zed PRs; the right local response is to live
+  with the gap and route the user via `/models`.
+
+Restore point: git tag `swap-card-v3-deployed`, commit `123740b`
+(plus `3d3a498` for the AGENTS.md banner).
+
 ## Open work
 
 The build is functional and pleasant. Open items remaining:
@@ -579,13 +741,23 @@ The build is functional and pleasant. Open items remaining:
   today, opencode's `agent.compaction.model = gpt-oss-120b` pin
   handles the post-swap case where compaction would otherwise route
   to the wrong model.
-- **Remote-user popup forwarding.** The yad swap dialog runs on the
-  workstation's local display. SSH'd-in remote users (Anny's
-  workflow) won't see it. Deferred.
-- **Second-user / remote-laptop integration.** The launcher
-  simplification (Phase 8) cleaned up `2gpu-launch.sh` and
-  `opencode-session.sh`, but the remote-laptop variant still needs
-  the matching update.
+- ~~**Remote-user popup forwarding.**~~ **Resolved in Phase 9.** The
+  v3 `/models` slash command runs in-chat for both local and remote
+  users; no display-bound popup. yad path retained for terminal
+  incident use only.
+- ~~**Second-user / remote-laptop integration.**~~ **Resolved in
+  Phase 9.** `model-swap-remote.sh` now forwards flag-mode args
+  (`exec model-swap.sh "$@"`) so anny's launcher works uniformly
+  with v3.
+- **Picker-pick silent dispatch (fix-8).** Selecting a different
+  model in Zed's picker should emit a synthetic `/models <id>` chat
+  message but currently produces nothing. Typed `/models` works.
+  Investigation TBD.
+- **Picker-label staleness.** ACP gap; needs upstream Zed work for a
+  proper fix. AGENTS.md first-message banner mitigates by giving
+  the model itself the truth.
+- **Cancel-mid-load.** Spawned `--execute` survives session abort.
+  Same pattern as bash tool's existing limitation; fix together.
 - **Library MCP measurements at scale.** The 42.8x number is anchored
   on three calls. Worth a longer-run study.
 - **Skill loader exercise.** Still largely untested under real load.
