@@ -1,0 +1,23 @@
+{
+  "_comment": "Test fixture; mirrors real registry shape",
+  "models": {
+    "tiny-test-model": {
+      "display_name": "Tiny Test 1B",
+      "description": "Toy model for tests, fully GPU-resident",
+      "context_tokens": 8192,
+      "vram_required_mb": 2048,
+      "dram_required_mb": 0,
+      "expected_load_seconds": 5,
+      "expected_gen_tok_per_sec": 200
+    },
+    "big-test-model": {
+      "display_name": "Big Test 70B",
+      "description": "Large test model with DRAM offload",
+      "context_tokens": 131072,
+      "vram_required_mb": 22000,
+      "dram_required_mb": 32000,
+      "expected_load_seconds": 180,
+      "expected_gen_tok_per_sec": 12
+    }
+  }
+}

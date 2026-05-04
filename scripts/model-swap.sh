@@ -64,11 +64,28 @@ require_cmd() {
   }
 }
 
+# ── Mode dispatch ────────────────────────────────────────────────────────────
+#
+# New flag-driven modes (used by opencode-patched via OPENCODE_MODEL_SWAP_SCRIPT):
+#   --preflight <target>   emit JSON describing target / current / resources / recommendations
+#   --execute   <target>   quiet load + heartbeat lines (no yad)
+#
+# Bare `model-swap.sh <target>` keeps the yad popup behavior; that path
+# is preserved for now and removed in a later pass once the card UX is
+# proven.
+
+MODE="legacy"
+if [[ "${1:-}" == "--preflight" ]]; then
+  MODE="preflight"; shift
+elif [[ "${1:-}" == "--execute" ]]; then
+  MODE="execute"; shift
+fi
+
 # ── Args ─────────────────────────────────────────────────────────────────────
 
-if [[ $# -ne 1 ]]; then
+if [[ $# -lt 1 ]]; then
   cat >&2 <<EOF
-Usage: $0 <target-model-id>
+Usage: $0 [--preflight|--execute] <target-model-id>
 
 Where <target-model-id> is one of the model ids declared in:
   $REGISTRY
@@ -129,6 +146,11 @@ router_models_json() {
 }
 
 current_loaded_model() {
+  # Test override: when WS_TEST_CURRENT_LOADED is set (even to empty string),
+  # return it instead of querying the router. Lets tests run without a live router.
+  if [[ -n "${WS_TEST_CURRENT_LOADED+set}" ]]; then
+    echo "$WS_TEST_CURRENT_LOADED"; return
+  fi
   # Returns the id of the currently-loaded model, or empty if none.
   router_models_json | jq -r '.data[] | select(.status.value == "loaded") | .id' | head -1
 }
@@ -147,18 +169,33 @@ vram_used_mb() {
 }
 
 vram_total_mb() {
+  # Test override: when WS_TEST_VRAM_TOTAL_MB is set, return it instead of
+  # reading the live system. Lets tests run without specific hardware.
+  if [[ -n "${WS_TEST_VRAM_TOTAL_MB:-}" ]]; then
+    echo "$WS_TEST_VRAM_TOTAL_MB"; return
+  fi
   local b
   b=$(cat "/sys/class/drm/${GPU_CARD}/device/mem_info_vram_total" 2>/dev/null || echo 0)
   echo $(( b / 1024 / 1024 ))
 }
 
 dram_avail_mb() {
+  # Test override: when WS_TEST_DRAM_AVAIL_MB is set, return it instead of
+  # reading /proc/meminfo. Lets tests run without specific hardware.
+  if [[ -n "${WS_TEST_DRAM_AVAIL_MB:-}" ]]; then
+    echo "$WS_TEST_DRAM_AVAIL_MB"; return
+  fi
   awk '/^MemAvailable:/ {print int($2/1024)}' /proc/meminfo
 }
 
 # ── Session token count ──────────────────────────────────────────────────────
 
 session_token_count() {
+  # Test override: when WS_TEST_SESSION_TOKENS is set, return it instead of
+  # querying the opencode SQLite. Lets tests run without a live database.
+  if [[ -n "${WS_TEST_SESSION_TOKENS:-}" ]]; then
+    echo "$WS_TEST_SESSION_TOKENS"; return
+  fi
   # Returns the cumulative token count of the most recent assistant
   # message in the most recent session. Empty / "0" if no session
   # exists or the DB isn't readable.
@@ -265,6 +302,120 @@ needs_pre_swap_compaction() {
     return 1  # session fits in target window without compaction
   fi
   return 0  # pre-swap compaction needed
+}
+
+# ── Preflight JSON emitter ───────────────────────────────────────────────────
+
+# Emit a single JSON object describing target model, current state,
+# resources, and recommendations. Read by opencode-patched to render
+# the swap-confirm card. No side effects.
+preflight_json() {
+  local target_desc target_display target_ctx target_vram target_dram
+  local current_id current_display current_ctx
+  local vram_total vram_free_pred
+  local dram_avail dram_free_pred
+  local vram_state ram_state soft_block compaction_rec
+  local session_tokens
+
+  # Target (already loaded into TARGET_* vars at script top)
+  target_desc=$(registry_field "$TARGET" description)
+  target_display=$(registry_field "$TARGET" display_name)
+  target_ctx="$TARGET_CTX"
+  target_vram="$TARGET_VRAM_MB"
+  target_dram="$TARGET_DRAM_MB"
+
+  # Current
+  current_id=$(current_loaded_model)
+  if [[ -n "$current_id" ]] && registry_has "$current_id"; then
+    current_display=$(registry_field "$current_id" display_name)
+    current_ctx=$(registry_field "$current_id" context_tokens)
+  else
+    current_id=""
+    current_display=""
+    current_ctx=0
+  fi
+
+  # Resources
+  vram_total=$(vram_total_mb)
+  vram_free_pred=$(predict_post_unload_vram_free_mb)
+  dram_avail=$(dram_avail_mb)
+  dram_free_pred=$(predict_post_unload_dram_free_mb)
+
+  # State labels: ok / tight / short
+  if (( vram_free_pred >= target_vram )); then
+    vram_state="ok"
+  elif (( vram_free_pred >= target_vram * 95 / 100 )); then
+    vram_state="tight"
+  else
+    vram_state="short"
+  fi
+
+  if (( target_dram == 0 )); then
+    ram_state="ok"
+  elif (( dram_free_pred >= target_dram )); then
+    ram_state="ok"
+  elif (( dram_free_pred >= target_dram * 95 / 100 )); then
+    ram_state="tight"
+  else
+    ram_state="short"
+  fi
+
+  if [[ "$vram_state" == "ok" && "$ram_state" == "ok" ]]; then
+    soft_block="false"
+  else
+    soft_block="true"
+  fi
+
+  if needs_pre_swap_compaction; then
+    compaction_rec="true"
+  else
+    compaction_rec="false"
+  fi
+
+  session_tokens=$(session_token_count)
+
+  # Compose JSON via jq for safe escaping
+  jq -nc \
+    --arg t_id "$TARGET" \
+    --arg t_display "$target_display" \
+    --arg t_desc "$target_desc" \
+    --argjson t_ctx "$target_ctx" \
+    --argjson t_vram "$target_vram" \
+    --argjson t_dram "$target_dram" \
+    --arg c_id "$current_id" \
+    --arg c_display "$current_display" \
+    --argjson c_ctx "$current_ctx" \
+    --argjson vram_free "$vram_free_pred" \
+    --arg vram_st "$vram_state" \
+    --argjson ram_free "$dram_free_pred" \
+    --arg ram_st "$ram_state" \
+    --argjson soft "$soft_block" \
+    --argjson compact "$compaction_rec" \
+    --argjson session "$session_tokens" \
+    '{
+      target: {
+        id: $t_id,
+        display_name: $t_display,
+        description: $t_desc,
+        context_tokens: $t_ctx,
+        vram_required_mb: $t_vram,
+        dram_required_mb: $t_dram
+      },
+      current: (if $c_id == "" then null else {
+        id: $c_id,
+        display_name: $c_display,
+        context_tokens: $c_ctx
+      } end),
+      resources: {
+        vram_free_mb: $vram_free,
+        vram_state: $vram_st,
+        ram_free_mb: $ram_free,
+        ram_state: $ram_st
+      },
+      compaction_recommended: $compact,
+      session_tokens: $session,
+      soft_block: $soft
+    }'
 }
 
 # ── yad popup helpers ───────────────────────────────────────────────────────
@@ -499,4 +650,20 @@ main() {
   fi
 }
 
-main "$@"
+# ── Main ─────────────────────────────────────────────────────────────────────
+
+case "$MODE" in
+  preflight)
+    preflight_json
+    exit 0
+    ;;
+  execute)
+    # Stage 2 placeholder — implemented in Task 2
+    err "--execute mode not yet implemented"
+    exit 99
+    ;;
+  legacy)
+    # Existing yad-driven flow. Unchanged.
+    main "$@"
+    ;;
+esac
