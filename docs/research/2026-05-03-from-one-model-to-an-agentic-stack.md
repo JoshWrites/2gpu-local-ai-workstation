@@ -725,6 +725,147 @@ canonical; the picker label is documented as cosmetic.
 Restore point: git tag `swap-card-v3-deployed`, commit `123740b`
 (plus `3d3a498` for the AGENTS.md banner).
 
+## Phase 10 (2026-05-04 evening) -- persistent memory via mnemory
+
+Phase 9 closed with the swap UX uniform across users. Phase 10 closes
+the next obvious gap: every session started blind. The agent
+re-asked the same questions every time -- "what are you working on,"
+"what's your tech stack," "what are your constraints" -- because
+nothing persisted between sessions. AGENTS.md gives the model
+agent-rule-shaped facts; CLAUDE.md gives it project-shaped facts.
+But neither stores conversational history: "I told you last week I'm
+red-green colorblind, why are you suggesting green error states
+again."
+
+Phase 10 introduced mnemory (github.com/fpytloun/mnemory v1.12.0) as
+a fifth systemd-managed service. It runs on port 8050, talks to the
+existing 5700 XT sidecars for its LLM work (qwen3-4b for fact
+extraction + dedup; multilingual-e5-large for embeddings), uses
+embedded Qdrant for the vector store at `~/.mnemory/qdrant/`, and
+authenticates clients via per-user API keys mapped to user_ids.
+Both opencode users (levine, anny) hit the same instance; mnemory
+namespaces memories by user.
+
+### How it integrates with opencode
+
+Via the @fpytloun/opencode-mnemory plugin, declared in
+`opencode.json.template`'s `plugin` array as a `file://` path
+pointing at our local clone of the mnemory repo at
+`~/Documents/Repos/mnemory/integrations/opencode/`. The plugin
+hooks opencode's lifecycle:
+
+- **Session start**: pre-fetches "core" memories matching the
+  current cwd / project context into the system prompt.
+- **Per message**: runs a semantic search on user input, injects
+  the top-N matches into the next LLM call.
+- **Post turn**: sends the conversation to mnemory's extraction
+  endpoint; mnemory's qwen3-4b call extracts facts, dedups against
+  existing memories, resolves contradictions, and stores the result.
+
+### What didn't work along the way
+
+1. **The npm-published plugin is broken at v0.1.0.** Ships *.ts
+   sources but its imports use `.js` extensions that opencode's
+   plugin loader can't resolve from the auto-installed bun cache.
+   ENOENT on `client.js`. Workaround: clone the mnemory repo
+   locally, `bun install` in `integrations/opencode/` to fetch the
+   peer dep, point opencode.json at `file://` instead. bun's
+   resolver handles `.js → .ts` automatically when the .ts source
+   exists. Filed for upstream.
+
+2. **Embedding-dim mismatch.** mnemory defaults to 1536 dims
+   (OpenAI text-embedding-3-small). Our multilingual-e5-large
+   emits 1024. First-launch silently created the Qdrant collection
+   at 1536; first write would have rejected. Fixed by setting
+   `EMBED_DIMS=1024` in the env file before first launch. Once a
+   collection is created, mnemory won't resize it -- the .qdrant/
+   data dir has to be deleted.
+
+3. **inotify limit.** Adding the local mnemory clone (2,368 files)
+   on top of the existing IDE/LSP/desktop-app watchers tipped the
+   user-instances total over Ubuntu's default of 128. Zed crashed
+   with "couldn't start inotify." Bumped permanently via
+   `/etc/sysctl.d/40-inotify.conf`: `max_user_instances=512`,
+   `max_user_watches=524288`.
+
+4. **Plugin loaded but didn't fire hooks the first time.** The
+   `opencode-session.sh` template renderer was overwriting the
+   user-edited `opencode.json` on every Zed launch -- the canonical
+   place to declare the plugin is `configs/opencode/opencode.json.template`,
+   not `~/.config/opencode/opencode.json`. Edits to the rendered
+   file get blown away. Documented in the patch commit message so
+   future-me doesn't repeat the mistake.
+
+### The qwen3-4b vs Phi-4-Mini decision
+
+Mnemory's docs recommend gpt-5-mini-class structured-output
+fidelity. We compared qwen3-4b (current sidecar) against Phi-4-Mini
+(3.8B, would have been a swap-in replacement). Findings:
+
+- Phi-4-Mini has higher BFCL function-calling at 70.3 vs qwen3-4b
+  at 61.9, but BFCL versions and methodology differ enough that the
+  comparison is shaky.
+- Phi-4-Mini has *lower* IFEval at 70.1 vs qwen3-4b at 83.4.
+  IFEval is what matters for the compaction and title agents that
+  also run on the secondary sidecar -- those depend on instruction
+  compliance, not raw function-calling.
+- Phi-4-Mini's tool-call format is custom (`<|tool|>...<|/tool|>`
+  tokens), needs an OpenAI-compat wrapper, has had a vLLM parser
+  bug, and Microsoft's own model card lists "hallucinated function
+  names" as a known failure mode.
+
+Decision: kept qwen3-4b. mnemory has automatic fallback from
+`json_schema` strict mode to plain `json_object`, so the BFCL gap
+doesn't bite as hard as it looks. If extraction reliability turns
+out to be a real issue later, Phi-4-Mini is a clean drop-in (same
+~2.4 GiB Q4_K_M footprint).
+
+### Persistence test
+
+End-to-end: told the agent "I'm red-green colorblind, when
+designing frontends always use blue/yellow/orange instead of red/
+green for status, errors, success." Closed Zed. Stopped mnemory.
+Restarted mnemory. Restarted Zed. Asked in a fresh agent panel:
+"What do you remember about my frontend design constraints?" It
+came back with the colorblind constraint, sourced from the prior
+session. Persistence works.
+
+### Operationalization
+
+mnemory now runs as a system-scope systemd unit
+(`systemd/mnemory.service`), reads `/etc/workstation/mnemory.env`
+for the per-user MCP_API_KEYS map and the LLM/embed endpoint config,
+and is started by `2gpu-launch.sh` alongside the four llama units.
+Polkit rule extended to allow launcher users to start/stop without
+sudo. Deploy sequence is three commands documented in the unit's
+install path:
+
+```
+/tmp/start-mnemory.sh           # generates ~/.config/mnemory/keys
+scripts/install-mnemory-env.sh  # writes /etc/workstation/mnemory.env
+scripts/install-systemd-units.sh
+sudo systemctl enable --now mnemory.service
+```
+
+### What Phase 10 proved
+
+- The stateless-services tier had headroom for one more shared
+  consumer: mnemory's per-message extraction adds work to qwen3-4b's
+  queue but doesn't compete with compaction (which routes to the
+  primary, not the secondary), so the queue is title + mnemory
+  only -- both short, both non-blocking forks.
+- The "data layer first, integration second" split worked. Mnemory's
+  REST API is well-defined; we never had to look at its internals
+  to debug. Almost all the friction was in opencode's plugin loader
+  and the inotify limit.
+- Agent rules + persistent memory are complementary. AGENTS.md gives
+  the model session-invariant rules; mnemory gives it
+  conversation-history-derived facts. Both feed the system prompt at
+  session start.
+
+Restore point: branch `mnemory`, commits `aaac6ee` (plugin wire-up)
+and `00c22d5` (systemd unit + launcher integration).
+
 ## Open work
 
 The build is functional and pleasant. Open items remaining:

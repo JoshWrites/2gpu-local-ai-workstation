@@ -74,6 +74,27 @@ Edit-prediction (Qwen2.5-Coder on the 5700 XT) is the one
 exception to the Library-as-boundary rule -- Zed talks to it
 directly on a latency budget that can't tolerate an extra hop.
 Everything else routes through Library.
+
++--------------------------------------------------------------+
+|  PERSISTENT MEMORY -- mnemory                  :8050         |
+|                                                              |
+|  Cross-session fact extraction, dedup, semantic recall.      |
+|  Fact extraction:    qwen3-4b (port 11435, shared sidecar)   |
+|  Embeddings:         e5-large (port 11437, shared sidecar)   |
+|  Vector store:       embedded Qdrant in ~/.mnemory/qdrant/   |
+|  Multi-user:         per-user namespacing via API keys       |
+|                                                              |
+|  Loaded into opencode via @fpytloun/opencode-mnemory plugin  |
+|  (auto-recall on session start, auto-capture on each turn).  |
+|  Survives session reboot; the agent starts a new conversation|
+|  knowing what it learned in prior ones.                      |
++--------------------------------------------------------------+
+
+mnemory and Library serve different needs and coexist: Library
+compresses external content (web, files) into the chat session;
+mnemory persists conversational facts across sessions. Both feed
+through the qwen3-4b sidecar for their LLM work, sharing the
+secondary's queue.
 ```
 
 ## Effective parameter capacity served simultaneously
@@ -182,15 +203,27 @@ the discipline:
 - **The Library MCP as a type-conversion boundary**: stateless work
   becomes compressed payloads before crossing into the agent's
   accumulating state.
-- **Router-mode primary with on-demand swap UX.** A single
-  llama-server (mainline router mode, PR #16653) hosts both GLM-4.7
-  -Flash (fast default) and GPT-OSS-120B (heavy reasoning) on the
-  same port, loading on demand. Picking a not-loaded model in Zed's
-  footer triggers a yad confirm dialog, a progress popup, and the
-  swap completes in ~35 s for GLM or ~4 min for OSS before the
-  message goes through. The mechanic is mainline llama.cpp; the UX
-  layer is a 5th opencode patch plus `scripts/model-swap.sh`. See
-  [`2026-05-03-router-mode-swap-implementation.md`](2026-05-03-router-mode-swap-implementation.md).
+- **Router-mode primary with `/models` slash-command swap UX.** A
+  single llama-server (mainline router mode, PR #16653) hosts both
+  GLM-4.7-Flash (fast default) and GPT-OSS-120B (heavy reasoning) on
+  the same port, loading on demand. The swap UX lives entirely in
+  the chat panel: type `/models` to list available models, `/models
+  <id>` to raise a confirmation card showing target description and
+  resource check, click Allow to stream `[swap] still loading (Ns)`
+  heartbeats into a foldable terminal block, and a final `✓ <id>
+  loaded (Ns)` bookend. ~35 s for GLM, ~3-4 min for OSS. Works
+  identically for local users at the workstation and for remote
+  users over SSH+ACP. See
+  [`2026-05-03-router-mode-swap-implementation.md`](2026-05-03-router-mode-swap-implementation.md)
+  and the v3 design at
+  [`../superpowers/specs/2026-05-04-models-slash-command-design.md`](../superpowers/specs/2026-05-04-models-slash-command-design.md).
+- **Persistent memory across sessions.** mnemory (port 8050) runs as
+  a fifth systemd-managed service and ingests every chat turn. The
+  next session starts with relevant memories pre-fetched into
+  context. Multi-user via per-user API keys. Both extraction and
+  embeddings use the existing 5700 XT sidecars; no new GPU load. See
+  [`../../opencode-zed-patches/fix-7-shipped.md`](../../opencode-zed-patches/fix-7-shipped.md)
+  for context.
 
 The architecture predates this measurement run by months -- see
 [`2026-05-03-from-one-model-to-an-agentic-stack.md`](2026-05-03-from-one-model-to-an-agentic-stack.md)
@@ -204,6 +237,7 @@ for the build history.
 | GPU acceleration entirely | Pure-CPU inference at DDR4-3200 bandwidth: ~5-8 tok/s. **2-3x slower** than measured. |
 | 5700 XT (secondary GPU) | Lose edit predictions, embeddings, fast summarizer. The latency-sensitive workloads can't share a card with chat-shaped generation without queueing badly. Primary GPU shrinks to make room. |
 | Library MCP | Webfetch path overflows 128K window after ~10 calls. Long-context model becomes unusable for agentic research. |
+| mnemory | Each session starts blind: the agent re-asks for preferences, constraints, project facts the user has already taught it. Cosmetic on day 1; corrosive over weeks. |
 | `--alias gpt-oss-120b` flag | opencode pattern-matches model id to enable Harmony / tool attachment. Without it, model emits code in chat instead of tool calls. |
 
 ## Methodology notes
