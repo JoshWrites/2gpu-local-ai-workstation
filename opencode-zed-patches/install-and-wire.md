@@ -11,11 +11,11 @@ How to build the patched opencode, install it, and wire Zed to use it.
 | Build artifact (per-user staging) | `~/.local/bin/opencode-patched` | Build output before the system install. Useful as a fallback. |
 | Build tree | `/tmp/opencode-build/opencode/` | Sparse clone for rebuilding. Disposable. |
 | Isolated bun 1.3.13 | `/tmp/bun-1313/bin/bun` | Required to build (stock bun on most distros lags behind). Disposable. |
-| Source patches | `our-patch-agent.diff`, `our-patch-bash.diff`, `our-patch-tools.diff`, `our-patch-skill-permission.diff`, `our-patch-router-swap-v2.diff` | Five diffs in this repo. Apply in order against opencode v1.14.28. |
+| Source patches | `our-patch-agent.diff`, `our-patch-bash.diff`, `our-patch-tools.diff`, `our-patch-skill-permission.diff`, `our-patch-router-swap-v3.diff` | Five diffs in this repo. Apply in order against opencode v1.14.28. |
 
-> Note: `our-patch-router-swap-v2.diff` replaces the earlier
-> `our-patch-router-swap.diff`. The v1 file is kept in the repo for
-> historical reference but is not applied.
+> Note: `our-patch-router-swap-v3.diff` supersedes both v1 and v2.
+> v1 and v2 are kept in the repo for historical reference but are
+> not applied.
 
 ## How Zed picks up the patched binary
 
@@ -68,7 +68,7 @@ git apply /path/to/this/repo/our-patch-agent.diff
 git apply /path/to/this/repo/our-patch-bash.diff
 git apply /path/to/this/repo/our-patch-tools.diff
 git apply /path/to/this/repo/our-patch-skill-permission.diff
-git apply /path/to/this/repo/our-patch-router-swap-v2.diff
+git apply /path/to/this/repo/our-patch-router-swap-v3.diff
 
 # 3. Get a compatible bun. The build script requires bun >= 1.3.13.
 BUN_INSTALL=/tmp/bun-1313 bash <(curl -fsSL https://bun.sh/install) bun-v1.3.13

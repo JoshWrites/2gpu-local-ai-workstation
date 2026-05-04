@@ -42,27 +42,29 @@ Five patches in this repo fix that:
   "Load skill: \<name\> (~\<N\> tokens)" with the description on a
   second line. Now the user can see what the skill is for and how
   much context it will eat before clicking Allow.
-- **router-swap-v2 patch.** Confirm-card UX for model swaps in router
-  mode. When the user picks an unloaded primary model in Zed,
-  `unstable_setSessionModel` probes `scripts/model-swap.sh
-  --preflight <target>` (path from `OPENCODE_MODEL_SWAP_SCRIPT`).
-  On JSON success the preflight result is stashed; on the next user
-  message, opencode raises an ACP `swap` permission_request with a
-  rich card body (description, VRAM/RAM resource glyphs, optional
-  soft-block warning, optional /compact recommendation). On Allow,
-  the script's `--execute` mode runs and stdout/stderr stream into
-  a foldable terminal block in chat (via the same ACP
-  `_meta.terminal_*` convention the bash tool uses; non-Zed clients
-  get a text-content fallback). On Deny, opencode reverts the
-  picker to the user's prior model, publishes a
-  Session.Event.Error, and breaks the loop -- the chat input is
-  immediately usable on the previous model with no manual re-pick.
-  If the probe fails (script doesn't speak `--preflight`, exits
-  non-zero, or emits non-JSON), opencode falls through to the v1
-  eager-spawn behavior, preserving anny's `model-swap-remote.sh`
-  flow byte-for-byte. The v1 patch
-  (`our-patch-router-swap.diff`) is kept in the repo for historical
-  reference but is not applied.
+- **router-swap-v3 patch.** Confirm-card UX for model swaps in router
+  mode, collapsed onto a single `/models` slash command. All four
+  trigger paths -- typed `/models <id>`, typed bare `/models`,
+  picker pick (typed re-emit), picker pick (mouse) -- converge on
+  `case "models":` inside the slash-command dispatch in
+  `acp/agent.ts`. The picker handler emits a synthetic
+  `/models <id>` chat message instead of running preflight or
+  spawning anything directly; the slash-command branch then runs
+  `scripts/model-swap.sh --preflight <target>` (path from
+  `OPENCODE_MODEL_SWAP_SCRIPT`), raises an ACP `swap`
+  permission_request with a rich card body (description, VRAM/RAM
+  resource glyphs, optional soft-block warning, optional /compact
+  recommendation), and on Allow runs `--execute` while streaming
+  stdout/stderr into a foldable terminal block (via
+  `_meta.terminal_*`; non-Zed clients get a text-content
+  fallback). The new model is committed to the session only after
+  load success. On Deny, on load failure, or if the model is
+  already loaded, the session model is reconciled to keep Zed's
+  picker accurate. Bare `/models` lists available models from
+  `--list` so the user can pick without leaving the chat. The v1
+  and v2 patches (`our-patch-router-swap.diff`,
+  `our-patch-router-swap-v2.diff`) are kept in the repo for
+  historical reference but are not applied.
 
 Apply the patches, rebuild opencode from source, install the resulting
 binary alongside the upstream one, and point Zed at the patched binary.
@@ -124,16 +126,21 @@ A few real failure modes:
 - `our-patch-tools.diff`: the write/edit schema patch (and matching
   test fixtures).
 - `our-patch-skill-permission.diff`: the skill-permission card patch.
-- `our-patch-router-swap-v2.diff`: the router-mode model-swap
-  confirm-card patch -- preflight probe + ACP `swap` permission card
-  with resource summary, optional soft-block warning, and optional
-  /compact recommendation. On Allow runs `--execute` and streams
-  stdout/stderr into a chat terminal block; on Deny reverts the
-  picker to the prior model and breaks the loop. Falls back to the
-  v1 eager-spawn path if the script doesn't speak `--preflight`
-  (preserves remote-user paths). Adds a small shared module
-  (`acp/pending-swap.ts`) bridging the picker handler and the
-  on-message check for short-lived per-session state.
+- `our-patch-router-swap-v3.diff`: the router-mode model-swap
+  `/models` slash-command patch -- single dispatch arm in
+  `acp/agent.ts` handles all four trigger paths (typed slash
+  command, picker pick, bare listing, already-loaded short-circuit).
+  Touches only `acp/agent.ts` (no new shared module, no
+  `session/prompt.ts` on-message branch). The picker handler
+  re-emits as a synthetic `/models <id>` so the visible UI stays
+  consistent regardless of trigger path. Anny's path
+  (`model-swap-remote.sh`) works uniformly because it now forwards
+  flags to `model-swap.sh`.
+- `our-patch-router-swap-v2.diff`: the v2 router-mode model-swap
+  confirm-card patch (kept for historical reference; not applied
+  as of v3 cutover). Used a picker-handler probe + on-message
+  check + shared `acp/pending-swap.ts` module; replaced by v3's
+  single-dispatch design.
 - `our-patch-router-swap.diff`: the v1 router-mode model-swap trigger
   patch (kept for historical reference; not applied as of fix-6).
 - `the-fix.md`: a plain-language description of the agent.ts patch and
@@ -174,9 +181,10 @@ why; the files in this repo are the what.
 
 ## Status
 
-Both patches are in production on the author's workstation as of
-2026-05-01. Stock opencode v1.14.28 plus the two diffs (agent.ts now
-including the fix-3 file-tool fallback), built and installed at
+Five patches are in production on the author's workstation as of
+2026-05-04. Stock opencode v1.14.28 plus the five diffs (agent.ts
+including fix-3 file-tool fallback, fix-4 schema description, fix-5
+code preview, plus router-swap-v3), built and installed at
 `/usr/local/bin/opencode-patched`. Zed in a per-project isolated
 profile points at it via `OPENCODE_BIN`.
 

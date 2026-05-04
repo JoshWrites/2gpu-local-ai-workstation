@@ -1,0 +1,476 @@
+diff --git a/packages/opencode/src/acp/agent.ts b/packages/opencode/src/acp/agent.ts
+index 8114004..f692a02 100644
+--- a/packages/opencode/src/acp/agent.ts
++++ b/packages/opencode/src/acp/agent.ts
+@@ -46,7 +46,8 @@ import { MessageV2 } from "@/session/message-v2"
+ import { Config } from "@/config"
+ import { ConfigMCP } from "@/config/mcp"
+ import { Todo } from "@/session/todo"
+-import { Result, Schema } from "effect"
++import { Effect, Result, Schema } from "effect"
++import { Permission } from "@/permission"
+ import { LoadAPIKeyError } from "ai"
+ import type { AssistantMessage, Event, OpencodeClient, SessionMessageResponse, ToolPart } from "@opencode-ai/sdk/v2"
+ import { applyPatch } from "diff"
+@@ -278,6 +279,14 @@ export class Agent implements ACPAgent {
+                     : ""
+                 return `Load skill: ${promptSkillName}${cost}`
+               }
++              if (permission.permission === "swap") {
++                // Workstation router-mode v3: arrow title for the
++                // model-swap confirm card. "current → target" reads
++                // naturally and stays single-line for non-execute kinds.
++                const target = typeof md["target"] === "string" ? md["target"] : "unknown"
++                const current = typeof md["current"] === "string" ? md["current"] : "(none)"
++                return `${current} → ${target}`
++              }
+               if (permissionKind === "execute" && promptCommand) {
+                 return promptDescription ? `${promptCommand}\n${promptDescription}` : promptCommand
+               }
+@@ -307,6 +316,71 @@ export class Agent implements ACPAgent {
+                 content: { type: "text", text: promptDescription },
+               })
+             }
++            // Workstation router-mode v3: swap confirm card body.
++            // Layout (each line a content block):
++            //   1. <description from registry>
++            //   2. ✓/⚠/✗ VRAM: <free> GB free of <need> GB needed
++            //   2. ✓/⚠/✗ RAM:  <free> GB free of <need> GB needed   (only if ram_applies)
++            //   3. ⚠ tight-margin warning (only if soft_block)
++            //   4. ⓘ compaction recommendation (only if compaction_recommended)
++            //   5. trailer: "Load will begin when you accept and may take a few minutes."
++            // Data is pulled off permission.metadata (set by the
++            // /models slash-command handler from the preflight JSON).
++            if (permission.permission === "swap") {
++              const desc = typeof md["description"] === "string" ? md["description"] : ""
++              const vramFreeGb = typeof md["vram_free_gb"] === "number" ? md["vram_free_gb"] : 0
++              const vramNeedGb = typeof md["vram_need_gb"] === "number" ? md["vram_need_gb"] : 0
++              const vramState = typeof md["vram_state"] === "string" ? md["vram_state"] : "ok"
++              const ramFreeGb = typeof md["ram_free_gb"] === "number" ? md["ram_free_gb"] : 0
++              const ramNeedGb = typeof md["ram_need_gb"] === "number" ? md["ram_need_gb"] : 0
++              const ramState = typeof md["ram_state"] === "string" ? md["ram_state"] : "ok"
++              const ramApplies = typeof md["ram_applies"] === "boolean" ? md["ram_applies"] : false
++              const softBlock = typeof md["soft_block"] === "boolean" ? md["soft_block"] : false
++              const compactionRec =
++                typeof md["compaction_recommended"] === "boolean" ? md["compaction_recommended"] : false
++              const sessionTokens = typeof md["session_tokens"] === "number" ? md["session_tokens"] : 0
++              const targetCtxK = typeof md["target_ctx_k"] === "number" ? md["target_ctx_k"] : 0
++
++              if (desc) {
++                promptContent.push({ type: "content", content: { type: "text", text: desc } })
++              }
++              const glyph = (s: string) => (s === "ok" ? "✓" : s === "tight" ? "⚠" : "✗")
++              const resourceLines: string[] = []
++              resourceLines.push(`${glyph(vramState)} VRAM: ${vramFreeGb} GB free of ${vramNeedGb} GB needed`)
++              if (ramApplies) {
++                resourceLines.push(`${glyph(ramState)} RAM:  ${ramFreeGb} GB free of ${ramNeedGb} GB needed`)
++              }
++              promptContent.push({
++                type: "content",
++                content: { type: "text", text: resourceLines.join("\n") },
++              })
++              if (softBlock) {
++                promptContent.push({
++                  type: "content",
++                  content: {
++                    type: "text",
++                    text: "⚠ Resource margin is tight; load may swap to disk or fail. Proceed only if you've closed other GPU/RAM workloads.",
++                  },
++                })
++              }
++              if (compactionRec) {
++                const sessionK = Math.round(sessionTokens / 1000)
++                promptContent.push({
++                  type: "content",
++                  content: {
++                    type: "text",
++                    text: `ⓘ Your session has ${sessionK}K tokens; target can hold ${targetCtxK}K. Run /compact before swapping to avoid losing context after the swap.`,
++                  },
++                })
++              }
++              promptContent.push({
++                type: "content",
++                content: {
++                  type: "text",
++                  text: "Load will begin when you accept and may take a few minutes. Send your next message after it completes.",
++                },
++              })
++            }
+             if (permissionKind !== "execute" && promptPath && promptDescription) {
+               const newText = typeof md["newString"] === "string"
+                 ? (md["newString"] as string)
+@@ -1621,8 +1695,51 @@ export class Agent implements ACPAgent {
+       .then((x) => x.data!.providers)
+ 
+     const selection = parseModelSelection(params.modelId, providers)
+-    this.sessionManager.setModel(session.id, selection.model)
+-    this.sessionManager.setVariant(session.id, selection.variant)
++
++    // Workstation router-mode integration v3: defer the actual model
++    // change to the /models slash command handler, which will run
++    // preflight, raise a permission card, and only call sessionManager
++    // .setModel after a successful load. Here we just emit a synthetic
++    // /models <id> chat message; agent.prompt() will route it to
++    // case "models": which owns the full flow.
++    //
++    // The picker still updates Zed's UI client-side because Zed assumes
++    // setSessionModel responses imply selection. If the slash-command
++    // handler later denies (or load fails), it will revert via
++    // sessionManager.setModel(previous) to snap the picker back.
++    //
++    // Anny's path: model-swap-remote.sh now forwards flags to
++    // model-swap.sh (per Stage 2), so the same handler works for both
++    // users uniformly.
++    //
++    // Gated on OPENCODE_MODEL_SWAP_SCRIPT. Without it we behave like
++    // upstream and commit the model change directly.
++    const swapScript = process.env["OPENCODE_MODEL_SWAP_SCRIPT"]
++    if (swapScript) {
++      // Fire-and-forget: don't await. Awaiting would block the picker
++      // response for the entire load (potentially minutes) and Zed
++      // would hang. The synthetic prompt re-enters this agent through
++      // agent.prompt() and runs the swap on its own clock.
++      // annotations.audience: ["assistant"] is the ACP-side hint that
++      // gets translated to part.synthetic = true at the prompt-loop
++      // boundary (see line ~1707 of this file), matching how
++      // compaction summaries and system reminders are flagged.
++      void this.prompt({
++        sessionId: params.sessionId,
++        prompt: [
++          {
++            type: "text",
++            text: `/models ${selection.model.modelID}`,
++            annotations: { audience: ["assistant"] },
++          },
++        ],
++      }).catch((error) => {
++        log.error("synthetic /models dispatch failed", { error, target: selection.model.modelID })
++      })
++    } else {
++      this.sessionManager.setModel(session.id, selection.model)
++      this.sessionManager.setVariant(session.id, selection.variant)
++    }
+ 
+     const entries = sortProvidersByName(providers)
+     const availableVariants = modelVariantsFromProviders(entries, selection.model)
+@@ -1856,6 +1973,320 @@ export class Agent implements ACPAgent {
+           { throwOnError: true },
+         )
+         break
++
++      case "models": {
++        // Workstation router-mode integration v3: /models slash command.
++        //
++        // Four entry paths, all converge here:
++        //   1. user types "/models"            → list available models
++        //   2. user types "/models <id>"       → preflight + card + load
++        //   3. picker pick (typed re-emit)     → synthetic /models <id>
++        //   4. picker pick (mouse, headless)   → synthetic /models <id>
++        //
++        // Disabled when OPENCODE_MODEL_SWAP_SCRIPT is unset (upstream
++        // users get the bare slash-command no-op).
++        const swapScript = process.env["OPENCODE_MODEL_SWAP_SCRIPT"]
++        if (!swapScript) break
++
++        const target = (cmd.args ?? "").trim()
++
++        // Bare /models — emit the available-models listing.
++        if (!target) {
++          const listJson = await new Promise<any>((resolve) => {
++            // eslint-disable-next-line @typescript-eslint/no-require-imports
++            const { execFile } = require("child_process")
++            execFile(swapScript, ["--list"], { timeout: 5000 }, (err: any, stdout: string) => {
++              if (err) {
++                resolve(null)
++                return
++              }
++              try {
++                resolve(JSON.parse(stdout))
++              } catch {
++                resolve(null)
++              }
++            })
++          })
++          if (!listJson?.models) {
++            await this.connection.sessionUpdate({
++              sessionId: sessionID,
++              update: {
++                sessionUpdate: "agent_message_chunk",
++                content: { type: "text", text: "Could not list available models. Check the workstation logs." },
++              },
++            })
++            break
++          }
++          const lines: string[] = ["Available models:"]
++          for (const m of listJson.models) {
++            const idCol = String(m.id ?? "?").padEnd(18)
++            const statusBit = `(${m.status}${m.in_registry ? "" : " ⚠ not in registry"})`.padEnd(35)
++            const desc = typeof m.description === "string" ? m.description : ""
++            lines.push(`  ${idCol}${statusBit}${desc}`)
++          }
++          lines.push("")
++          lines.push("Type `/models <id>` to swap.")
++          await this.connection.sessionUpdate({
++            sessionId: sessionID,
++            update: {
++              sessionUpdate: "agent_message_chunk",
++              content: { type: "text", text: lines.join("\n") },
++            },
++          })
++          break
++        }
++
++        // /models <id> — preflight + card + execute.
++        const preflight = await new Promise<any>((resolve) => {
++          // eslint-disable-next-line @typescript-eslint/no-require-imports
++          const { execFile } = require("child_process")
++          execFile(
++            swapScript,
++            ["--preflight", target],
++            { timeout: 3000 },
++            (err: any, stdout: string, stderr: string) => {
++              if (err) {
++                resolve({ error: (stderr || err.message || "").toString() })
++                return
++              }
++              try {
++                resolve(JSON.parse(stdout))
++              } catch {
++                resolve({ error: "preflight emitted non-JSON" })
++              }
++            },
++          )
++        })
++        if (preflight?.error) {
++          const errStr = String(preflight.error)
++          const isNotInRegistry = /not in registry/i.test(errStr)
++          const msg = isNotInRegistry
++            ? `${target} is not in the model registry. Edit primary-pool.json to register it.`
++            : `Could not preflight ${target}: ${errStr.split("\n")[0]}. Retry, or check journalctl -u llama-primary-router.service.`
++          await this.connection.sessionUpdate({
++            sessionId: sessionID,
++            update: {
++              sessionUpdate: "agent_message_chunk",
++              content: { type: "text", text: msg },
++            },
++          })
++          break
++        }
++
++        // Already loaded: short-circuit. Forward-commit so the session
++        // model lines up with the picker selection.
++        if (preflight?.current?.id === preflight?.target?.id) {
++          this.sessionManager.setModel(sessionID, {
++            providerID: ProviderID.make(model.providerID),
++            modelID: ModelID.make(target),
++          })
++          await this.connection.sessionUpdate({
++            sessionId: sessionID,
++            update: {
++              sessionUpdate: "agent_message_chunk",
++              content: { type: "text", text: `${target} is already loaded.` },
++            },
++          })
++          break
++        }
++
++        // Build card metadata. The renderer in handleEvent
++        // (permission.asked) pulls these keys off permission.metadata.
++        const swapMd: Record<string, unknown> = {
++          target: preflight.target.id,
++          current: preflight.current?.id ?? "(none)",
++          description: preflight.target.description ?? "",
++          vram_free_gb: Math.round((preflight.resources?.vram_free_mb ?? 0) / 1024),
++          vram_need_gb: Math.round((preflight.target.vram_required_mb ?? 0) / 1024),
++          vram_state: preflight.resources?.vram_state ?? "ok",
++          ram_free_gb: Math.round((preflight.resources?.ram_free_mb ?? 0) / 1024),
++          ram_need_gb: Math.round((preflight.target.dram_required_mb ?? 0) / 1024),
++          ram_state: preflight.resources?.ram_state ?? "ok",
++          ram_applies: (preflight.target.dram_required_mb ?? 0) > 0,
++          soft_block: preflight.soft_block ?? false,
++          compaction_recommended: preflight.compaction_recommended ?? false,
++          session_tokens: preflight.session_tokens ?? 0,
++          target_ctx_k: Math.round((preflight.target.context_tokens ?? 0) / 1000),
++        }
++
++        // Resolve previous model id for revert paths.
++        const previousModelId = preflight.current?.id ?? null
++        const previousProviderID = previousModelId ? model.providerID : null
++
++        // Raise the swap permission card. Permission.Service.ask
++        // publishes "permission.asked" on the bus; our event
++        // subscription routes it through connection.requestPermission
++        // and replies via sdk.permission.reply. AppRuntime provides
++        // Permission.Service via AppLayer; Instance context was set
++        // up in cli/bootstrap so InstanceState.get resolves.
++        const allowed = await AppRuntime.runPromise(
++          Permission.Service.use((svc) =>
++            svc.ask({
++              permission: "swap",
++              patterns: [target],
++              always: [target],
++              sessionID: sessionID as any,
++              metadata: swapMd,
++              ruleset: [],
++            }),
++          ).pipe(
++            Effect.match({
++              onSuccess: () => true,
++              onFailure: () => false,
++            }),
++          ),
++        )
++
++        if (!allowed) {
++          // Deny: revert Zed's picker to the previous model so the
++          // chat input is usable immediately.
++          if (previousModelId && previousProviderID) {
++            this.sessionManager.setModel(sessionID, {
++              providerID: ProviderID.make(previousProviderID),
++              modelID: ModelID.make(previousModelId),
++            })
++          }
++          await this.connection.sessionUpdate({
++            sessionId: sessionID,
++            update: {
++              sessionUpdate: "agent_message_chunk",
++              content: {
++                type: "text",
++                text: previousModelId
++                  ? `Cancelled — staying on ${previousModelId}.`
++                  : `Cancelled — no model loaded.`,
++              },
++            },
++          })
++          break
++        }
++
++        // Allow: spawn --execute and stream stdout/stderr into a
++        // chat terminal block. Pattern mirrors tool/bash.ts: emit a
++        // tool_call with _meta.terminal_info, push deltas via
++        // tool_call_update + _meta.terminal_output, close out with
++        // tool_call_update + status + _meta.terminal_exit.
++        const terminalId = `swap-${target}-${Date.now()}`
++        const swapTitle = `Loading ${target}`
++        const useTerminal = this.clientSupportsTerminalOutput
++        await this.connection
++          .sessionUpdate({
++            sessionId: sessionID,
++            update: {
++              sessionUpdate: "tool_call",
++              toolCallId: terminalId,
++              title: swapTitle,
++              kind: "execute",
++              status: "pending",
++              locations: [],
++              rawInput: { command: `${swapScript} --execute ${target}` },
++              ...(useTerminal
++                ? {
++                    content: [{ type: "terminal", terminalId } as any],
++                    _meta: { terminal_info: { terminal_id: terminalId } },
++                  }
++                : {
++                    content: [{ type: "content", content: { type: "text", text: `${swapTitle}…\n` } }],
++                  }),
++            } as any,
++          })
++          .catch(() => {})
++
++        // TODO(stage-2): cancellation leak. If the user aborts the
++        // session mid-load, this Promise won't kill the spawned
++        // `model-swap.sh --execute` child. The router continues the
++        // load to completion, and the on-exit handler posts a
++        // tool_call_update to a session that may have moved on. Same
++        // shape as tool/bash.ts's existing limitation. Fix by wrapping
++        // in Effect.acquireRelease with a child.kill('SIGTERM') in the
++        // release path; mirror tool/bash.ts when that gets the same
++        // treatment.
++        let textBuffer = ""
++        const exitCode = await new Promise<number>((resolve) => {
++          // eslint-disable-next-line @typescript-eslint/no-require-imports
++          const { spawn } = require("child_process")
++          const child = spawn(swapScript, ["--execute", target], {
++            stdio: ["ignore", "pipe", "pipe"],
++            env: { ...process.env },
++          })
++          const onChunk = (chunk: Buffer) => {
++            const chunkText = chunk.toString()
++            if (useTerminal) {
++              this.connection
++                .sessionUpdate({
++                  sessionId: sessionID,
++                  update: {
++                    sessionUpdate: "tool_call_update",
++                    toolCallId: terminalId,
++                    _meta: { terminal_output: { terminal_id: terminalId, data: chunkText } },
++                  } as any,
++                })
++                .catch(() => {})
++            } else {
++              textBuffer += chunkText
++              this.connection
++                .sessionUpdate({
++                  sessionId: sessionID,
++                  update: {
++                    sessionUpdate: "tool_call_update",
++                    toolCallId: terminalId,
++                    content: [{ type: "content", content: { type: "text", text: textBuffer } }],
++                  } as any,
++                })
++                .catch(() => {})
++            }
++          }
++          child.stdout?.on("data", onChunk)
++          child.stderr?.on("data", onChunk)
++          child.on("exit", (code: number | null) => resolve(code ?? 1))
++          child.on("error", () => resolve(1))
++        })
++
++        // Close out the terminal card.
++        await this.connection
++          .sessionUpdate({
++            sessionId: sessionID,
++            update: {
++              sessionUpdate: "tool_call_update",
++              toolCallId: terminalId,
++              status: exitCode === 0 ? "completed" : "failed",
++              ...(useTerminal && {
++                _meta: {
++                  terminal_exit: {
++                    terminal_id: terminalId,
++                    exit_code: exitCode,
++                    signal: null,
++                  },
++                },
++              }),
++            } as any,
++          })
++          .catch(() => {})
++
++        if (exitCode === 0) {
++          // Forward commit: load succeeded, set the new model.
++          this.sessionManager.setModel(sessionID, {
++            providerID: ProviderID.make(model.providerID),
++            modelID: ModelID.make(target),
++          })
++        } else {
++          // Failure: revert to previous to keep Zed's picker accurate.
++          if (previousModelId && previousProviderID) {
++            this.sessionManager.setModel(sessionID, {
++              providerID: ProviderID.make(previousProviderID),
++              modelID: ModelID.make(previousModelId),
++            })
++          }
++          await this.connection.sessionUpdate({
++            sessionId: sessionID,
++            update: {
++              sessionUpdate: "agent_message_chunk",
++              content: { type: "text", text: `Load failed for ${target}. See terminal block above.` },
++            },
++          })
++        }
++        break
++      }
+     }
+ 
+     await sendUsageUpdate(this.connection, this.sdk, sessionID, directory)
