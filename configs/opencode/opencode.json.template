@@ -47,7 +47,9 @@
     }
   },
   "model": "llama-primary/glm-4.7-flash",
-  "disabled_providers": ["opencode"],
+  "disabled_providers": [
+    "opencode"
+  ],
   "agent": {
     "compaction": {
       "model": "llama-primary/gpt-oss-120b"
@@ -76,7 +78,6 @@
     "skill": "ask",
     "bash": {
       "*": "ask",
-
       "ls *": "allow",
       "cat /etc/*": "allow",
       "cat /var/log/*": "allow",
@@ -85,7 +86,6 @@
       "find *": "allow",
       "systemctl status *": "allow",
       "systemctl list-units *": "allow",
-
       "ssh ${WS_PROXMOX_USER}@${WS_PROXMOX_HOST} sudo pct list*": "allow",
       "ssh ${WS_PROXMOX_USER}@${WS_PROXMOX_HOST} sudo pct config *": "allow",
       "ssh ${WS_PROXMOX_USER}@${WS_PROXMOX_HOST} sudo pct status *": "allow",
@@ -99,7 +99,6 @@
       "ssh ${WS_PROXMOX_USER}@${WS_PROXMOX_HOST} grep *": "allow",
       "ssh ${WS_PROXMOX_USER}@${WS_PROXMOX_HOST} systemctl status *": "allow",
       "ssh ${WS_PROXMOX_USER}@${WS_PROXMOX_HOST} sudo systemctl status *": "allow",
-
       "rm *": "ask",
       "rm -rf *": "deny",
       "dd *": "deny",
@@ -116,5 +115,7 @@
       "ssh ${WS_PROXMOX_USER}@${WS_PROXMOX_HOST} shutdown*": "deny"
     }
   },
-  "plugin": []
+  "plugin": [
+    "file:///home/levine/Documents/Repos/mnemory/integrations/opencode"
+  ]
 }
