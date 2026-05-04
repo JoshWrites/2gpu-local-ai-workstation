@@ -79,13 +79,15 @@ if [[ "${1:-}" == "--preflight" ]]; then
   MODE="preflight"; shift
 elif [[ "${1:-}" == "--execute" ]]; then
   MODE="execute"; shift
+elif [[ "${1:-}" == "--list" ]]; then
+  MODE="list"; shift
 fi
 
 # ── Args ─────────────────────────────────────────────────────────────────────
 
-if [[ $# -lt 1 ]]; then
+if [[ "$MODE" != "list" && $# -lt 1 ]]; then
   cat >&2 <<EOF
-Usage: $0 [--preflight|--execute] <target-model-id>
+Usage: $0 [--preflight|--execute|--list] [<target-model-id>]
 
 Where <target-model-id> is one of the model ids declared in:
   $REGISTRY
@@ -96,7 +98,9 @@ EOF
   exit 2
 fi
 
-TARGET="$1"
+if [[ "$MODE" != "list" ]]; then
+  TARGET="$1"
+fi
 
 # Required external tools.
 require_cmd curl
@@ -118,21 +122,23 @@ registry_has() {
 }
 
 # Verify the target exists in the registry. If it doesn't, refuse early
-# rather than discover this halfway through a swap.
-if ! registry_has "$TARGET"; then
+# rather than discover this halfway through a swap. Skip in list mode.
+if [[ "$MODE" != "list" ]] && ! registry_has "$TARGET"; then
   err "model '$TARGET' not in registry $REGISTRY"
   err "registered ids:"
   jq -r '.models | keys[] | "  - " + .' "$REGISTRY" >&2
   exit 1
 fi
 
-TARGET_DISPLAY=$(registry_field "$TARGET" display_name)
-TARGET_DESC=$(registry_field "$TARGET" description)
-TARGET_CTX=$(registry_field "$TARGET" context_tokens)
-TARGET_VRAM_MB=$(registry_field "$TARGET" vram_required_mb)
-TARGET_DRAM_MB=$(registry_field "$TARGET" dram_required_mb)
-TARGET_LOAD_SEC=$(registry_field "$TARGET" expected_load_seconds)
-TARGET_GEN_TPS=$(registry_field "$TARGET" expected_gen_tok_per_sec)
+if [[ "$MODE" != "list" ]]; then
+  TARGET_DISPLAY=$(registry_field "$TARGET" display_name)
+  TARGET_DESC=$(registry_field "$TARGET" description)
+  TARGET_CTX=$(registry_field "$TARGET" context_tokens)
+  TARGET_VRAM_MB=$(registry_field "$TARGET" vram_required_mb)
+  TARGET_DRAM_MB=$(registry_field "$TARGET" dram_required_mb)
+  TARGET_LOAD_SEC=$(registry_field "$TARGET" expected_load_seconds)
+  TARGET_GEN_TPS=$(registry_field "$TARGET" expected_gen_tok_per_sec)
+fi
 
 # ── Router state queries ─────────────────────────────────────────────────────
 
@@ -478,6 +484,39 @@ execute_load() {
   done
 }
 
+# ── List mode (router models + registry merge) ──────────────────────────────
+
+# Emit JSON describing all router-known models with their status and
+# registry data (description, display_name) merged in. Models the
+# router knows but the registry doesn't get null description/display_name
+# and in_registry=false. Read by opencode-patched to render the
+# `/models` (bare) listing.
+list_json() {
+  # Get all router models as a JSON array of {id, status} objects.
+  local router_data
+  router_data=$(router_models_json | jq -c '[.data[] | {id: .id, status: .status.value}]')
+
+  # For each router-known model, look up registry fields and merge.
+  # Use jq's --slurpfile to fold registry data in.
+  jq -nc \
+    --argjson router "$router_data" \
+    --slurpfile reg "$REGISTRY" \
+    '{
+      models: [
+        $router[] |
+        . as $r |
+        ($reg[0].models[$r.id] // null) as $entry |
+        {
+          id: $r.id,
+          status: $r.status,
+          in_registry: ($entry != null),
+          display_name: ($entry.display_name // null),
+          description: ($entry.description // null)
+        }
+      ]
+    }'
+}
+
 # ── yad popup helpers ───────────────────────────────────────────────────────
 
 yad_confirm_swap() {
@@ -719,6 +758,10 @@ case "$MODE" in
     ;;
   execute)
     if execute_load; then exit 0; else exit 1; fi
+    ;;
+  list)
+    list_json
+    exit 0
     ;;
   legacy)
     # Existing yad-driven flow. Unchanged.
