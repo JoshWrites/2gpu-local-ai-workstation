@@ -423,6 +423,61 @@ preflight_json() {
     }'
 }
 
+# ── Execute (quiet load + heartbeats) ────────────────────────────────────────
+
+# Trigger load on the router and poll until 'loaded' or 'failed'.
+# Emits "[swap] ..." lines to stdout. Exits 0 on loaded, 1 on failure
+# or timeout. No yad. opencode-patched streams stdout into a
+# foldable terminal block in chat via _meta.terminal_info.
+execute_load() {
+  local poll_interval="${WS_TEST_POLL_INTERVAL:-5}"
+  local heartbeat_every="${WS_TEST_HEARTBEAT_EVERY:-6}"   # poll * 6 = 30s in prod
+  local start_ts now elapsed status poll_count
+
+  echo "[swap] Loading $TARGET..."
+
+  # POST /models/load
+  if ! curl -fsS -m 10 -X POST "$ROUTER_BASE/models/load" \
+         -H 'Content-Type: application/json' \
+         -d "$(jq -nc --arg m "$TARGET" '{model:$m}')" >/dev/null 2>&1; then
+    echo "[swap] ERROR: /models/load request failed"
+    return 1
+  fi
+  echo "[swap] /models/load accepted, polling status"
+
+  start_ts=$(date +%s)
+  poll_count=0
+
+  while :; do
+    now=$(date +%s)
+    elapsed=$(( now - start_ts ))
+
+    if (( elapsed >= LOAD_TIMEOUT )); then
+      echo "[swap] ERROR: load timed out after ${LOAD_TIMEOUT}s. Check journalctl -u llama-primary-router.service -n 100"
+      return 1
+    fi
+
+    status=$(model_status "$TARGET" 2>/dev/null || echo unknown)
+    case "$status" in
+      loaded)
+        echo "[swap] ✓ $TARGET loaded (${elapsed}s)"
+        return 0
+        ;;
+      error|failed|loading-error)
+        echo "[swap] ERROR: status entered '$status'. Check journalctl -u llama-primary-router.service -n 100"
+        return 1
+        ;;
+    esac
+
+    poll_count=$(( poll_count + 1 ))
+    if (( poll_count % heartbeat_every == 0 )); then
+      echo "[swap] still loading (${elapsed}s)"
+    fi
+
+    sleep "$poll_interval"
+  done
+}
+
 # ── yad popup helpers ───────────────────────────────────────────────────────
 
 yad_confirm_swap() {
@@ -663,11 +718,7 @@ case "$MODE" in
     exit 0
     ;;
   execute)
-    # Stage 1 Task 2 will replace this placeholder with the real load
-    # + heartbeat loop. Until then, hard-fail loudly so opencode
-    # doesn't silently wait forever after Allow.
-    err "--execute mode not yet implemented"
-    exit 99
+    if execute_load; then exit 0; else exit 1; fi
     ;;
   legacy)
     # Existing yad-driven flow. Unchanged.
