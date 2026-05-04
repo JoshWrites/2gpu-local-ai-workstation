@@ -32,8 +32,21 @@ ROUTER_BASE="${WS_ROUTER_BASE:-http://127.0.0.1:11434}"
 LOAD_TIMEOUT=900
 POLL_INTERVAL=5
 
+# ── Flag-mode passthrough (v3 /models slash command) ────────────────────────
+#
+# When opencode-patched calls --list / --preflight / --execute, those modes
+# are implemented in model-swap.sh and don't depend on WS_REMOTE_SESSION
+# (--list and --preflight are read-only JSON emitters; --execute is a quiet
+# stream). Forward all args unconditionally; the underlying script's mode
+# dispatch handles them.
+case "${1:-}" in
+  --list|--preflight|--execute)
+    exec "${REPO}/scripts/model-swap.sh" "$@"
+    ;;
+esac
+
 if [[ $# -ne 1 ]]; then
-  echo "Usage: $0 <target-model-id>" >&2
+  echo "Usage: $0 [--list|--preflight|--execute] <target-model-id>" >&2
   exit 2
 fi
 
