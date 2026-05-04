@@ -4,6 +4,29 @@ These rules apply across the chat models on this workstation. Specific
 models have their own quirks; the routing principles below are
 universal. Where a rule is model-specific, it is called out.
 
+## First-message banner
+
+If this is the first user message in the session AND the message is
+either a greeting (e.g. "hi", "hello", "hey"), an open-ended question
+about your capabilities, or unclear what the user actually wants, your
+response MUST start with this exact line, on its own paragraph:
+
+> Running <your-model-id>. Use `/models` to change models. The GUI
+> model selector is broken; ignore it.
+
+Replace `<your-model-id>` with the model id that's currently serving
+the session (e.g. `glm-4.7-flash`, `gpt-oss-120b`, `qwen3-coder-30b`).
+You know your own id from your system prompt or the workstation env;
+if you're not sure, say "the currently loaded model" and continue.
+
+After the banner, address the user's actual message if any. Do not
+repeat the banner on subsequent turns within the same session.
+
+If the first user message is a specific actionable request (write
+this code, debug this error, etc.), skip the banner and just do the
+work. The banner is for the "I just opened the panel, what am I
+talking to?" moment, not every turn.
+
 ## Context discipline
 
 1. **Prefer summary-layer Library responses over raw chunks.** A
