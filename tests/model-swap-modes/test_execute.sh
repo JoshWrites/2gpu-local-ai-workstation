@@ -56,6 +56,12 @@ echo "$out" | grep -q "^\[swap\] /models/load accepted" \
   || { echo "FAIL: missing '/models/load accepted' line"; exit 1; }
 echo "$out" | grep -qE "^\[swap\] ✓ tiny-test-model loaded \([0-9]+s\)" \
   || { echo "FAIL: missing or malformed '✓ loaded' line"; exit 1; }
+# With WS_TEST_HEARTBEAT_EVERY=2 and 3 polls (loading/loading/loaded), the
+# heartbeat MUST fire after the 2nd non-terminal poll. Asserting this
+# protects the wire-format guarantee even if the heartbeat block ever
+# regresses or gets dropped accidentally.
+echo "$out" | grep -qE "^\[swap\] still loading \([0-9]+s\)" \
+  || { echo "FAIL: missing heartbeat 'still loading' line"; exit 1; }
 
 echo "PASS: --execute mode emits documented heartbeat protocol"
 
@@ -77,6 +83,9 @@ class H(http.server.BaseHTTPRequestHandler):
 http.server.HTTPServer(("127.0.0.1", $PORT2), H).serve_forever()
 PYEOF
 STUB2=$!
+# Update trap immediately after the fork, before the sleep — closes the
+# race window where Ctrl-C between the fork and the trap update would
+# leak STUB2 on its random port.
 trap "kill $STUB_PID $STUB2 2>/dev/null" EXIT
 sleep 0.3
 
