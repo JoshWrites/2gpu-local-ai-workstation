@@ -312,8 +312,7 @@ needs_pre_swap_compaction() {
 preflight_json() {
   local target_desc target_display target_ctx target_vram target_dram
   local current_id current_display current_ctx
-  local vram_total vram_free_pred
-  local dram_avail dram_free_pred
+  local vram_free_pred dram_free_pred
   local vram_state ram_state soft_block compaction_rec
   local session_tokens
 
@@ -336,9 +335,7 @@ preflight_json() {
   fi
 
   # Resources
-  vram_total=$(vram_total_mb)
   vram_free_pred=$(predict_post_unload_vram_free_mb)
-  dram_avail=$(dram_avail_mb)
   dram_free_pred=$(predict_post_unload_dram_free_mb)
 
   # State labels: ok / tight / short
