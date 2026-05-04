@@ -50,12 +50,17 @@ Five patches in this repo fix that:
   message, opencode raises an ACP `swap` permission_request with a
   rich card body (description, VRAM/RAM resource glyphs, optional
   soft-block warning, optional /compact recommendation). On Allow,
-  the script's `--execute` mode runs synchronously to load the
-  target. On Deny, opencode publishes a Session.Event.Error and the
-  loop breaks. If the probe fails (script doesn't speak
-  `--preflight`, exits non-zero, or emits non-JSON), opencode falls
-  through to the v1 eager-spawn behavior, preserving anny's
-  `model-swap-remote.sh` flow byte-for-byte. The v1 patch
+  the script's `--execute` mode runs and stdout/stderr stream into
+  a foldable terminal block in chat (via the same ACP
+  `_meta.terminal_*` convention the bash tool uses; non-Zed clients
+  get a text-content fallback). On Deny, opencode reverts the
+  picker to the user's prior model, publishes a
+  Session.Event.Error, and breaks the loop -- the chat input is
+  immediately usable on the previous model with no manual re-pick.
+  If the probe fails (script doesn't speak `--preflight`, exits
+  non-zero, or emits non-JSON), opencode falls through to the v1
+  eager-spawn behavior, preserving anny's `model-swap-remote.sh`
+  flow byte-for-byte. The v1 patch
   (`our-patch-router-swap.diff`) is kept in the repo for historical
   reference but is not applied.
 
@@ -122,9 +127,13 @@ A few real failure modes:
 - `our-patch-router-swap-v2.diff`: the router-mode model-swap
   confirm-card patch -- preflight probe + ACP `swap` permission card
   with resource summary, optional soft-block warning, and optional
-  /compact recommendation. On Allow runs `--execute`; on Deny breaks
-  the loop. Falls back to the v1 eager-spawn path if the script
-  doesn't speak `--preflight` (preserves remote-user paths).
+  /compact recommendation. On Allow runs `--execute` and streams
+  stdout/stderr into a chat terminal block; on Deny reverts the
+  picker to the prior model and breaks the loop. Falls back to the
+  v1 eager-spawn path if the script doesn't speak `--preflight`
+  (preserves remote-user paths). Adds a small shared module
+  (`acp/pending-swap.ts`) bridging the picker handler and the
+  on-message check for short-lived per-session state.
 - `our-patch-router-swap.diff`: the v1 router-mode model-swap trigger
   patch (kept for historical reference; not applied as of fix-6).
 - `the-fix.md`: a plain-language description of the agent.ts patch and

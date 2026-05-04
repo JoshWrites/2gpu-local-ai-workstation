@@ -1,52 +1,12 @@
-diff --git a/packages/opencode/src/acp/pending-swap.ts b/packages/opencode/src/acp/pending-swap.ts
-new file mode 100644
-index 000000000..57b653ac5
---- /dev/null
-+++ b/packages/opencode/src/acp/pending-swap.ts
-@@ -0,0 +1,34 @@
-+// Workstation router-mode integration v2: shared pending-swap state.
-+//
-+// The picker handler in acp/agent.ts calls --preflight on the configured
-+// swap script and stashes the resulting JSON in this map (keyed by
-+// session id) when the user picks an unloaded model. The on-message check
-+// in session/prompt.ts reads the map, raises a `swap` permission card via
-+// permission.ask, and on Allow runs --execute. On Deny it reverts the
-+// model selection and clears the entry.
-+//
-+// Module-level state because the two call sites live in different
-+// packages (acp/ and session/) and there is no existing shared service
-+// that fits this short-lived, single-process state.
-+
-+export type PendingSwap = {
-+  target: string
-+  previous: string | null
-+  preflight: any
-+  script: string
-+  routerBase: string | null
-+}
-+
-+const pendingSwaps = new Map<string, PendingSwap>()
-+
-+export function setPendingSwap(sessionId: string, swap: PendingSwap): void {
-+  pendingSwaps.set(sessionId, swap)
-+}
-+
-+export function getPendingSwap(sessionId: string): PendingSwap | undefined {
-+  return pendingSwaps.get(sessionId)
-+}
-+
-+export function clearPendingSwap(sessionId: string): void {
-+  pendingSwaps.delete(sessionId)
-+}
 diff --git a/packages/opencode/src/acp/agent.ts b/packages/opencode/src/acp/agent.ts
-index 811400437..b80b1631d 100644
+index 811400437..318b1287f 100644
 --- a/packages/opencode/src/acp/agent.ts
 +++ b/packages/opencode/src/acp/agent.ts
 @@ -36,6 +36,7 @@ import { pathToFileURL } from "url"
  import { Filesystem } from "../util"
  import { Hash } from "@opencode-ai/core/util/hash"
  import { ACPSessionManager } from "./session"
-+import { setPendingSwap } from "./pending-swap"
++import { setPendingSwap, setSessionContext } from "./pending-swap"
  import type { ACPConfig } from "./types"
  import { Provider } from "../provider"
  import { ModelID, ProviderID } from "../provider/schema"
@@ -138,11 +98,73 @@ index 811400437..b80b1631d 100644
              if (permissionKind !== "execute" && promptPath && promptDescription) {
                const newText = typeof md["newString"] === "string"
                  ? (md["newString"] as string)
-@@ -1621,9 +1696,92 @@ export class Agent implements ACPAgent {
+@@ -829,6 +904,15 @@ export class Agent implements ACPAgent {
+       const state = await this.sessionManager.create(params.cwd, params.mcpServers, model)
+       const sessionId = state.id
+ 
++      // Workstation router-mode v2: register the session context so
++      // session/prompt.ts can stream --execute output and revert the
++      // model on Deny. See acp/pending-swap.ts for the rationale.
++      setSessionContext(sessionId, {
++        connection: this.connection,
++        sessionManager: this.sessionManager,
++        clientSupportsTerminalOutput: this.clientSupportsTerminalOutput,
++      })
++
+       log.info("creating_session", { sessionId, mcpServers: params.mcpServers.length })
+ 
+       const load = await this.loadSessionMode({
+@@ -865,6 +949,14 @@ export class Agent implements ACPAgent {
+       // Store ACP session state
+       await this.sessionManager.load(sessionId, params.cwd, params.mcpServers, model)
+ 
++      // Workstation router-mode v2: register the session context. See
++      // acp/pending-swap.ts.
++      setSessionContext(sessionId, {
++        connection: this.connection,
++        sessionManager: this.sessionManager,
++        clientSupportsTerminalOutput: this.clientSupportsTerminalOutput,
++      })
++
+       log.info("load_session", { sessionId, mcpServers: params.mcpServers.length })
+ 
+       const result = await this.loadSessionMode({
+@@ -994,6 +1086,14 @@ export class Agent implements ACPAgent {
+       const sessionId = forked.id
+       await this.sessionManager.load(sessionId, directory, mcpServers, model)
+ 
++      // Workstation router-mode v2: register the session context. See
++      // acp/pending-swap.ts.
++      setSessionContext(sessionId, {
++        connection: this.connection,
++        sessionManager: this.sessionManager,
++        clientSupportsTerminalOutput: this.clientSupportsTerminalOutput,
++      })
++
+       log.info("fork_session", { sessionId, mcpServers: mcpServers.length })
+ 
+       const mode = await this.loadSessionMode({
+@@ -1044,6 +1144,14 @@ export class Agent implements ACPAgent {
+       const model = await defaultModel(this.config, directory)
+       await this.sessionManager.load(sessionId, directory, mcpServers, model)
+ 
++      // Workstation router-mode v2: register the session context. See
++      // acp/pending-swap.ts.
++      setSessionContext(sessionId, {
++        connection: this.connection,
++        sessionManager: this.sessionManager,
++        clientSupportsTerminalOutput: this.clientSupportsTerminalOutput,
++      })
++
+       log.info("resume_session", { sessionId, mcpServers: mcpServers.length })
+ 
+       const result = await this.loadSessionMode({
+@@ -1621,9 +1729,98 @@ export class Agent implements ACPAgent {
        .then((x) => x.data!.providers)
  
      const selection = parseModelSelection(params.modelId, providers)
 +    const previousModel = session.model?.modelID ?? null
++    const previousProviderID = session.model?.providerID ?? null
      this.sessionManager.setModel(session.id, selection.model)
      this.sessionManager.setVariant(session.id, selection.variant)
  
@@ -192,9 +214,14 @@ index 811400437..b80b1631d 100644
 +
 +      if (preflight && preflight.target) {
 +        // New v2 path: stash for the on-message check to render a card.
++        // previousProviderID is needed so the on-message Deny path can
++        // revert sessionManager.setModel to the user's prior selection
++        // (cross-provider picks are possible in principle, even if
++        // workstation router-mode keeps everything under provider=workstation).
 +        setPendingSwap(session.id, {
 +          target: selection.model.modelID,
 +          previous: previousModel,
++          previousProviderID,
 +          preflight,
 +          script: swapScript,
 +          routerBase,
@@ -231,19 +258,95 @@ index 811400437..b80b1631d 100644
      const entries = sortProvidersByName(providers)
      const availableVariants = modelVariantsFromProviders(entries, selection.model)
  
+diff --git a/packages/opencode/src/acp/pending-swap.ts b/packages/opencode/src/acp/pending-swap.ts
+new file mode 100644
+index 000000000..fdcb0dda6
+--- /dev/null
++++ b/packages/opencode/src/acp/pending-swap.ts
+@@ -0,0 +1,70 @@
++// Workstation router-mode integration v2: shared pending-swap state.
++//
++// The picker handler in acp/agent.ts calls --preflight on the configured
++// swap script and stashes the resulting JSON in this map (keyed by
++// session id) when the user picks an unloaded model. The on-message check
++// in session/prompt.ts reads the map, raises a `swap` permission card via
++// permission.ask, and on Allow runs --execute. On Deny it reverts the
++// model selection and clears the entry.
++//
++// Module-level state because the two call sites live in different
++// packages (acp/ and session/) and there is no existing shared service
++// that fits this short-lived, single-process state.
++
++import type { ACPSessionManager } from "./session"
++
++export type PendingSwap = {
++  target: string
++  previous: string | null
++  previousProviderID: string | null
++  preflight: any
++  script: string
++  routerBase: string | null
++}
++
++const pendingSwaps = new Map<string, PendingSwap>()
++
++export function setPendingSwap(sessionId: string, swap: PendingSwap): void {
++  pendingSwaps.set(sessionId, swap)
++}
++
++export function getPendingSwap(sessionId: string): PendingSwap | undefined {
++  return pendingSwaps.get(sessionId)
++}
++
++export function clearPendingSwap(sessionId: string): void {
++  pendingSwaps.delete(sessionId)
++}
++
++// The Connection and the ACPSessionManager are owned by Agent in
++// acp/agent.ts. prompt.ts needs them to:
++//   - stream --execute stdout to chat as ACP terminal output updates
++//   - revert sessionManager.setModel(previous) on Deny
++// Agent registers them when it creates/loads/forks/resumes a session;
++// prompt.ts looks them up by sessionID. Module-level state, same
++// justification as the pending-swap Map -- short-lived process state
++// that bridges the acp/ ↔ session/ package boundary.
++//
++// The connection type is intentionally loose (`any`) here to avoid a
++// circular import with @agentclientprotocol/sdk through agent.ts. The
++// only methods we call on it are sessionUpdate(...), which is a stable
++// part of the ACP agent-side connection surface.
++export type SessionContext = {
++  connection: any
++  sessionManager: ACPSessionManager
++  clientSupportsTerminalOutput: boolean
++}
++
++const sessionContexts = new Map<string, SessionContext>()
++
++export function setSessionContext(sessionId: string, ctx: SessionContext): void {
++  sessionContexts.set(sessionId, ctx)
++}
++
++export function getSessionContext(sessionId: string): SessionContext | undefined {
++  return sessionContexts.get(sessionId)
++}
++
++export function clearSessionContext(sessionId: string): void {
++  sessionContexts.delete(sessionId)
++}
 diff --git a/packages/opencode/src/session/prompt.ts b/packages/opencode/src/session/prompt.ts
-index 861f7285c..d9e16f3b9 100644
+index 861f7285c..4031c6748 100644
 --- a/packages/opencode/src/session/prompt.ts
 +++ b/packages/opencode/src/session/prompt.ts
 @@ -52,6 +52,7 @@ import { InstanceState } from "@/effect"
  import { TaskTool, type TaskPromptOps } from "@/tool/task"
  import { SessionRunState } from "./run-state"
  import { EffectBridge } from "@/effect"
-+import { getPendingSwap, clearPendingSwap } from "@/acp/pending-swap"
++import { getPendingSwap, clearPendingSwap, getSessionContext } from "@/acp/pending-swap"
  
  // @ts-ignore
  globalThis.AI_SDK_LOG_WARNINGS = false
-@@ -1328,6 +1329,168 @@ NOTE: At any point in time through this workflow you should feel free to ask the
+@@ -1328,6 +1329,318 @@ NOTE: At any point in time through this workflow you should feel free to ask the
              }).pipe(Effect.ignore, Effect.forkIn(scope))
  
            const model = yield* getModel(lastUser.model.providerID, lastUser.model.modelID, sessionID)
@@ -307,47 +410,197 @@ index 861f7285c..d9e16f3b9 100644
 +                }),
 +              )
 +
++            // Look up the per-session bridge into the ACP layer. The
++            // Agent in acp/agent.ts registers this when the session is
++            // created (newSession/loadSession/forkSession/resumeSession).
++            // We need:
++            //   - sessionCtx.sessionManager.setModel(...) to revert the
++            //     user's not-loaded selection on Deny.
++            //   - sessionCtx.connection.sessionUpdate(...) to stream
++            //     --execute progress as a terminal block in chat (vs
++            //     the previous stdio:"inherit" which only landed in
++            //     the agent-server log panel).
++            // It is theoretically possible for the registry to miss
++            // (race on session create, or the user is on a non-ACP
++            // path that still hits this code somehow) so we degrade
++            // gracefully: skip the revert (the user can pick again)
++            // and fall back to stdio:"inherit" for output.
++            const sessionCtx = getSessionContext(sessionID)
++
 +            if (swapResult === "deny") {
 +              clearPendingSwap(sessionID)
 +              const prev = pendingSwap.previous
++              const prevProvider = pendingSwap.previousProviderID
++              if (sessionCtx && prev && prevProvider) {
++                // Revert the model picker to the user's prior selection
++                // so the chat input is usable immediately. Without this
++                // the session is still "set" to the not-loaded target
++                // and any further send hits the same swap-card flow.
++                try {
++                  sessionCtx.sessionManager.setModel(sessionID, {
++                    providerID: ProviderID.make(prevProvider),
++                    modelID: ModelID.make(prev),
++                  })
++                } catch {
++                  // setModel throws if the session was disposed mid-revert;
++                  // benign here, the user still gets the chat error below.
++                }
++              }
 +              yield* bus.publish(Session.Event.Error, {
 +                sessionID,
 +                error: new NamedError.Unknown({
 +                  message: prev
-+                    ? `Model swap cancelled. Pick ${prev} in the model picker to continue, or pick a different model to try again.`
-+                    : `Model swap cancelled. Pick a different model in the model picker to continue.`,
++                    ? `Model swap cancelled. Reverted to ${prev}.`
++                    : `Model swap cancelled.`,
 +                }).toObject(),
 +              })
 +              break
 +            }
 +
-+            // Allow: run --execute synchronously. stdout/stderr stream
-+            // to opencode's own stdio (Zed surfaces these in the agent
-+            // server log panel). Live ACP terminal-block streaming
-+            // would require plumbing the ACP connection through to
-+            // prompt.ts; deferred. The script's heartbeat protocol
-+            // (every ~30s) keeps the user informed via that log.
++            // Allow: run --execute and stream stdout/stderr to chat as
++            // an ACP terminal block. Mirrors the bash-tool pattern
++            // (see acp/agent.ts: `_meta.terminal_info` on the initial
++            // tool_call, deltas via `_meta.terminal_output`, exit via
++            // `_meta.terminal_exit`). Zed renders this as a foldable
++            // terminal card alongside the agent-server log; non-Zed
++            // ACP clients that don't decode `_meta.terminal_*` get a
++            // text-content-block fallback (running buffer of stdout).
++            //
++            // The connection lives on Agent (acp/agent.ts) which
++            // registers itself in pending-swap's session-context map at
++            // session creation. If the lookup fails (shouldn't happen
++            // in practice) we degrade to stdio:"inherit" so heartbeats
++            // at least land in opencode's own stderr (visible in Zed's
++            // agent-server log panel).
 +            clearPendingSwap(sessionID)
 +            yield* Effect.logInfo(
 +              `model-swap v2: --execute ${pendingSwap.target} (router=${pendingSwap.routerBase ?? "unknown"})`,
 +            )
++            const swapTerminalId = `swap-${pendingSwap.target}-${Date.now()}`
++            const swapTitle = `Loading ${pendingSwap.target}`
++            const useTerminalStream = !!sessionCtx && sessionCtx.clientSupportsTerminalOutput
++
++            // Emit the initial tool_call so Zed renders a terminal
++            // card. The terminal_info `_meta` is what flips the card
++            // into the same look-and-feel as bash output blocks.
++            if (sessionCtx) {
++              yield* Effect.tryPromise({
++                try: () =>
++                  sessionCtx.connection.sessionUpdate({
++                    sessionId: sessionID,
++                    update: {
++                      sessionUpdate: "tool_call",
++                      toolCallId: swapTerminalId,
++                      title: swapTitle,
++                      kind: "execute",
++                      status: "in_progress",
++                      locations: [],
++                      rawInput: { command: `${pendingSwap.script} --execute ${pendingSwap.target}` },
++                      ...(useTerminalStream
++                        ? {
++                            content: [{ type: "terminal", terminalId: swapTerminalId }],
++                            _meta: { terminal_info: { terminal_id: swapTerminalId } },
++                          }
++                        : {
++                            content: [
++                              { type: "content", content: { type: "text", text: `${swapTitle}…\n` } },
++                            ],
++                          }),
++                    },
++                  }),
++                catch: () => new Error("swap tool_call announce failed"),
++              }).pipe(Effect.catch(() => Effect.succeed(undefined)))
++            }
++
 +            const execExit = yield* Effect.tryPromise({
 +              try: () =>
 +                new Promise<number>((resolve) => {
 +                  // eslint-disable-next-line @typescript-eslint/no-require-imports
 +                  const { spawn } = require("child_process")
++                  const stdio: any = sessionCtx ? ["ignore", "pipe", "pipe"] : "inherit"
 +                  const child = spawn(pendingSwap.script, ["--execute", pendingSwap.target], {
-+                    stdio: "inherit",
++                    stdio,
 +                    env: {
 +                      ...process.env,
 +                      ...(pendingSwap.routerBase ? { OPENCODE_ROUTER_BASE: pendingSwap.routerBase } : {}),
 +                    },
 +                  })
++                  if (sessionCtx) {
++                    let textBuffer = ""
++                    const onChunk = (chunk: Buffer) => {
++                      const text = chunk.toString()
++                      // Terminal-output path: send each chunk as a
++                      // delta -- Zed appends to the open terminal card.
++                      // Text-fallback path: tool_call_update content
++                      // replaces (not appends) on most ACP clients, so
++                      // accumulate the running buffer and resend.
++                      // Promise rejections swallow because the script
++                      // keeps running regardless of UI delivery.
++                      if (useTerminalStream) {
++                        sessionCtx.connection
++                          .sessionUpdate({
++                            sessionId: sessionID,
++                            update: {
++                              sessionUpdate: "tool_call_update",
++                              toolCallId: swapTerminalId,
++                              _meta: {
++                                terminal_output: { terminal_id: swapTerminalId, data: text },
++                              },
++                            },
++                          })
++                          .catch(() => {})
++                      } else {
++                        textBuffer += text
++                        sessionCtx.connection
++                          .sessionUpdate({
++                            sessionId: sessionID,
++                            update: {
++                              sessionUpdate: "tool_call_update",
++                              toolCallId: swapTerminalId,
++                              content: [
++                                { type: "content", content: { type: "text", text: textBuffer } },
++                              ],
++                            },
++                          })
++                          .catch(() => {})
++                      }
++                    }
++                    child.stdout?.on("data", onChunk)
++                    child.stderr?.on("data", onChunk)
++                  }
 +                  child.on("exit", (code: number | null) => resolve(code ?? 1))
 +                  child.on("error", () => resolve(1))
 +                }),
 +              catch: () => new Error("model-swap.sh --execute spawn failed"),
 +            }).pipe(Effect.catch(() => Effect.succeed(1)))
++
++            // Close out the terminal card. The bash tool emits
++            // terminal_exit + final status; mirror that so Zed marks
++            // the card as completed/failed and stops showing a
++            // running spinner.
++            if (sessionCtx) {
++              yield* Effect.tryPromise({
++                try: () =>
++                  sessionCtx.connection.sessionUpdate({
++                    sessionId: sessionID,
++                    update: {
++                      sessionUpdate: "tool_call_update",
++                      toolCallId: swapTerminalId,
++                      status: execExit === 0 ? "completed" : "failed",
++                      ...(useTerminalStream && {
++                        _meta: {
++                          terminal_exit: {
++                            terminal_id: swapTerminalId,
++                            exit_code: execExit,
++                            signal: null,
++                          },
++                        },
++                      }),
++                    },
++                  }),
++                catch: () => new Error("swap tool_call complete failed"),
++              }).pipe(Effect.catch(() => Effect.succeed(undefined)))
++            }
 +
 +            if (execExit !== 0) {
 +              yield* bus.publish(Session.Event.Error, {
