@@ -35,6 +35,10 @@ echo "$out" | jq -e '.soft_block == false' >/dev/null \
 echo "$out" | jq -e '.compaction_recommended == false' >/dev/null \
   || { echo "FAIL: compaction_recommended should be false"; exit 1; }
 
+# Pin the top-level schema so future refactors that drop a key fail loudly.
+echo "$out" | jq -e 'has("target") and has("current") and has("resources") and has("compaction_recommended") and has("session_tokens") and has("soft_block")' >/dev/null \
+  || { echo "FAIL: top-level schema missing one of target/current/resources/compaction_recommended/session_tokens/soft_block"; echo "$out"; exit 1; }
+
 echo "PASS: preflight emits valid JSON for tiny-test-model"
 
 # Soft-block scenario: target VRAM exceeds available
@@ -64,4 +68,13 @@ out=$("$SCRIPT" --preflight tiny-test-model)
 echo "$out" | jq -e '.compaction_recommended == true' >/dev/null \
   || { echo "FAIL: compaction_recommended should be true"; echo "$out"; exit 1; }
 
-echo "PASS: compaction recommended when current ctx > target ctx + session overflow"
+# When current is non-null, it must carry the registry's vram/dram fields too
+# so the renderer can show "currently using N GB" without a second lookup.
+echo "$out" | jq -e '.current.id == "big-test-model"' >/dev/null \
+  || { echo "FAIL: current.id should be big-test-model"; echo "$out"; exit 1; }
+echo "$out" | jq -e '.current.vram_required_mb == 22000' >/dev/null \
+  || { echo "FAIL: current.vram_required_mb should be 22000"; echo "$out"; exit 1; }
+echo "$out" | jq -e '.current.dram_required_mb == 32000' >/dev/null \
+  || { echo "FAIL: current.dram_required_mb should be 32000"; echo "$out"; exit 1; }
+
+echo "PASS: compaction recommended; current carries registry vram/dram fields"

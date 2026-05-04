@@ -311,7 +311,7 @@ needs_pre_swap_compaction() {
 # the swap-confirm card. No side effects.
 preflight_json() {
   local target_desc target_display target_ctx target_vram target_dram
-  local current_id current_display current_ctx
+  local current_id current_display current_ctx current_vram current_dram
   local vram_free_pred dram_free_pred
   local vram_state ram_state soft_block compaction_rec
   local session_tokens
@@ -328,10 +328,14 @@ preflight_json() {
   if [[ -n "$current_id" ]] && registry_has "$current_id"; then
     current_display=$(registry_field "$current_id" display_name)
     current_ctx=$(registry_field "$current_id" context_tokens)
+    current_vram=$(registry_field "$current_id" vram_required_mb)
+    current_dram=$(registry_field "$current_id" dram_required_mb)
   else
     current_id=""
     current_display=""
     current_ctx=0
+    current_vram=0
+    current_dram=0
   fi
 
   # Resources
@@ -382,6 +386,8 @@ preflight_json() {
     --arg c_id "$current_id" \
     --arg c_display "$current_display" \
     --argjson c_ctx "$current_ctx" \
+    --argjson c_vram "$current_vram" \
+    --argjson c_dram "$current_dram" \
     --argjson vram_free "$vram_free_pred" \
     --arg vram_st "$vram_state" \
     --argjson ram_free "$dram_free_pred" \
@@ -401,7 +407,9 @@ preflight_json() {
       current: (if $c_id == "" then null else {
         id: $c_id,
         display_name: $c_display,
-        context_tokens: $c_ctx
+        context_tokens: $c_ctx,
+        vram_required_mb: $c_vram,
+        dram_required_mb: $c_dram
       } end),
       resources: {
         vram_free_mb: $vram_free,
@@ -655,7 +663,9 @@ case "$MODE" in
     exit 0
     ;;
   execute)
-    # Stage 2 placeholder — implemented in Task 2
+    # Stage 1 Task 2 will replace this placeholder with the real load
+    # + heartbeat loop. Until then, hard-fail loudly so opencode
+    # doesn't silently wait forever after Allow.
     err "--execute mode not yet implemented"
     exit 99
     ;;
