@@ -130,6 +130,7 @@ if [[ "$MODE" != "list" ]] && ! registry_has "$TARGET"; then
   exit 1
 fi
 
+# Hydrate TARGET_* registry fields. Skipped in list mode (no target).
 if [[ "$MODE" != "list" ]]; then
   TARGET_DISPLAY=$(registry_field "$TARGET" display_name)
   TARGET_DESC=$(registry_field "$TARGET" description)
