@@ -1,0 +1,34 @@
+[Unit]
+Description=mnemory persistent memory server (qwen3-4b for extraction, e5-large for embeddings, embedded Qdrant, port 8050)
+# Reads config from /etc/workstation/mnemory.env (LLM/embed endpoints,
+# MCP_API_KEYS user-mapping). Data at $HOME/.mnemory/ (Qdrant collection,
+# SQLite session state, filesystem artifacts).
+#
+# Runs as user=${SUDO_USER:-levine} via templated install — the launcher
+# user owns the data dir; both opencode users (levine, anny) authenticate
+# via per-user API keys and mnemory namespaces memories by user_id.
+#
+# A future revision may migrate to a dedicated 'mnemory' system user
+# for cleaner isolation; for now this is colocated with the launcher
+# user's uvx install and data dir.
+
+[Service]
+Type=simple
+User=levine
+Group=levine
+EnvironmentFile=/etc/workstation/mnemory.env
+Environment="PATH=/home/levine/.local/bin:/usr/local/bin:/usr/bin:/bin"
+Environment="HOME=/home/levine"
+WorkingDirectory=/home/levine
+
+ExecStart=/home/levine/.local/bin/uvx mnemory
+
+Restart=on-failure
+RestartSec=10s
+KillSignal=SIGTERM
+TimeoutStopSec=15
+StandardOutput=journal
+StandardError=journal
+
+[Install]
+WantedBy=multi-user.target

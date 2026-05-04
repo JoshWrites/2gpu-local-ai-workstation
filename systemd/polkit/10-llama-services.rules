@@ -34,6 +34,7 @@ polkit.addRule(function(action, subject) {
         "llama-secondary.service",
         "llama-embed.service",
         "llama-coder.service",
+        "mnemory.service",
     ];
     if (allowedUnits.indexOf(unit) === -1) {
         return;

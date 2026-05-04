@@ -70,6 +70,16 @@ ENDPOINTS=(
 )
 PRIMARY_UNIT="llama-primary-router.service"
 
+# mnemory is brought up alongside the llama units. It depends on
+# llama-secondary (LLM) and llama-embed (embeddings) being healthy
+# before it can serve the first plugin request, but its own health
+# check (TCP bind on port 8050) doesn't validate that — so the worst
+# case is that a plugin call fires before the underlying llama
+# services are ready, gets a 5xx, and the plugin retries on the next
+# turn. Acceptable.
+MNEMORY_UNIT="mnemory.service"
+MNEMORY_PORT=8050
+
 # Router-mode startup is fast (no model loaded yet); first model load is
 # what takes minutes. The router itself just needs to bind the port.
 EXPECTED_READY=15
@@ -125,6 +135,15 @@ start_llama() {
   # System-scoped units; polkit rule grants the configured local users
   # passwordless start (see systemd/polkit/10-llama-services.rules).
   systemctl start "${LLAMA_UNITS[@]/%/.service}"
+
+  # mnemory comes up alongside. Best-effort: if the unit isn't installed
+  # (e.g. fresh setup before scripts/install-mnemory-env.sh ran), don't
+  # fail the launch. The plugin in opencode will degrade gracefully when
+  # mnemory is unreachable.
+  if systemctl list-unit-files "$MNEMORY_UNIT" --no-legend 2>/dev/null \
+       | grep -q "$MNEMORY_UNIT"; then
+    systemctl start "$MNEMORY_UNIT" 2>/dev/null || true
+  fi
 }
 
 poll_until_ready() {

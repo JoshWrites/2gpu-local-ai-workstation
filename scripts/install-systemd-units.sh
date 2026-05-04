@@ -53,6 +53,21 @@ for unit in "${LLAMA_UNITS[@]}"; do
   fi
   sudo install -m 0644 "$UNIT_SRC/${unit}.service" "$SYSTEM_UNIT_DST/"
 done
+
+# ── mnemory unit ─────────────────────────────────────────────────────────
+#
+# Lives in a separate block from LLAMA_UNITS because it doesn't share
+# the polite-shutdown coordinator (llama-shutdown only knows about GPU
+# llama-server processes). Mnemory has its own lifecycle: it's a long-
+# running HTTP server with embedded Qdrant, restartable independently.
+#
+# Reads /etc/workstation/mnemory.env (separate from system.env because
+# it carries the per-user MCP_API_KEYS secret). Install that env file
+# first via scripts/install-mnemory-env.sh before enabling the unit.
+if [[ -f "$UNIT_SRC/mnemory.service" ]]; then
+  sudo install -m 0644 "$UNIT_SRC/mnemory.service" "$SYSTEM_UNIT_DST/"
+fi
+
 sudo systemctl daemon-reload
 
 # ── llama-shutdown helper script ──────────────────────────────────────────
@@ -140,6 +155,9 @@ echo "  $USER_UNIT_DST/searxng.service"
 for unit in "${LLAMA_UNITS[@]}"; do
   echo "  $SYSTEM_UNIT_DST/${unit}.service"
 done
+if [[ -f "$SYSTEM_UNIT_DST/mnemory.service" ]]; then
+  echo "  $SYSTEM_UNIT_DST/mnemory.service"
+fi
 echo "  $LLAMA_SHUTDOWN_DST"
 echo "  $POLKIT_DST"
 echo "  $SYSCTL_DST"
@@ -147,3 +165,7 @@ echo
 echo "Note: the llama units were installed but not started. Start them"
 echo "individually with: sudo systemctl start llama-primary.service"
 echo "(or use the second-opinion launcher to bring them all up at once)."
+echo
+echo "For mnemory: install the env file first, then enable+start:"
+echo "  scripts/install-mnemory-env.sh"
+echo "  sudo systemctl enable --now mnemory.service"
