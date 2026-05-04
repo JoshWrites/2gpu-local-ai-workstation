@@ -1,0 +1,414 @@
+diff --git a/packages/opencode/src/acp/pending-swap.ts b/packages/opencode/src/acp/pending-swap.ts
+new file mode 100644
+index 000000000..57b653ac5
+--- /dev/null
++++ b/packages/opencode/src/acp/pending-swap.ts
+@@ -0,0 +1,34 @@
++// Workstation router-mode integration v2: shared pending-swap state.
++//
++// The picker handler in acp/agent.ts calls --preflight on the configured
++// swap script and stashes the resulting JSON in this map (keyed by
++// session id) when the user picks an unloaded model. The on-message check
++// in session/prompt.ts reads the map, raises a `swap` permission card via
++// permission.ask, and on Allow runs --execute. On Deny it reverts the
++// model selection and clears the entry.
++//
++// Module-level state because the two call sites live in different
++// packages (acp/ and session/) and there is no existing shared service
++// that fits this short-lived, single-process state.
++
++export type PendingSwap = {
++  target: string
++  previous: string | null
++  preflight: any
++  script: string
++  routerBase: string | null
++}
++
++const pendingSwaps = new Map<string, PendingSwap>()
++
++export function setPendingSwap(sessionId: string, swap: PendingSwap): void {
++  pendingSwaps.set(sessionId, swap)
++}
++
++export function getPendingSwap(sessionId: string): PendingSwap | undefined {
++  return pendingSwaps.get(sessionId)
++}
++
++export function clearPendingSwap(sessionId: string): void {
++  pendingSwaps.delete(sessionId)
++}
+diff --git a/packages/opencode/src/acp/agent.ts b/packages/opencode/src/acp/agent.ts
+index 811400437..b80b1631d 100644
+--- a/packages/opencode/src/acp/agent.ts
++++ b/packages/opencode/src/acp/agent.ts
+@@ -36,6 +36,7 @@ import { pathToFileURL } from "url"
+ import { Filesystem } from "../util"
+ import { Hash } from "@opencode-ai/core/util/hash"
+ import { ACPSessionManager } from "./session"
++import { setPendingSwap } from "./pending-swap"
+ import type { ACPConfig } from "./types"
+ import { Provider } from "../provider"
+ import { ModelID, ProviderID } from "../provider/schema"
+@@ -278,6 +279,14 @@ export class Agent implements ACPAgent {
+                     : ""
+                 return `Load skill: ${promptSkillName}${cost}`
+               }
++              if (permission.permission === "swap") {
++                // Workstation router-mode v2: arrow title for the
++                // model-swap confirm card. "current → target" reads
++                // naturally and stays single-line for non-execute kinds.
++                const target = typeof md["target"] === "string" ? md["target"] : "unknown"
++                const current = typeof md["current"] === "string" ? md["current"] : "(none)"
++                return `Load model: ${current} → ${target}`
++              }
+               if (permissionKind === "execute" && promptCommand) {
+                 return promptDescription ? `${promptCommand}\n${promptDescription}` : promptCommand
+               }
+@@ -307,6 +316,72 @@ export class Agent implements ACPAgent {
+                 content: { type: "text", text: promptDescription },
+               })
+             }
++            // Workstation router-mode v2: swap confirm card body.
++            // Layout (each line a content block):
++            //   1. <description from registry>
++            //   2. ✓/⚠/✗ VRAM: <free> GB free of <need> GB needed
++            //   2. ✓/⚠/✗ RAM:  <free> GB free of <need> GB needed   (only if ram_applies)
++            //   3. ⚠ tight-margin warning (only if soft_block)
++            //   4. ⓘ compaction recommendation (only if compaction_recommended)
++            //   5. trailer: "Load will begin when you accept and may take a few minutes."
++            // Data is pulled off permission.metadata (set by the
++            // on-message check in session/prompt.ts from the
++            // preflight JSON).
++            if (permission.permission === "swap") {
++              const desc = typeof md["description"] === "string" ? md["description"] : ""
++              const vramFreeGb = typeof md["vram_free_gb"] === "number" ? md["vram_free_gb"] : 0
++              const vramNeedGb = typeof md["vram_need_gb"] === "number" ? md["vram_need_gb"] : 0
++              const vramState = typeof md["vram_state"] === "string" ? md["vram_state"] : "ok"
++              const ramFreeGb = typeof md["ram_free_gb"] === "number" ? md["ram_free_gb"] : 0
++              const ramNeedGb = typeof md["ram_need_gb"] === "number" ? md["ram_need_gb"] : 0
++              const ramState = typeof md["ram_state"] === "string" ? md["ram_state"] : "ok"
++              const ramApplies = typeof md["ram_applies"] === "boolean" ? md["ram_applies"] : false
++              const softBlock = typeof md["soft_block"] === "boolean" ? md["soft_block"] : false
++              const compactionRec =
++                typeof md["compaction_recommended"] === "boolean" ? md["compaction_recommended"] : false
++              const sessionTokens = typeof md["session_tokens"] === "number" ? md["session_tokens"] : 0
++              const targetCtxK = typeof md["target_ctx_k"] === "number" ? md["target_ctx_k"] : 0
++
++              if (desc) {
++                promptContent.push({ type: "content", content: { type: "text", text: desc } })
++              }
++              const glyph = (s: string) => (s === "ok" ? "✓" : s === "tight" ? "⚠" : "✗")
++              const resourceLines: string[] = []
++              resourceLines.push(`${glyph(vramState)} VRAM: ${vramFreeGb} GB free of ${vramNeedGb} GB needed`)
++              if (ramApplies) {
++                resourceLines.push(`${glyph(ramState)} RAM:  ${ramFreeGb} GB free of ${ramNeedGb} GB needed`)
++              }
++              promptContent.push({
++                type: "content",
++                content: { type: "text", text: resourceLines.join("\n") },
++              })
++              if (softBlock) {
++                promptContent.push({
++                  type: "content",
++                  content: {
++                    type: "text",
++                    text: "⚠ Resource margin is tight; load may swap to disk or fail. Proceed only if you've closed other GPU/RAM workloads.",
++                  },
++                })
++              }
++              if (compactionRec) {
++                const sessionK = Math.round(sessionTokens / 1000)
++                promptContent.push({
++                  type: "content",
++                  content: {
++                    type: "text",
++                    text: `ⓘ Your session has ${sessionK}K tokens; target can hold ${targetCtxK}K. Run /compact before swapping to avoid losing context after the swap.`,
++                  },
++                })
++              }
++              promptContent.push({
++                type: "content",
++                content: {
++                  type: "text",
++                  text: "Load will begin when you accept and may take a few minutes. Send your next message after it completes.",
++                },
++              })
++            }
+             if (permissionKind !== "execute" && promptPath && promptDescription) {
+               const newText = typeof md["newString"] === "string"
+                 ? (md["newString"] as string)
+@@ -1621,9 +1696,92 @@ export class Agent implements ACPAgent {
+       .then((x) => x.data!.providers)
+ 
+     const selection = parseModelSelection(params.modelId, providers)
++    const previousModel = session.model?.modelID ?? null
+     this.sessionManager.setModel(session.id, selection.model)
+     this.sessionManager.setVariant(session.id, selection.variant)
+ 
++    // Workstation router-mode integration v2: confirm-card flow.
++    //
++    // Probe the configured swap script with `--preflight <target>`. If
++    // it exits 0 with parseable JSON, stash the result on the
++    // pending-swap map; the on-message check in session/prompt.ts will
++    // raise a `swap` permission card on the next user message and
++    // gate the actual `--execute` on the response.
++    //
++    // Fall-back: if the probe fails (script doesn't support
++    // --preflight, exits non-zero, or emits non-JSON), fall through to
++    // the v1 eager-spawn behavior. This preserves anny's
++    // model-swap-remote.sh flow byte-for-byte until that script is
++    // updated to speak --preflight.
++    //
++    // Gated on OPENCODE_MODEL_SWAP_SCRIPT env var.
++    const swapScript = process.env["OPENCODE_MODEL_SWAP_SCRIPT"]
++    if (swapScript) {
++      // Find router base from the provider's first model api url.
++      const provider = providers.find((p: any) => p.id === selection.model.providerID)
++      const firstModelKey = provider ? Object.keys(provider.models ?? {})[0] : undefined
++      const apiUrl =
++        firstModelKey && provider?.models?.[firstModelKey]?.api?.url
++          ? (provider.models[firstModelKey].api.url as string)
++          : ""
++      const routerMatch = apiUrl.match(/^(https?:\/\/(?:127\.0\.0\.1|localhost):\d+)/)
++      const routerBase = routerMatch ? routerMatch[1] : null
++
++      // Preflight probe: 2s timeout, capture stdout, swallow stderr.
++      let preflight: any = null
++      try {
++        // eslint-disable-next-line @typescript-eslint/no-require-imports
++        const { spawnSync } = require("child_process")
++        const result = spawnSync(swapScript, ["--preflight", selection.model.modelID], {
++          timeout: 2000,
++          encoding: "utf-8",
++          env: { ...process.env, ...(routerBase ? { OPENCODE_ROUTER_BASE: routerBase } : {}) },
++        })
++        if (result.status === 0 && result.stdout) {
++          preflight = JSON.parse(result.stdout)
++        }
++      } catch {
++        preflight = null
++      }
++
++      if (preflight && preflight.target) {
++        // New v2 path: stash for the on-message check to render a card.
++        setPendingSwap(session.id, {
++          target: selection.model.modelID,
++          previous: previousModel,
++          preflight,
++          script: swapScript,
++          routerBase,
++        })
++      } else if (routerBase) {
++        // Fall-back to v1: eager detached spawn with no UI.
++        try {
++          const status = await fetch(`${routerBase}/models`, { signal: AbortSignal.timeout(3000) })
++            .then((r) => (r.ok ? r.json() : null))
++            .then((d: any) => {
++              if (!d?.data) return null
++              const m = d.data.find((x: any) => x.id === selection.model.modelID)
++              return m?.status?.value ?? null
++            })
++            .catch(() => null)
++
++          if (status === "unloaded") {
++            // eslint-disable-next-line @typescript-eslint/no-require-imports
++            const { spawn } = require("child_process")
++            const child = spawn(swapScript, [selection.model.modelID], {
++              detached: true,
++              stdio: "ignore",
++              env: { ...process.env, OPENCODE_ROUTER_BASE: routerBase },
++            })
++            child.unref()
++          }
++        } catch {
++          // Best-effort fallback. If this fails too, the on-message
++          // safety net catches it.
++        }
++      }
++    }
++
+     const entries = sortProvidersByName(providers)
+     const availableVariants = modelVariantsFromProviders(entries, selection.model)
+ 
+diff --git a/packages/opencode/src/session/prompt.ts b/packages/opencode/src/session/prompt.ts
+index 861f7285c..d9e16f3b9 100644
+--- a/packages/opencode/src/session/prompt.ts
++++ b/packages/opencode/src/session/prompt.ts
+@@ -52,6 +52,7 @@ import { InstanceState } from "@/effect"
+ import { TaskTool, type TaskPromptOps } from "@/tool/task"
+ import { SessionRunState } from "./run-state"
+ import { EffectBridge } from "@/effect"
++import { getPendingSwap, clearPendingSwap } from "@/acp/pending-swap"
+ 
+ // @ts-ignore
+ globalThis.AI_SDK_LOG_WARNINGS = false
+@@ -1328,6 +1329,168 @@ NOTE: At any point in time through this workflow you should feel free to ask the
+             }).pipe(Effect.ignore, Effect.forkIn(scope))
+ 
+           const model = yield* getModel(lastUser.model.providerID, lastUser.model.modelID, sessionID)
++
++          // Workstation router-mode integration v2: confirm-card gate.
++          //
++          // If the picker handler in acp/agent.ts stashed a pending
++          // swap (preflight succeeded, card not yet shown), raise the
++          // `swap` permission card now via permission.ask. On Allow,
++          // run the swap script's --execute mode synchronously and
++          // continue once the model is loaded. On Deny, emit a chat
++          // error and break — the user can pick a different model.
++          //
++          // If no pending swap but the model is unloaded/loading, fall
++          // back to v1 behavior: spawn the script with stdio:"inherit"
++          // and wait. This preserves anny's model-swap-remote.sh path
++          // (which doesn't speak --preflight) byte-for-byte.
++          //
++          // OPENCODE_MODEL_SWAP_SCRIPT env var gates the whole feature.
++          const swapScript = process.env["OPENCODE_MODEL_SWAP_SCRIPT"]
++          const pendingSwap = getPendingSwap(sessionID)
++          if (pendingSwap) {
++            const pf = pendingSwap.preflight
++            // Build metadata for the swap card. agent.ts's renderer
++            // pulls these keys off permission.metadata.
++            const swapMd: Record<string, unknown> = {
++              target: pf?.target?.id ?? pendingSwap.target,
++              current: pf?.current?.id ?? pendingSwap.previous ?? "(none)",
++              description: pf?.target?.description ?? "",
++              vram_free_gb: Math.round((pf?.resources?.vram_free_mb ?? 0) / 1024),
++              vram_need_gb: Math.round((pf?.target?.vram_required_mb ?? 0) / 1024),
++              vram_state: pf?.resources?.vram_state ?? "ok",
++              ram_free_gb: Math.round((pf?.resources?.ram_free_mb ?? 0) / 1024),
++              ram_need_gb: Math.round((pf?.target?.dram_required_mb ?? 0) / 1024),
++              ram_state: pf?.resources?.ram_state ?? "ok",
++              ram_applies: (pf?.target?.dram_required_mb ?? 0) > 0,
++              soft_block: pf?.soft_block ?? false,
++              compaction_recommended: pf?.compaction_recommended ?? false,
++              session_tokens: pf?.session_tokens ?? 0,
++              target_ctx_k: Math.round((pf?.target?.context_tokens ?? 0) / 1000),
++            }
++
++            // Empty ruleset: the swap permission has no agent-level
++            // policy (it's a per-confirmation user gesture). The
++            // first ask raises the card; choosing "always" stores a
++            // session approval keyed on the target id so subsequent
++            // swaps to the same model skip the card.
++            const swapResult = yield* permission
++              .ask({
++                permission: "swap",
++                patterns: [pendingSwap.target],
++                always: [pendingSwap.target],
++                sessionID,
++                metadata: swapMd,
++                ruleset: session.permission ?? [],
++              })
++              .pipe(
++                Effect.match({
++                  onSuccess: () => "allow" as const,
++                  onFailure: () => "deny" as const,
++                }),
++              )
++
++            if (swapResult === "deny") {
++              clearPendingSwap(sessionID)
++              const prev = pendingSwap.previous
++              yield* bus.publish(Session.Event.Error, {
++                sessionID,
++                error: new NamedError.Unknown({
++                  message: prev
++                    ? `Model swap cancelled. Pick ${prev} in the model picker to continue, or pick a different model to try again.`
++                    : `Model swap cancelled. Pick a different model in the model picker to continue.`,
++                }).toObject(),
++              })
++              break
++            }
++
++            // Allow: run --execute synchronously. stdout/stderr stream
++            // to opencode's own stdio (Zed surfaces these in the agent
++            // server log panel). Live ACP terminal-block streaming
++            // would require plumbing the ACP connection through to
++            // prompt.ts; deferred. The script's heartbeat protocol
++            // (every ~30s) keeps the user informed via that log.
++            clearPendingSwap(sessionID)
++            yield* Effect.logInfo(
++              `model-swap v2: --execute ${pendingSwap.target} (router=${pendingSwap.routerBase ?? "unknown"})`,
++            )
++            const execExit = yield* Effect.tryPromise({
++              try: () =>
++                new Promise<number>((resolve) => {
++                  // eslint-disable-next-line @typescript-eslint/no-require-imports
++                  const { spawn } = require("child_process")
++                  const child = spawn(pendingSwap.script, ["--execute", pendingSwap.target], {
++                    stdio: "inherit",
++                    env: {
++                      ...process.env,
++                      ...(pendingSwap.routerBase ? { OPENCODE_ROUTER_BASE: pendingSwap.routerBase } : {}),
++                    },
++                  })
++                  child.on("exit", (code: number | null) => resolve(code ?? 1))
++                  child.on("error", () => resolve(1))
++                }),
++              catch: () => new Error("model-swap.sh --execute spawn failed"),
++            }).pipe(Effect.catch(() => Effect.succeed(1)))
++
++            if (execExit !== 0) {
++              yield* bus.publish(Session.Event.Error, {
++                sessionID,
++                error: new NamedError.Unknown({
++                  message: `Model swap failed for ${pendingSwap.target} (exit ${execExit}). Send another message to retry.`,
++                }).toObject(),
++              })
++              break
++            }
++            // Loaded: fall through to the rest of the loop; the model
++            // is now available for inference.
++          } else if (swapScript) {
++            // Fall-back: v1 eager-spawn behavior (anny's path).
++            const apiUrl = model.api?.url ?? ""
++            const routerMatch = apiUrl.match(/^(https?:\/\/(?:127\.0\.0\.1|localhost):\d+)/)
++            if (routerMatch) {
++              const routerBase = routerMatch[1]
++              const status = yield* Effect.tryPromise({
++                try: () =>
++                  fetch(`${routerBase}/models`, { signal: AbortSignal.timeout(3000) })
++                    .then((r) => (r.ok ? r.json() : null))
++                    .then((d: any) => {
++                      if (!d?.data) return null as string | null
++                      const m = d.data.find((x: any) => x.id === lastUser.model.modelID)
++                      return (m?.status?.value ?? null) as string | null
++                    }),
++                catch: () => new Error("router /models probe failed"),
++              }).pipe(Effect.catch(() => Effect.succeed(null as string | null)))
++
++              if (status === "unloaded" || status === "loading") {
++                yield* Effect.logInfo(
++                  `model-swap v1-fallback: ${lastUser.model.modelID} status=${status}, invoking ${swapScript}`,
++                )
++                const exitCode = yield* Effect.tryPromise({
++                  try: () =>
++                    new Promise<number>((resolve) => {
++                      // eslint-disable-next-line @typescript-eslint/no-require-imports
++                      const { spawn } = require("child_process")
++                      const child = spawn(swapScript, [lastUser.model.modelID], {
++                        stdio: "inherit",
++                        env: { ...process.env, OPENCODE_ROUTER_BASE: routerBase },
++                      })
++                      child.on("exit", (code: number | null) => resolve(code ?? 1))
++                      child.on("error", () => resolve(1))
++                    }),
++                  catch: () => new Error("model-swap.sh spawn failed"),
++                }).pipe(Effect.catch(() => Effect.succeed(1)))
++                if (exitCode !== 0) {
++                  yield* bus.publish(Session.Event.Error, {
++                    sessionID,
++                    error: new NamedError.Unknown({
++                      message: `Model swap cancelled or failed for ${lastUser.model.modelID}. Send another message to retry.`,
++                    }).toObject(),
++                  })
++                  break
++                }
++              }
++            }
++          }
++
+           const task = tasks.pop()
+ 
+           if (task?.type === "subtask") {

@@ -42,17 +42,22 @@ Five patches in this repo fix that:
   "Load skill: \<name\> (~\<N\> tokens)" with the description on a
   second line. Now the user can see what the skill is for and how
   much context it will eat before clicking Allow.
-- **router-swap.ts patch.** Detects when the resolved model for a turn
-  points at the local llama-server router (`http://127.0.0.1:<port>`)
-  and is currently `unloaded` or `loading` per `/models`. Forks
-  `scripts/model-swap.sh` (path from `OPENCODE_MODEL_SWAP_SCRIPT` env
-  var) with the target model id and waits for it to exit. The script
-  shows a yad confirm dialog + progress popup and either loads the
-  target or returns 1 (cancel). On cancel, opencode publishes a
-  Session.Event.Error with a clear message; on success, the loop
-  continues normally. Without this patch, Zed's model-picker change
-  causes a silent 400 from the router because `--no-models-autoload`
-  is set on llama-primary-router.
+- **router-swap-v2 patch.** Confirm-card UX for model swaps in router
+  mode. When the user picks an unloaded primary model in Zed,
+  `unstable_setSessionModel` probes `scripts/model-swap.sh
+  --preflight <target>` (path from `OPENCODE_MODEL_SWAP_SCRIPT`).
+  On JSON success the preflight result is stashed; on the next user
+  message, opencode raises an ACP `swap` permission_request with a
+  rich card body (description, VRAM/RAM resource glyphs, optional
+  soft-block warning, optional /compact recommendation). On Allow,
+  the script's `--execute` mode runs synchronously to load the
+  target. On Deny, opencode publishes a Session.Event.Error and the
+  loop breaks. If the probe fails (script doesn't speak
+  `--preflight`, exits non-zero, or emits non-JSON), opencode falls
+  through to the v1 eager-spawn behavior, preserving anny's
+  `model-swap-remote.sh` flow byte-for-byte. The v1 patch
+  (`our-patch-router-swap.diff`) is kept in the repo for historical
+  reference but is not applied.
 
 Apply the patches, rebuild opencode from source, install the resulting
 binary alongside the upstream one, and point Zed at the patched binary.
@@ -114,9 +119,14 @@ A few real failure modes:
 - `our-patch-tools.diff`: the write/edit schema patch (and matching
   test fixtures).
 - `our-patch-skill-permission.diff`: the skill-permission card patch.
-- `our-patch-router-swap.diff`: the router-mode model-swap trigger
-  patch -- detects when the user picks an unloaded primary model and
-  forks scripts/model-swap.sh to handle the load with progress UI.
+- `our-patch-router-swap-v2.diff`: the router-mode model-swap
+  confirm-card patch -- preflight probe + ACP `swap` permission card
+  with resource summary, optional soft-block warning, and optional
+  /compact recommendation. On Allow runs `--execute`; on Deny breaks
+  the loop. Falls back to the v1 eager-spawn path if the script
+  doesn't speak `--preflight` (preserves remote-user paths).
+- `our-patch-router-swap.diff`: the v1 router-mode model-swap trigger
+  patch (kept for historical reference; not applied as of fix-6).
 - `the-fix.md`: a plain-language description of the agent.ts patch and
   why it works.
 - `fix-2-shipped.md`: the production state after the bash polish landed
