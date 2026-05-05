@@ -36,6 +36,13 @@ REGISTRY="${WS_PRIMARY_POOL:-${REPO}/configs/workstation/primary-pool.json}"
 ROUTER_BASE="${WS_ROUTER_BASE:-http://127.0.0.1:11434}"
 OPENCODE_DB="${HOME}/.local/share/opencode/opencode.db"
 
+# fix-9 follow-up: rendered opencode.json that we re-target on every
+# successful swap so .model and .agent.compaction.model both follow
+# the currently-loaded primary. Per-user file (lives in $HOME, written
+# by opencode-session.sh's render step). If unset (e.g. running under
+# a service account that has no opencode config), patches are skipped.
+OPENCODE_CONFIG="${OPENCODE_CONFIG:-${HOME}/.config/opencode/opencode.json}"
+
 # Wait timeouts (seconds). Generous because OSS load can take ~4 min,
 # compaction summarization can take a few min on long sessions.
 LOAD_TIMEOUT=900
@@ -436,6 +443,50 @@ preflight_json() {
 # Emits "[swap] ..." lines to stdout. Exits 0 on loaded, 1 on failure
 # or timeout. No yad. opencode-patched streams stdout into a
 # foldable terminal block in chat via _meta.terminal_info.
+patch_compaction_target() {
+  # Re-target both .model and .agent.compaction.model in the user's
+  # rendered opencode.json so the just-loaded model becomes the active
+  # primary AND the compaction agent. This implements the "current model
+  # always handles its own compaction" rule -- there is no static
+  # compaction pin to stale out as we add/remove models from the pool.
+  #
+  # Best-effort: skipped if opencode.json doesn't exist (user might
+  # have not launched opencode yet, or this swap is being driven from
+  # a script that has no opencode session). Skipped if jq is not
+  # available. Validates JSON before promoting.
+  local model="$1"
+  local target="llama-primary/$model"
+
+  if [[ ! -f "$OPENCODE_CONFIG" ]]; then
+    return 0
+  fi
+  if ! command -v jq >/dev/null 2>&1; then
+    return 0
+  fi
+
+  local current_primary current_compact
+  current_primary=$(jq -r '.model // ""' "$OPENCODE_CONFIG" 2>/dev/null)
+  current_compact=$(jq -r '.agent.compaction.model // ""' "$OPENCODE_CONFIG" 2>/dev/null)
+  if [[ "$current_primary" == "$target" && "$current_compact" == "$target" ]]; then
+    return 0
+  fi
+
+  local tmp="${OPENCODE_CONFIG}.swap.$$"
+  if jq --arg m "$target" '
+        .model = $m
+        | .agent = (.agent // {})
+        | .agent.compaction = (.agent.compaction // {})
+        | .agent.compaction.model = $m
+      ' "$OPENCODE_CONFIG" > "$tmp" 2>/dev/null \
+     && jq empty "$tmp" >/dev/null 2>&1; then
+    mv -f "$tmp" "$OPENCODE_CONFIG"
+    echo "[swap] opencode.json re-targeted: model + compaction -> $target"
+  else
+    rm -f "$tmp"
+    echo "[swap] WARN: could not re-target opencode.json (continuing anyway)"
+  fi
+}
+
 execute_load() {
   local poll_interval="${WS_TEST_POLL_INTERVAL:-5}"
   local heartbeat_every="${WS_TEST_HEARTBEAT_EVERY:-6}"   # poll * 6 = 30s in prod
@@ -468,6 +519,10 @@ execute_load() {
     case "$status" in
       loaded)
         echo "[swap] ✓ $TARGET loaded (${elapsed}s)"
+        # fix-9 follow-up: keep opencode.json in sync with the just-
+        # loaded model. This makes the next compaction route to the
+        # current model (rather than to a stale static pin).
+        patch_compaction_target "$TARGET"
         return 0
         ;;
       error|failed|loading-error)
@@ -611,24 +666,24 @@ yad_progress_pipe() {
 
 run_compaction_via_opencode() {
   # opencode's compaction agent fires automatically when a turn would
-  # overflow the model's context. We can't trigger compaction directly
-  # via an API; what we CAN do is rely on the agent.compaction.model
-  # config in opencode.json.template (already pinned to the larger
-  # model in the pool) to ensure that when compaction does fire after
-  # the swap, it targets a still-loaded model.
+  # overflow the model's context. As of fix-9 follow-up (2026-05-05),
+  # the compaction-agent model is no longer a static pin -- it tracks
+  # whatever's currently loaded on the router (see patch_compaction_target
+  # below, which re-targets opencode.json on every successful swap).
   #
-  # In practice: if the user is swapping smaller->larger, no
-  # compaction needed (target window is bigger). If swapping
-  # larger->smaller AND session > target's usable, opencode will fire
-  # compaction on the next user message and route it to whichever model
-  # is named in agent.compaction.model. As long as that's the larger
-  # model AND it's loaded, compaction succeeds.
+  # The ideal flow for "current ctx > target ctx" swap-compaction is:
+  #   1. While the larger model is still loaded, fire compaction so it
+  #      summarizes the session in its own larger window.
+  #   2. After compaction completes, perform the actual swap.
+  # Today we don't have a clean trigger for (1) -- opencode's compaction
+  # agent fires on context overflow, not on demand. The card hint
+  # "compaction recommended" surfaces this to the user as guidance, but
+  # the user's only real lever is to /compact before swapping.
   #
-  # For us right now: compaction agent = gpt-oss-120b (always largest
-  # in our 2-model pool). On a GLM->OSS swap, OSS will be loaded
-  # post-swap and compaction works. On an OSS->GLM swap, OSS gets
-  # unloaded; we'd need to either (a) keep OSS for compaction first
-  # and load GLM for serving second, or (b) skip compaction.
+  # For us right now: compaction agent always equals the loaded model
+  # (kept in sync by patch_compaction_target on every swap). That means
+  # compaction triggered AFTER a swap routes to the new (smaller)
+  # model, which may or may not handle a near-full context cleanly.
   #
   # Right now we don't have a way to do (a) -- the router's
   # --models-max 1 mutex makes it impossible to have OSS loaded for

@@ -89,8 +89,29 @@ OPENCODE_CONFIG="$HOME/.config/opencode/opencode.json"
 # template default for these is what a fresh deploy gets; subsequent
 # renders read the user-edited value and copy it forward. Today the
 # only such field is "model", which the user changes when swapping
-# models for a task.
+# models for a task. (Note: fix-9 supersedes per-session preservation
+# for "model" -- the post-render discover_and_patch_primary_model step
+# overwrites whatever was preserved, with the actual loaded model on
+# the router. PRESERVE_FIELDS still covers any other field a user
+# edits in the rendered file across renders.)
 PRESERVE_FIELDS=(model)
+
+# Path to primary-pool.json -- the registry of models we'll adopt as
+# session primaries. Out-of-registry models (e.g. someone smoke-loaded
+# a random GGUF outside the pool) are left alone by the discovery step.
+PRIMARY_POOL_JSON="$REPO/configs/workstation/primary-pool.json"
+
+# Cold-start fallback model for when no pool member is loaded. GLM was
+# chosen because it has the fastest cold load (~35s) and is fully GPU-
+# resident, so it's the most predictable "first model after boot"
+# experience. Picked at config time, not runtime; if we ever change the
+# default fallback we update this constant.
+DEFAULT_FALLBACK_MODEL="glm-4.7-flash"
+
+# Cap on how long we'll wait for the cold-start load to finish. 90s is
+# generous for glm (which loads in ~35s) but bounded enough that a
+# truly broken router doesn't hold the launcher hostage.
+COLD_START_TIMEOUT_SEC=90
 
 # ── Utilities ────────────────────────────────────────────────────────────────
 
@@ -310,6 +331,154 @@ wait_for_endpoints() {
   done
 }
 
+# ── Primary-model discovery (fix-9) ──────────────────────────────────────────
+#
+# Runs after the router endpoint is up but before exec'ing opencode.
+# Aligns the rendered opencode.json's top-level "model" field with the
+# actual model loaded on llama-primary-router. If nothing in our
+# registry is loaded, kicks a load of DEFAULT_FALLBACK_MODEL so the
+# user gets a working session out of the box.
+#
+# Three outcomes:
+#   1. A registered pool model is loaded -> patch opencode.json to
+#      that model. (Common case: launcher inherits prior session's
+#      model selection.)
+#   2. No pool model is loaded -> POST /models/load for the fallback,
+#      poll up to COLD_START_TIMEOUT_SEC, then patch.
+#   3. An out-of-registry model is loaded -> log a warning and leave
+#      opencode.json alone. The user explicitly chose this; we don't
+#      override.
+#
+# All paths are best-effort: if the discovery step fails for any
+# reason (router unreachable, jq error, etc.), we log and fall through
+# with whatever the rendered config has. Better to launch with a
+# possibly-wrong default than refuse to launch entirely.
+
+primary_loaded_model() {
+  # Print the id of the currently-loaded primary model, or empty.
+  # Filters status=loaded; if multiple match (shouldn't with --models-max 1
+  # but tolerate it) returns the first.
+  curl -fs --max-time 3 "http://127.0.0.1:${WS_PORT_PRIMARY}/v1/models" 2>/dev/null \
+    | jq -r '[.data[] | select(.status.value == "loaded") | .id] | .[0] // ""' 2>/dev/null
+}
+
+is_pool_member() {
+  # Return 0 if $1 is in primary-pool.json's models map, 1 otherwise.
+  local model="$1"
+  if [[ ! -r "$PRIMARY_POOL_JSON" ]]; then
+    return 1
+  fi
+  jq -e --arg m "$model" '.models | has($m)' "$PRIMARY_POOL_JSON" >/dev/null 2>&1
+}
+
+cold_start_fallback() {
+  # POST /models/load for DEFAULT_FALLBACK_MODEL and poll until loaded
+  # or COLD_START_TIMEOUT_SEC elapses. Returns 0 on load, non-zero on
+  # timeout/error. Stdout: nothing. Caller checks status with
+  # primary_loaded_model.
+  log "no pool model loaded; cold-starting $DEFAULT_FALLBACK_MODEL (~35s)"
+  if ! curl -fs --max-time 5 \
+         -X POST "http://127.0.0.1:${WS_PORT_PRIMARY}/models/load" \
+         -H 'Content-Type: application/json' \
+         -d "$(jq -nc --arg m "$DEFAULT_FALLBACK_MODEL" '{model: $m}')" \
+         >/dev/null 2>&1; then
+    warn "cold-start POST failed; opencode will launch with template default"
+    return 1
+  fi
+
+  local start_ts deadline
+  start_ts=$(date +%s)
+  deadline=$(( start_ts + COLD_START_TIMEOUT_SEC ))
+  while :; do
+    local status
+    status=$(curl -fs --max-time 3 "http://127.0.0.1:${WS_PORT_PRIMARY}/v1/models" 2>/dev/null \
+              | jq -r --arg m "$DEFAULT_FALLBACK_MODEL" \
+                  '.data[] | select(.id == $m) | .status.value' 2>/dev/null)
+    case "$status" in
+      loaded)
+        local elapsed=$(( $(date +%s) - start_ts ))
+        log "$DEFAULT_FALLBACK_MODEL loaded in ${elapsed}s"
+        return 0
+        ;;
+      error|failed|loading-error)
+        warn "cold-start status=$status; opencode will launch with template default"
+        return 1
+        ;;
+    esac
+    if (( $(date +%s) >= deadline )); then
+      warn "cold-start timed out after ${COLD_START_TIMEOUT_SEC}s; opencode will launch with template default"
+      return 1
+    fi
+    sleep 2
+  done
+}
+
+patch_opencode_model() {
+  # Rewrite opencode.json so BOTH .model (top-level primary) and
+  # .agent.compaction.model point at "llama-primary/<id>". Compaction
+  # follows the active model so that whatever's loaded handles its own
+  # context overflow -- no separate "compaction agent" pin to go stale.
+  # Idempotent: skips the write if both fields already match. Validates
+  # JSON before promoting; on validation failure leaves the existing
+  # rendered file in place.
+  local model="$1"
+  local target="llama-primary/$model"
+
+  if [[ ! -f "$OPENCODE_CONFIG" ]]; then
+    warn "opencode.json missing at $OPENCODE_CONFIG; nothing to patch"
+    return 1
+  fi
+
+  local current_primary current_compact
+  current_primary=$(jq -r '.model // ""' "$OPENCODE_CONFIG" 2>/dev/null)
+  current_compact=$(jq -r '.agent.compaction.model // ""' "$OPENCODE_CONFIG" 2>/dev/null)
+  if [[ "$current_primary" == "$target" && "$current_compact" == "$target" ]]; then
+    log "opencode.json already targets $target (primary + compaction); no patch needed"
+    return 0
+  fi
+
+  local tmp="${OPENCODE_CONFIG}.fix9.$$"
+  if jq --arg m "$target" '
+        .model = $m
+        | .agent = (.agent // {})
+        | .agent.compaction = (.agent.compaction // {})
+        | .agent.compaction.model = $m
+      ' "$OPENCODE_CONFIG" > "$tmp" 2>/dev/null \
+     && jq empty "$tmp" >/dev/null 2>&1; then
+    mv -f "$tmp" "$OPENCODE_CONFIG"
+    log "patched opencode.json: model + compaction -> $target"
+    return 0
+  else
+    warn "could not patch opencode.json; leaving as-is"
+    rm -f "$tmp"
+    return 1
+  fi
+}
+
+discover_and_patch_primary_model() {
+  # Main entry for fix-9. Best-effort: any failure path falls through
+  # without aborting the launcher.
+  local loaded
+  loaded=$(primary_loaded_model)
+
+  if [[ -n "$loaded" ]]; then
+    if is_pool_member "$loaded"; then
+      log "router has loaded: $loaded (in registry)"
+      patch_opencode_model "$loaded" || true
+      return 0
+    else
+      warn "router has loaded: $loaded (NOT in primary-pool.json registry)"
+      warn "leaving opencode.json model field at template default; user can /models <id> to retarget"
+      return 0
+    fi
+  fi
+
+  # Nothing loaded. Cold-start the fallback.
+  if cold_start_fallback; then
+    patch_opencode_model "$DEFAULT_FALLBACK_MODEL" || true
+  fi
+}
+
 # ── Main ─────────────────────────────────────────────────────────────────────
 #
 # Service lifecycle is owned by the launcher (2gpu-launch.sh) and
@@ -338,6 +507,11 @@ wait_for_endpoints || {
   err "endpoints did not come up; aborting before opencode launch"
   exit 1
 }
+
+# fix-9: align opencode.json with the actual loaded primary model.
+# Best-effort -- failures here don't block launch; user can still
+# /models <id> from inside opencode if needed.
+discover_and_patch_primary_model
 
 log "launching opencode: $OPENCODE_BIN $*"
 exec "$OPENCODE_BIN" "$@"

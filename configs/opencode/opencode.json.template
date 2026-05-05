@@ -52,7 +52,8 @@
   ],
   "agent": {
     "compaction": {
-      "model": "llama-primary/gpt-oss-120b"
+      "_comment": "Dynamic: scripts/opencode-session.sh patches this to match the currently-loaded primary at launch, and scripts/model-swap.sh re-patches it on every successful swap. This template default is only the cold-boot value before discovery runs.",
+      "model": "llama-primary/glm-4.7-flash"
     },
     "title": {
       "model": "llama-secondary/qwen3-4b-instruct-2507"
