@@ -446,9 +446,20 @@ preflight_json() {
 patch_compaction_target() {
   # Re-target both .model and .agent.compaction.model in the user's
   # rendered opencode.json so the just-loaded model becomes the active
-  # primary AND the compaction agent. This implements the "current model
-  # always handles its own compaction" rule -- there is no static
-  # compaction pin to stale out as we add/remove models from the pool.
+  # primary AND the compaction agent.
+  #
+  # IMPORTANT MENTAL MODEL: .agent.compaction.model is NOT a static pin.
+  # It's a follower field. opencode reads it at compaction time, so the
+  # JSON entry has to exist; but the value is overwritten by this
+  # function (and by scripts/opencode-session.sh at launch) to track
+  # the currently-loaded primary. The "compaction agent" decision is
+  # not a config decision; it's "whatever the router currently has
+  # loaded." This means there's no separate pin to maintain as the
+  # pool changes.
+  #
+  # The proper fix (no JSON field at all, opencode queries the router
+  # directly at compaction time) is deferred -- requires an opencode
+  # source patch. This follower pattern is the substitute.
   #
   # Best-effort: skipped if opencode.json doesn't exist (user might
   # have not launched opencode yet, or this swap is being driven from

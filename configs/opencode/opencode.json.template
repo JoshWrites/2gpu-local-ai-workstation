@@ -52,7 +52,7 @@
   ],
   "agent": {
     "compaction": {
-      "_comment": "Dynamic: scripts/opencode-session.sh patches this to match the currently-loaded primary at launch, and scripts/model-swap.sh re-patches it on every successful swap. This template default is only the cold-boot value before discovery runs.",
+      "_comment": "NOT a pin -- this is a follower field. opencode reads .agent.compaction.model at compaction time, so the JSON entry has to exist; but its value is overwritten by external scripts to track the currently-loaded primary on llama-primary-router. Writers: scripts/opencode-session.sh (at launch, after router discovery) and scripts/model-swap.sh (on every successful --execute load). The template default below is only the cold-boot value before the first writer runs. To remove this field entirely we'd need to patch opencode source so compaction reads the loaded model from the router directly; deferred.",
       "model": "llama-primary/glm-4.7-flash"
     },
     "title": {

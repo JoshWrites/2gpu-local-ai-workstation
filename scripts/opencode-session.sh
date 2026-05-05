@@ -415,9 +415,21 @@ cold_start_fallback() {
 
 patch_opencode_model() {
   # Rewrite opencode.json so BOTH .model (top-level primary) and
-  # .agent.compaction.model point at "llama-primary/<id>". Compaction
-  # follows the active model so that whatever's loaded handles its own
-  # context overflow -- no separate "compaction agent" pin to go stale.
+  # .agent.compaction.model point at "llama-primary/<id>".
+  #
+  # On .agent.compaction.model: this is NOT a static pin even though it
+  # looks like one in the file. opencode reads .agent.compaction.model
+  # at compaction time, so the field has to exist. We treat it as a
+  # follower of whatever's loaded on the router: the launcher writes it
+  # at startup (here), and scripts/model-swap.sh writes it again on
+  # every successful --execute load. Result: compaction always routes
+  # to the currently-loaded model, no separate "compaction agent"
+  # decision to go stale as the pool changes.
+  #
+  # The proper fix (delete the field, patch opencode to query the
+  # router at compaction time) is deferred -- needs an opencode source
+  # patch. The follower pattern is the no-source-patch substitute.
+  #
   # Idempotent: skips the write if both fields already match. Validates
   # JSON before promoting; on validation failure leaves the existing
   # rendered file in place.
