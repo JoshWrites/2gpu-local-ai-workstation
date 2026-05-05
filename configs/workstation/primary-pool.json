@@ -1,16 +1,6 @@
 {
   "_comment": "Registry for the primary-model swap pool. Each entry describes a model that llama-router.ini knows how to load. The id matches the [section] name in llama-router.ini and the model id at the API level. model-swap.sh reads this to compose its yad popup, predict memory, and pick the larger-context model for compaction. Add an entry here when you add a model to llama-router.ini.",
-
   "models": {
-    "gpt-oss-120b": {
-      "display_name": "GPT-OSS-120B 128K",
-      "description": "Frontier reasoning, 128K context, MoE expert offload to system RAM",
-      "context_tokens": 131072,
-      "vram_required_mb": 19000,
-      "dram_required_mb": 48000,
-      "expected_load_seconds": 240,
-      "expected_gen_tok_per_sec": 17
-    },
     "glm-4.7-flash": {
       "display_name": "GLM-4.7-Flash 64K",
       "description": "Fast generalist, 64K context, fully GPU-resident",
@@ -19,9 +9,35 @@
       "dram_required_mb": 0,
       "expected_load_seconds": 35,
       "expected_gen_tok_per_sec": 72
+    },
+    "qwen3-coder-30b": {
+      "display_name": "Qwen3-Coder-30B 64K",
+      "description": "Coding-focused MoE: 30B / 3B active, fully GPU-resident, ~70 tok/s expected; SWE-Bench Verified ~50%",
+      "context_tokens": 65536,
+      "vram_required_mb": 19000,
+      "dram_required_mb": 0,
+      "expected_load_seconds": 35,
+      "expected_gen_tok_per_sec": 70
+    },
+    "qwen3-next-80b-thinking": {
+      "display_name": "Qwen3-Next-80B Thinking 96K",
+      "description": "Frontier reasoning: 80B MoE / 3B active, hybrid Gated DeltaNet, replaces gpt-oss-120b for hard tasks; ~25-35 tok/s expected",
+      "context_tokens": 98304,
+      "vram_required_mb": 14000,
+      "dram_required_mb": 44000,
+      "expected_load_seconds": 200,
+      "expected_gen_tok_per_sec": 30
+    },
+    "qwen3-next-80b-instruct": {
+      "display_name": "Qwen3-Next-80B Instruct 96K",
+      "description": "Non-thinking sibling of Qwen3-Next-Thinking; use for agent loops where reasoning traces are noise",
+      "context_tokens": 98304,
+      "vram_required_mb": 14000,
+      "dram_required_mb": 44000,
+      "expected_load_seconds": 200,
+      "expected_gen_tok_per_sec": 30
     }
   },
-
   "_notes": {
     "vram_required_mb": "Includes weights + KV cache + compute buffer. Measured live, not theoretical.",
     "dram_required_mb": "Host-side RAM the model needs for MoE expert offload. 0 for fully-GPU-resident models.",

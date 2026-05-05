@@ -9,6 +9,10 @@ models/
 aspects/
 .slots/
 
+# Backups left by ops scripts (rollback path is /etc/*.bak, not repo).
+*.bak
+*.bak.*
+
 # Python
 __pycache__/
 *.py[cod]

@@ -1,13 +1,15 @@
 # 2GPU Local AI Workstation -- One Sheet
 
-**Date:** 2026-05-03
+**Date:** 2026-05-04
 **Hardware:** Ryzen 9 5950X, 64 GB DDR4-3200, RX 7900 XTX (24 GB, gfx1100),
 RX 5700 XT (8 GB, gfx1010), Ubuntu 24.04, kernel 6.17
 
-A single-machine local agentic coding stack that runs a frontier-class
-116-billion-parameter model with full 128K context, alongside three
-supporting models and a Library MCP, on consumer AMD hardware. No
-cloud dependency, no datacenter GPU, no rental cost beyond electricity.
+A single-machine local agentic coding stack that runs a four-model
+primary pool -- frontier-class 80B-120B reasoning models alongside a
+fast generalist and a coding specialist -- with full 128K context,
+alongside three supporting models and a Library MCP, on consumer AMD
+hardware. No cloud dependency, no datacenter GPU, no rental cost
+beyond electricity.
 
 ---
 
@@ -22,12 +24,32 @@ benchmark throughput.
 +--------------------------------------------------------------+
 |  STATEFUL TIER -- 7900 XTX (24 GB VRAM) + System RAM         |
 |                                                              |
-|  GPT-OSS-120B (116.83B params, MXFP4, 128K context)          |
-|    weights on GPU:    14.5 GB (attention + output)           |
-|    weights on DRAM:   45.9 GB (28 of 36 layers' MoE experts) |
-|    KV cache (Q8_0):    2.5 GB                                |
-|    compute buffer:     1.8 GB                                |
-|    SWA checkpoints:    3.0 GB (DRAM, 64 slots)               |
+|  Router-mode llama-server hosts a 4-model primary pool, one  |
+|  loaded at a time, swapped via /models slash command:        |
+|                                                              |
+|    qwen3-next-80b-thinking  -- frontier reasoning + default  |
+|                                compaction agent (96K ctx,    |
+|                                highest in pool). 80B MoE/3B  |
+|                                active, hybrid Gated DeltaNet |
+|                                attention, MoE offload to     |
+|                                DRAM (n-cpu-moe=28).          |
+|    qwen3-next-80b-instruct  -- non-thinking sibling for      |
+|                                agent loops where reasoning   |
+|                                traces are noise. Same shape, |
+|                                96K ctx.                      |
+|    qwen3-coder-30b          -- coding specialist. 30B MoE/3B |
+|                                active, fully GPU-resident,   |
+|                                64K ctx.                      |
+|    glm-4.7-flash            -- fast generalist. Fully GPU-   |
+|                                resident, 64K ctx.            |
+|                                                              |
+|  Largest tenant (qwen3-next-80b-thinking @ 96K) sets the     |
+|  envelope:                                                   |
+|    weights on GPU:    19.1 GB (20 attention + 1 MoE layer)   |
+|    weights on DRAM:   25.4 GB (27 of 47 MoE layers offload)  |
+|    KV cache (Q8_0):    1.7 GB                                |
+|    SSM recurrent st:   0.3 GB (Gated DeltaNet state)         |
+|    compute buffer:     0.7 GB                                |
 |                                                              |
 |  Single accumulating conversation, tuned for amortized cost  |
 |  across multi-hour sessions, not peak benchmark throughput.  |
@@ -99,13 +121,21 @@ secondary's queue.
 
 ## Effective parameter capacity served simultaneously
 
+The primary slot is router-mode and hosts one of four models at a
+time. Effective capacity is computed against the largest tenant
+(GPT-OSS-120B); the smaller models leave headroom but the envelope
+is set by the worst case.
+
 | Role | Model | Params | Lives on |
 |---|---|---:|---|
-| Primary chat / agent | GPT-OSS-120B | 116.83 B | 7900 XTX + DRAM |
+| Primary -- frontier reasoning (default for hard) | Qwen3-Next-80B-A3B-Thinking | 80 B (3 B active) | 7900 XTX + DRAM |
+| Primary -- coding specialist | Qwen3-Coder-30B-A3B-Instruct | 30 B (3 B active) | 7900 XTX |
+| Primary -- fast generalist | GLM-4.7-Flash | ~12 B | 7900 XTX |
+| Primary -- fallback | GPT-OSS-120B | 116.83 B (5.1 B active) | 7900 XTX + DRAM |
 | Summarizer | Qwen3-4B Instruct | 4.0 B | 5700 XT |
 | Embeddings | multilingual-e5-large | 0.56 B | 5700 XT |
 | Edit predictions | Qwen2.5-Coder-3B | 3.0 B | 5700 XT |
-| **Total** | | **~124 B** | |
+| **Total at envelope (OSS loaded)** | | **~124 B** | |
 
 Hardware total: ~$1,200 (7900 XTX, 5700 XT used, 64 GB DDR4-3200,
 Ryzen 9 5950X used).
@@ -204,16 +234,19 @@ the discipline:
   becomes compressed payloads before crossing into the agent's
   accumulating state.
 - **Router-mode primary with `/models` slash-command swap UX.** A
-  single llama-server (mainline router mode, PR #16653) hosts both
-  GLM-4.7-Flash (fast default) and GPT-OSS-120B (heavy reasoning) on
-  the same port, loading on demand. The swap UX lives entirely in
-  the chat panel: type `/models` to list available models, `/models
-  <id>` to raise a confirmation card showing target description and
-  resource check, click Allow to stream `[swap] still loading (Ns)`
-  heartbeats into a foldable terminal block, and a final `✓ <id>
-  loaded (Ns)` bookend. ~35 s for GLM, ~3-4 min for OSS. Works
-  identically for local users at the workstation and for remote
-  users over SSH+ACP. See
+  single llama-server (mainline router mode, PR #16653) hosts a
+  four-model pool -- Qwen3-Next-80B-Thinking (frontier reasoning,
+  default for hard tasks), Qwen3-Coder-30B (coding specialist),
+  GLM-4.7-Flash (fast generalist), GPT-OSS-120B (fallback / OpenAI-
+  style RLHF tone) -- on the same port, loading on demand. The
+  swap UX lives entirely in the chat panel: type `/models` to list
+  available models, `/models <id>` to raise a confirmation card
+  showing target description and resource check, click Allow to
+  stream `[swap] still loading (Ns)` heartbeats into a foldable
+  terminal block, and a final `✓ <id> loaded (Ns)` bookend. ~30 s
+  for the GPU-resident models, ~3-4 min for the MoE-offload ones.
+  Works identically for local users at the workstation and for
+  remote users over SSH+ACP. See
   [`2026-05-03-router-mode-swap-implementation.md`](2026-05-03-router-mode-swap-implementation.md)
   and the v3 design at
   [`../superpowers/specs/2026-05-04-models-slash-command-design.md`](../superpowers/specs/2026-05-04-models-slash-command-design.md).
@@ -239,6 +272,7 @@ for the build history.
 | Library MCP | Webfetch path overflows 128K window after ~10 calls. Long-context model becomes unusable for agentic research. |
 | mnemory | Each session starts blind: the agent re-asks for preferences, constraints, project facts the user has already taught it. Cosmetic on day 1; corrosive over weeks. |
 | `--alias gpt-oss-120b` flag | opencode pattern-matches model id to enable Harmony / tool attachment. Without it, model emits code in chat instead of tool calls. |
+| MoE-with-low-active-params shape (Qwen3-Next, GPT-OSS-120B) | Out of options at this hardware tier. Dense 70B doesn't fit on 24 GB; full GLM-4.6/4.7 (357B) and Qwen3-Coder-480B don't fit in 88 GiB total even at IQ3. The MoE-offload-to-DRAM trick is what makes frontier-class fit on 24+64. |
 
 ## Methodology notes
 

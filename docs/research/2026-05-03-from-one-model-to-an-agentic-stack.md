@@ -866,6 +866,371 @@ sudo systemctl enable --now mnemory.service
 Restore point: branch `mnemory`, commits `aaac6ee` (plugin wire-up)
 and `00c22d5` (systemd unit + launcher integration).
 
+## Phase 11 (2026-05-04) -- primary pool expansion: dropping fast-gpt-oss-120b, adding the qwen3 family
+
+Phase 8 left the router-pool with two primary models: GLM-4.7-Flash
+(fast default, ~72 tok/s) and GPT-OSS-120B (heavy reasoning, ~17-19
+tok/s). Phase 11 reshapes that pool. The motivating questions:
+
+- GPT-OSS-120B has been the deep-reasoning slot since May 2. It's a
+  capable model from August 2025, but nine months is a long time at
+  the current rate of frontier-model releases. Worth re-examining.
+- 19 tok/s is the floor for our reasoning slot. Either we tune the
+  existing model further, find a faster model in the same shape, or
+  swap to a different shape entirely.
+- Coding work mostly routes to GLM-4.7-Flash today. Is there a
+  coding-specialized model that does better than a general-purpose
+  fast model on coding-shaped prompts?
+
+### The fast-gpt-oss-120b experiment
+
+Before going model-shopping, we tried tuning GPT-OSS-120B harder.
+The hypothesis: at the current `--n-cpu-moe 28`, `-c 131072`, `-ub
+2048` config, a smaller context + slightly smaller MoE-offload
+fraction should leave more layers on the GPU and run faster.
+
+Two tuning passes:
+
+1. `[fast-gpt-oss-120b]` v1 -- `ctx-size=92160` (90K), `n-cpu-moe=27`,
+   `ubatch-size=512`. Lighter KV, one more MoE layer on GPU, smaller
+   ubatch.
+2. `[fast-gpt-oss-120b]` v2 (retune) -- `ctx-size=65536` (64K),
+   `n-cpu-moe=26`, `ubatch-size=512`. Two more MoE layers on GPU
+   relative to baseline; KV halved relative to v1.
+
+A comprehensive bench script (`/tmp/bench-primary-models.sh`) runs
+two prompts × two runs × N models, takes the median, and emits a
+table. Two prompts: a short factual ("What is 17 × 23?") and a long
+context-loaded one (3K tokens of Roman-empire material with a
+follow-up question). Compares short and long generation tok/s and
+prompt-eval tok/s. Worth keeping for future model A/Bs.
+
+Median results (run 2 used for v2; v1 not re-run after retune):
+
+| Model | Ctx | Short gen tok/s | Long gen tok/s | Long prompt-eval tok/s |
+|---|---:|---:|---:|---:|
+| glm-4.7-flash | 64K | 72.5 | 69.9 | 43.8 |
+| fast-gpt-oss-120b v1 (90K, n-cpu-moe=27) | 92K | 19.7 | 20.0 | -- |
+| fast-gpt-oss-120b v2 (64K, n-cpu-moe=26) | 64K | 20.5 | 20.7 | -- |
+| gpt-oss-120b (baseline) | 128K | 18.0 | 19.7 | -- |
+
+The retune bought roughly 1-2 tok/s over the 128K baseline. Not
+nothing, but not enough to justify a second OSS variant in the pool
+(swap UX complexity, registry size, user confusion about which OSS
+to pick). More importantly, the failure mode is informative: the
+MoE-offload bottleneck on AMD HIP isn't ubatch-shaped or
+context-shaped. It lives somewhere deeper -- MXFP4 dequant on the
+CPU side, or KV-read patterns over PCIe, or both. Tuning the levers
+we have available doesn't move it.
+
+Decision: drop `fast-gpt-oss-120b` from the registry. If we want a
+faster reasoning slot, the leverage is on model selection, not on
+tuning the existing one harder.
+
+### Why we went looking for replacements
+
+GPT-OSS-120B's role in the pool is "the model you switch to when
+GLM isn't smart enough." It's been nine months since OpenAI
+released it. The frontier-class field has moved. Two questions
+worth asking:
+
+1. Is there a model that runs faster than 19 tok/s in the same
+   24 GB GPU + 64 GB DRAM envelope, at comparable or better quality
+   on hard reasoning?
+2. Coding work is a large share of what we ask the agent to do. Is
+   GLM-4.7-Flash actually the best coding model that fits on the
+   primary slot, or is there a coding-specialist that does better
+   on coding prompts at similar speed?
+
+A research session on third-party benchmarks pointed at two
+candidates. The ruled-out list is short and useful:
+
+- **GLM-4.6 / GLM-4.7 (full)** -- 357B. Even IQ3_M is ~140 GiB; we
+  have 88 GiB total across GPU + DRAM. Doesn't fit.
+- **Qwen3-Coder-480B / DeepSeek-V3.2-Exp** -- 270+ GiB. Doesn't fit.
+- **Llama-3.3-70B (dense)** -- 40 GiB at Q4. Doesn't fit on a
+  single 24 GiB GPU; would need MoE-style offload but it's dense,
+  so offload kills throughput.
+
+That leaves the MoE-with-low-active-params shape -- the same shape
+that made GPT-OSS-120B viable in the first place.
+
+### The two new models
+
+**Qwen3-Coder-30B-A3B-Instruct** (coding-specialist slot)
+
+- 30B MoE, 3B active. Q4_K_XL GGUF ~18 GiB, fits fully on the
+  7900 XTX with KV headroom. Same hardware shape as GLM-4.7-Flash.
+- SWE-Bench Verified 50.3% vs GPT-OSS-120B SWE-Bench Pro 16.2%.
+  Different splits, but the gap is roughly 2-3x on coding-shaped
+  evaluation. Source:
+  https://artificialanalysis.ai/models/qwen3-coder-30b-a3b-instruct
+- Aider Polyglot leaderboard puts the Qwen3-Coder family in
+  competitive territory; the sibling Qwen3-Coder-Next gets 70.6%
+  on Aider Polyglot. Source: https://aider.chat/docs/leaderboards/
+- Intelligence Index 20 vs GPT-OSS-120B 33 -- wins on coding,
+  loses on broad reasoning. The point of having both in the pool.
+- Expected speed on the 7900 XTX: 60-80 tok/s short generation,
+  matching GLM-4.7-Flash since it's the same hardware shape (fully
+  GPU-resident, 3B active params).
+
+**Qwen3-Next-80B-A3B-Thinking** (frontier-reasoning slot, replaces
+GPT-OSS-120B as default for hard tasks)
+
+- 80B MoE, 3B active (vs GPT-OSS's 5.1B active). Hybrid Gated
+  DeltaNet + Gated Attention architecture -- newer than GPT-OSS's
+  MXFP4 path.
+- Q4_K_XL GGUF ~40-45 GiB, uses MoE expert offload to DRAM in the
+  same shape as GPT-OSS-120B but with smaller active-param count.
+- Third-party numbers: LiveCodeBench v6 68.7, GPQA Diamond 77.2.
+  Sibling Qwen3-Coder-Next gets 70.6% on Aider Polyglot. GPT-OSS-
+  120B is 41.8% on Aider Polyglot, ~15.5 on Galaxy.ai coding rank.
+  Source: https://huggingface.co/Qwen/Qwen3-Next-80B-A3B-Thinking,
+  https://artificialanalysis.ai/models/gpt-oss-120b
+- Expected speed: 25-35 tok/s on the 7900 XTX -- assuming HIP
+  support lands. The lower active-param count vs GPT-OSS (3B vs
+  5.1B) is where the speedup comes from.
+
+### The risk: HIP support for Qwen3NextForCausalLM
+
+The architecture is newer than what mainline llama.cpp's HIP
+backend has been carrying since GPT-OSS-120B's MXFP4 path landed
+in August 2025. `Qwen3NextForCausalLM` is not the same as
+`Qwen3MoeForCausalLM` (the architecture used by Qwen3-Coder-30B,
+which is well-supported). The frontier model is the higher-risk
+add.
+
+Mitigation: the swap script the user is preparing in parallel
+includes a preflight that probes whether the loaded llama-server
+build recognizes the architecture before committing to the swap.
+If it doesn't, the swap fails fast with a clear error rather than
+loading partially and producing garbage.
+
+If HIP doesn't support it yet, the Qwen3-Coder-30B slot still
+ships (well-supported architecture, Qwen3MoeForCausalLM has been
+in mainline for months). We'd run the new pool with three models
+and add Qwen3-Next-80B-Thinking when HIP catches up.
+
+### The 4-model registry
+
+Final pool shape after Phase 11:
+
+| Model | Role | Hardware shape | Expected speed |
+|---|---|---|---:|
+| `glm-4.7-flash` | Fast generalist | Fully GPU-resident, 64K ctx | ~70 tok/s |
+| `qwen3-coder-30b` | Coding specialist | Fully GPU-resident, ~18 GiB | 60-80 tok/s |
+| `qwen3-next-80b-thinking` | Frontier reasoning (default for hard tasks) | MoE offload, ~40-45 GiB total | 25-35 tok/s |
+| `gpt-oss-120b` | Fallback / OpenAI-style RLHF tone | MoE offload, ~60 GiB total | ~17 tok/s |
+
+`fast-gpt-oss-120b` was dropped before promotion for the reasons
+above. `gpt-oss-120b` stays in the pool as a fallback for two
+reasons: (a) if the Qwen3-Next HIP path turns out to be unstable,
+we have a known-good frontier-class option; (b) GPT-OSS's RLHF
+tone is distinct from Qwen's -- worth keeping as a stylistic
+alternative for tasks where the model's voice matters.
+
+The registry stays small enough that the picker is still
+navigable, and each slot has a clear "use this when..." answer:
+fast → GLM, code → Qwen3-Coder, hard → Qwen3-Next, fallback → OSS.
+
+### What Phase 11 didn't prove
+
+- **Speed numbers for the new models are projections.** The 60-80
+  tok/s for Qwen3-Coder-30B is extrapolated from GLM-4.7-Flash's
+  shape; the 25-35 tok/s for Qwen3-Next-80B is extrapolated from
+  GPT-OSS-120B's shape, scaled by the active-param ratio. Real
+  numbers will land after the swap script runs and the bench
+  reruns against the new pool.
+- **HIP support for Qwen3NextForCausalLM is unverified at time of
+  decision.** The preflight in the swap script will tell us; if
+  the answer is no, the pool ships as 3 models and we wait.
+- **Quality benchmarks are third-party, not local replication.**
+  We're trusting LiveCodeBench, GPQA, Aider Polyglot, and SWE-Bench
+  numbers from artificialanalysis.ai and aider.chat. Those numbers
+  are well-sourced but they're not our measurements on our
+  prompts.
+
+### Open follow-ups from this phase
+
+- Rerun `/tmp/bench-primary-models.sh` against the new pool once
+  the swap is live. Replace the projections in this section with
+  real numbers.
+- If Qwen3-Next-80B-Thinking lands and works, revisit whether
+  GPT-OSS-120B earns its slot -- the fallback role is real, but
+  pool size is a UX cost.
+- Document any new tuning that the Qwen3-Next architecture needs
+  (KV quant compatibility with the hybrid Gated DeltaNet attention,
+  ubatch sweet spot, etc.). Will likely warrant its own research
+  doc in the same shape as `gpt-oss-120b-moe-offload.md`.
+
+## Phase 12 (2026-05-05) -- pool execution: dropping gpt-oss-120b, debugging qwen3 in opencode, and the launcher-time discovery fix
+
+Phase 11 set the strategy. Phase 12 was the day of measurement and
+adjustment. Three big things landed.
+
+### Bench against the real pool
+
+`/tmp/bench-primary-models.sh` ran across all 5 models in the
+post-Phase-11 registry. Median-of-2-runs, both short (~30 token)
+and long (~1700 token input) prompts, gen tok/s and prompt-eval
+tok/s recorded.
+
+| Model | Short gen | Long gen | Prompt eval (long) |
+|---|---|---|---|
+| **qwen3-coder-30b** | **90.8** | **86.8** | 56.9 |
+| glm-4.7-flash | 71.9 | 69.8 | 48.4 |
+| qwen3-next-80b-thinking | 30.3 | 30.8 | 54.4 |
+| qwen3-next-80b-instruct | 29.8 | 30.0 | 51.7 |
+| gpt-oss-120b | 10.5 | 17.9 | 18.1 |
+
+Three findings:
+
+1. **Qwen3-Coder-30B beats GLM-4.7-Flash by ~25%** despite both
+   being fully GPU-resident. Coder is MoE (3B active) vs GLM's
+   dense (30B active) — fewer FLOPs per token at similar context
+   sizes. Qwen3-Coder is the new fastest model in the pool.
+2. **Qwen3-Next-80B at ~30 tok/s gen** validates the architecture
+   choice over gpt-oss-120b's ~18 tok/s. The Phase 11 projection
+   was 25-35; landed at the high end of that range.
+3. **gpt-oss-120b regressed to 10.5 tok/s short** in this run,
+   down from 18 in the earlier 3-model bench. State thrashing
+   from 4 prior swaps; the long-prompt run-2 number (17.9) is the
+   real steady-state. But even at steady state it's last in the
+   pool.
+
+### Retuning Qwen3-Next: n-cpu-moe=28
+
+Initial deploy used `n-cpu-moe=36`. Live VRAM measurement showed
+12.2 GiB on GPU, ~10 GiB headroom on the 7900 XTX. Each MoE layer
+moved from CPU to GPU costs ~1.0 GiB; 8 GiB headroom available.
+
+Retuned to `n-cpu-moe=28` (matching gpt-oss-120b's tuning). VRAM
+went to 19.1 GiB GPU + 1.85 GiB KV/RS/compute = ~22 GiB total.
+Bench numbers above are the post-retune results. Single-prompt
+smoke gave a misleading ~24 tok/s; the bench's warm-up + 2 runs
+revealed the real ~30 tok/s.
+
+### Bumping Qwen3-Next context to 96K, dropping gpt-oss-120b
+
+Bench made the next decision easy: gpt-oss-120b earns nothing the
+pool can't get elsewhere. Qwen3-Next-Thinking is faster *and*
+smarter. Dropping it removes pool size as a UX cost.
+
+But: gpt-oss-120b had `ctx_size=131072`, the highest in the pool.
+`primary-pool.json` picks the highest-context model as the
+compaction agent. Without a substitute, dropping gpt-oss-120b
+left compaction without a designated home.
+
+Math: KV cache cost scales linearly with context. Qwen3-Next at
+64K used 1117 MiB; 96K extrapolates to ~1676 MiB (+560 MiB).
+n-cpu-moe=28 left ~2 GiB headroom. Bumping to 96K stayed within
+budget without retuning.
+
+Final pool shape:
+
+| Model | Role | ctx | Speed |
+|---|---|---:|---:|
+| qwen3-next-80b-thinking | Frontier reasoning + compaction agent | 96K | 30 tok/s |
+| qwen3-next-80b-instruct | Non-thinking sibling | 96K | 30 tok/s |
+| qwen3-coder-30b | Coding specialist | 64K | 90 tok/s |
+| glm-4.7-flash | Fast generalist | 64K | 70 tok/s |
+
+gpt-oss-120b weights stay on disk (`/var/lib/llama-models/
+gpt-oss-120b/`) for restoration if needed. The reversal path is a
+single `cp` of the timestamped router.ini backup plus a primary-
+pool.json edit.
+
+### The Qwen3 / opencode silence problem
+
+First attempt to use Qwen3-Next-Thinking in opencode produced no
+visible output. mnemory plugin fired, server logs showed HTTP 200,
+but Zed showed nothing.
+
+Root cause was three stacked bugs (one server-side, two client-
+side) that diagnostic confusion compounded:
+
+**Bug A: llama.cpp false-thinking detection**
+([ggml-org/llama.cpp#20809](https://github.com/ggml-org/llama.cpp/issues/20809)).
+With `--jinja` on, llama.cpp's default `--reasoning-format
+deepseek` extracts `<think>...</think>` text into
+`message.reasoning_content`, leaving `message.content` empty. The
+heuristic incorrectly triggers on Qwen3-Coder and Qwen3-Next-
+Instruct (both NON-thinking models) because the chat templates
+emit thinking-adjacent tokens. Output goes to reasoning_content;
+content is empty.
+
+**Bug B: opencode's openai-compatible adapter**
+([sst/opencode#24130](https://github.com/sst/opencode/issues/24130))
+only renders `message.content`. `reasoning_content` is silently
+dropped. Stacked with bug A, every Qwen3 response appeared blank
+in Zed even though the server was returning 200 with content in
+the wrong field.
+
+**Bug C: thinking-mode loop**. Pure-Thinking models can deliberate
+indefinitely on ambiguous short prompts. Qwen team's model card
+recommends `presence-penalty` between 0 and 2 specifically to
+prevent runaway. Default 0 was the failure mode for some test
+prompts.
+
+Fix: add `reasoning-format = none` and `presence-penalty = 1.5` to
+each Qwen3 section in router.ini. With reasoning-format=none,
+`<think>` text stays inline in `message.content` where opencode's
+renderer reads it. presence-penalty=1.5 keeps the Thinking variant
+from looping. Per-Qwen-card sampler values applied for each
+variant (Instruct/Coder vs Thinking).
+
+After the fix, all three Qwen3 models PASS direct curl tests with
+non-empty content and `finish_reason=stop`.
+
+### The launcher-time mismatch (fix-9)
+
+Even with the server returning content correctly, real-world
+opencode use surfaced one more issue. The user opened Zed with
+qwen3-next-80b-thinking already loaded on the router (from a
+prior smoke test). They typed `/models` (bare, list mode) and
+then a real prompt. opencode dispatched the prompt to
+`glm-4.7-flash` (the hardcoded default in opencode.json) and got
+**HTTP 400 "model is not loaded"**.
+
+The diagnosis took some back-and-forth. Initial theory was the
+v3-deferred picker dispatch bug (fix-8). Log inspection showed
+the user typed only `/models` (not `/models <id>`) and never
+attempted a swap. The picker UI showed qwen3-next loaded; opencode
+was sending to glm. opencode and the router silently disagreed on
+"what model is this session using."
+
+Fix-9 lands as a launcher-script change in
+`scripts/opencode-session.sh`: after endpoints come up but before
+`exec opencode`, query `/models` and patch the rendered
+`opencode.json`'s top-level `"model"` field to whatever's loaded
+on the router (gated to registered pool members). If nothing is
+loaded, load glm-4.7-flash (35s cold start) and patch to glm.
+
+The user's framing of the problem was the right one: *I open Zed
+because I want to use it. The loaded model is the model I want
+to use.* The fix encodes that assumption.
+
+See `opencode-zed-patches/fix-9-launcher-model-discovery.md` for
+the design.
+
+### What Phase 12 didn't prove
+
+- **The discovery flow under all edge cases.** Out-of-registry
+  models (e.g. someone smoke-loaded a random GGUF) get logged but
+  not handled aggressively. The launcher logs a warning and falls
+  through to template default. Real-world use will tell us if
+  that's correct.
+- **Whether qwen3-coder-30b's tool-call handling has the separate
+  llama.cpp template bug ([#18852](https://github.com/ggml-org/llama.cpp/issues/18852)).**
+  The bench harness doesn't exercise tool calls; opencode-with-tools
+  may surface this. If it does, we'd need to switch to
+  `pwilkin/llama.cpp:autoparser` branch.
+- **The reasoning-format=none UX for Thinking variants.** With
+  `<think>` text inline in content, the user sees the thinking
+  trace before the answer. Less polished than DeepSeek-style
+  expandable-reasoning-blocks but it works. opencode's #24130
+  proposes a fix; until it lands, this is the trade-off.
+
 ## Open work
 
 The build is functional and pleasant. Open items remaining:
