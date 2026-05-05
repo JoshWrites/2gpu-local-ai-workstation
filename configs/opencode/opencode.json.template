@@ -6,6 +6,36 @@
       "name": "chat",
       "api": "http://localhost:${WS_PORT_PRIMARY}/v1",
       "models": {
+        "qwen3-next-80b-thinking": {
+          "name": "Qwen3-Next-80B Thinking 96K",
+          "attachment": false,
+          "reasoning": true,
+          "tool_call": true,
+          "limit": {
+            "context": 98304,
+            "output": 16384
+          }
+        },
+        "qwen3-next-80b-instruct": {
+          "name": "Qwen3-Next-80B Instruct 96K",
+          "attachment": false,
+          "reasoning": false,
+          "tool_call": true,
+          "limit": {
+            "context": 98304,
+            "output": 16384
+          }
+        },
+        "qwen3-coder-30b": {
+          "name": "Qwen3-Coder-30B 64K",
+          "attachment": false,
+          "reasoning": false,
+          "tool_call": true,
+          "limit": {
+            "context": 65536,
+            "output": 8192
+          }
+        },
         "glm-4.7-flash": {
           "name": "GLM-4.7-Flash 64K",
           "attachment": false,
@@ -14,16 +44,6 @@
           "limit": {
             "context": 65536,
             "output": 8192
-          }
-        },
-        "gpt-oss-120b": {
-          "name": "GPT-OSS-120B 128K",
-          "attachment": false,
-          "reasoning": true,
-          "tool_call": true,
-          "limit": {
-            "context": 131072,
-            "output": 16384
           }
         }
       }
@@ -46,14 +66,14 @@
       }
     }
   },
-  "model": "llama-primary/glm-4.7-flash",
+  "model": "llama-primary/qwen3-next-80b-thinking",
   "disabled_providers": [
     "opencode"
   ],
   "agent": {
     "compaction": {
       "_comment": "NOT a pin -- this is a follower field. opencode reads .agent.compaction.model at compaction time, so the JSON entry has to exist; but its value is overwritten by external scripts to track the currently-loaded primary on llama-primary-router. Writers: scripts/opencode-session.sh (at launch, after router discovery) and scripts/model-swap.sh (on every successful --execute load). The template default below is only the cold-boot value before the first writer runs. To remove this field entirely we'd need to patch opencode source so compaction reads the loaded model from the router directly; deferred.",
-      "model": "llama-primary/glm-4.7-flash"
+      "model": "llama-primary/qwen3-next-80b-thinking"
     },
     "title": {
       "model": "llama-secondary/qwen3-4b-instruct-2507"
