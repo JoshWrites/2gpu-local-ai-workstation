@@ -4,6 +4,8 @@ How to onboard an additional local or remote user onto an existing 2GPU workstat
 
 The system-level pieces (llama.cpp, models, systemd units, polkit rule, opencode-patched binary, llama-shutdown) are already installed. A second user needs only the user-space pieces.
 
+For the laptop-based remote-user shape specifically, follow [`docs/remote-user-setup.md`](remote-user-setup.md) which is a superset of this doc. For *updating* an already-onboarded remote user when the umbrella code changes, see [`docs/remote-ai-server-pattern.md`](remote-ai-server-pattern.md).
+
 ## Who this is for
 
 A second person who will either:

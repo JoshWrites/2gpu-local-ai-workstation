@@ -9,6 +9,13 @@ This is a superset of `docs/second-user-setup.md`. For a user who sits at the
 workstation (or SSHes in and runs Zed on the workstation itself), follow that
 doc instead.
 
+For *updating* a remote user that's already onboarded (pulling the
+latest umbrella code into their clone, refreshing AGENTS.md,
+redeploying laptop scripts), see
+[`docs/remote-ai-server-pattern.md`](remote-ai-server-pattern.md) —
+that doc has the architecture-level "what's load-bearing" reference
+plus a copy-paste update checklist.
+
 ## Overview
 
 End state:
