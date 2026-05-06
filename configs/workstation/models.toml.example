@@ -132,7 +132,9 @@ latency_budget_ms = 100
 ram_budget_gb = 2.5
 
 [edit_prediction.user_choice]
-id = "qwen2.5-coder-3b-instruct"
+# id is also the directory name under WS_MODELS_DIR; match the existing
+# layout if you already have the GGUF in /var/lib/llama-models/<id>/.
+id = "qwen2.5-coder-3b"
 gguf_filename = "qwen2.5-coder-3b-instruct-q4_k_m.gguf"
 huggingface_repo = "Qwen/Qwen2.5-Coder-3B-Instruct-GGUF"
 huggingface_file = "qwen2.5-coder-3b-instruct-q4_k_m.gguf"
