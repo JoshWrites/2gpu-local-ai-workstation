@@ -130,16 +130,6 @@ The `--recurse-submodules` flag pulls the Library submodule along
 with the umbrella. If you forgot the flag, run `git submodule
 update --init` from the repo root.
 
-> **Heads-up: Library is currently a private GitHub repo.** Until a
-> separate portability review is done on the Library repo and it's
-> made public, `--recurse-submodules` will fail for users without
-> explicit GitHub access. If you hit auth errors on the submodule
-> step, ask the workstation admin for a tarball of the Library tree
-> and unpack it into the repo root at `Library/`. The umbrella's
-> install steps from here on treat `Library/` as a populated working
-> directory, regardless of whether it came from `git submodule` or a
-> hand-placed tarball. Tracking issue: see `docs/repo-issues.md`.
-
 **Verify:** `ls Library/` should show `pyproject.toml`, `library/`,
 `docs/`, `bench/`, etc. If `Library/` is empty, the submodule did
 not pull.

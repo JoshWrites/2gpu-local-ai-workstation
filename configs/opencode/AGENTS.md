@@ -88,13 +88,35 @@ the routing decision only.
 
 ### Decision rule for "summarize/analyze this file"
 
+**STOP-AND-THINK trigger.** Any time you catch yourself thinking
+"I should read the README," "let me read this file to summarize,"
+"I'll open the config to see what it does," or any variant of "read
+file → look at content → answer user," that is a `library_read_file`
+call, NOT a built-in `read`. The thought "let me read it" is the
+trigger; the action is `library_read_file`.
+
+The reason this rule exists: the built-in `read` is the most
+familiar tool from your training distribution, so the default
+instinct is to reach for it. Library exists precisely to break
+that instinct. Every byte of file content the built-in `read`
+loads into your context costs you tokens you cannot get back;
+`library_read_file` returns a focused summary against your query
+and keeps the raw bytes out of your context.
+
 A user pointing you at a file and asking a question about it
 (`summarize anny.html`, `what does this config do`, `find the part
-where X is defined`) is a `library_read_file` call, not a built-in
-`read`. The user does not want the file's bytes in your context;
+where X is defined`, `explain this code`) is a `library_read_file`
+call. The user does not want the file's bytes in your context;
 they want an answer about it. Use Library by default; fall back
-to `read` only when the user explicitly wants the raw contents
-or when you need to *edit* the file.
+to the built-in `read` ONLY when:
+
+1. The user explicitly asks for the verbatim file contents
+   ("show me the file", "open the file"), OR
+2. You are about to `edit` or `write` the file and need its current
+   exact contents to compute the diff.
+
+If you are unsure, default to `library_read_file` -- a worse
+summary is recoverable; an exhausted context window is not.
 
 ## The escalation protocol
 

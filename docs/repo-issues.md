@@ -16,15 +16,15 @@ The live rule at `/etc/polkit-1/rules.d/10-llama-services.rules` hardcodes usern
 
 The simpler approach: `install-systemd-units.sh` reads `WS_ALLOWED_USERS` from `system.env` and generates the rule with the correct usernames baked in at install time. Re-run the script to update.
 
-## Library submodule is private — breaks install for new users
+## Library submodule (resolved — public 2026-05-06)
 
-**File:** `.gitmodules`
-
-The Library submodule is a private GitHub repo. Any new user cloning the umbrella repo cannot pull Library — neither SSH (no key) nor HTTPS (repo not found) works without explicit access. This breaks `install.md` step 1 for anyone without write access to JoshWrites/Library.
-
-**Workaround:** copy Library directly from the admin user's clone (`cp -r`), or unpack a tarball the admin provides into the umbrella's `Library/` directory.
-
-**Plan (decided 2026-05-06):** stay private through the portability-branch test deployment so the umbrella's portabilization can be validated in isolation. After the portability branch lands on `main`, do a parallel portability review on the Library repo (same shape: hardcoded paths, owner-specific tooling, license disclosure), then make Library public. Update the install.md heads-up note to remove the "private repo" warning at that point.
+The Library submodule was previously a private GitHub repo, blocking
+`git clone --recurse-submodules` for any user without explicit access.
+Resolved on 2026-05-06: a parallel portability review against the
+Library repo (templatize sidecar URLs, sharpen tool docstrings, add
+LICENSE + LICENSES.md, standalone-readable README) was completed and
+the repo was made public. New users can now clone the umbrella with
+`--recurse-submodules` directly.
 
 ## Library submodule uses SSH URL (fixed)
 
