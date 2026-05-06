@@ -1230,6 +1230,92 @@ the design.
   trace before the answer. Less polished than DeepSeek-style
   expandable-reasoning-blocks but it works. opencode's #24130
   proposes a fix; until it lands, this is the trade-off.
+  *(Resolved in Phase 13 — see below.)*
+
+## Phase 13 (2026-05-05) -- thinking-mode rendering: reasoning-format=deepseek + a budget cap
+
+Phase 12 closed with a trade-off that wasn't sitting right.
+qwen3-next-80b-thinking ran on `reasoning-format = none`, which
+kept the model's output non-empty by leaving `<think>...</think>`
+in `message.content`. opencode rendered it inline. Functional, but
+the user saw a wall of internal monologue before the actual
+answer. opencode #24130 was the upstream fix; we'd noted "until
+it lands, this is the trade-off."
+
+A short curl experiment showed the trade-off was unnecessary.
+
+### What changed
+
+GLM-4.7-Flash already rendered as a foldable "Thinking" pill in
+Zed -- expandable reasoning trace, then the clean answer. Inspecting
+its `chat/completions` response showed the conventional shape:
+`message.content` carries the answer, `message.reasoning_content`
+carries the trace, no `<think>` tags leak. That is exactly what
+opencode's openai-compatible adapter renders correctly today.
+
+Curl-testing qwen3-next-80b-thinking with
+`reasoning-format = deepseek` produced the same shape. Whatever
+opencode #24130 is fixing, it's not "deepseek mode is
+unrenderable" -- deepseek mode is precisely the shape opencode
+already supports. The GLM + adapter pair was the existence proof.
+
+The reason we'd flipped to `none` in Phase 12 was a different
+failure mode: on hard prompts the model would deliberate past
+`max_tokens` without ever closing `</think>`, and the entire
+response came back with empty content. `none` dodged that by
+making the unclosed thinking trace at least *visible*. But it
+treated a content-budgeting bug as a rendering choice.
+
+The proper fix is `reasoning-format = deepseek` PLUS
+`reasoning-budget = 4096`. The budget flag forces llama.cpp to
+inject `</think>` after 4096 thinking tokens regardless of what
+the model wants, guaranteeing a non-empty `content` field on
+every completion.
+
+### The change
+
+`configs/workstation/llama-router.ini`, the
+`[model.qwen3-next-80b-thinking]` section only:
+
+```ini
+-reasoning-format = none
++reasoning-format = deepseek
++# Cap thinking-trace length so the model is forced to emit </think>
++# and produce content even on prompts that drive long deliberation.
++# 4096 is generous for hard reasoning while preserving budget for output.
++reasoning-budget = 4096
+```
+
+Coder and Instruct sections stay on `reasoning-format = none`.
+They're non-thinking models; neither setting matters for them, so
+leaving them unchanged keeps the diff small and the blast radius
+contained.
+
+### Verification
+
+Tested under the original failure prompt ("I want to build a
+color-picker chrome extension"), which had reliably triggered
+the unclosed-`</think>` failure mode in Phase 12. With the budget
+cap in place the journal showed the budget firing at the
+configured limit, content non-empty, finish_reason=stop. Zed
+rendered a foldable Thinking pill, exactly matching the GLM UX.
+
+### Why this belongs as its own phase
+
+Two reasons. First, it inverts a Phase-12 conclusion -- the
+"we'll live with `<think>` tags inline until upstream fixes
+opencode" trade-off was wrong; the right path was already
+available, we just hadn't tested it. Second, it's a single-line
+config change that demonstrably resolves an open UX item, which
+is worth recording for the same reason Phase 9's UX day was: the
+specific shape of the test that established the fix is as
+important as the fix itself, because the next time a similar
+"render trade-off" appears the playbook is *curl the working
+sibling and compare response shapes*.
+
+Commit `9549ceb`. No code changes outside the config; no
+opencode-side patch. Phase 12's "what we didn't prove" bullet
+about reasoning-format=none UX is now closed.
 
 ## Open work
 
