@@ -281,24 +281,33 @@ ssh <user>@<workstation-ip> 'hostname'
 
 ### B5. Install the laptop-side scripts
 
-The laptop scripts live in the repo at `scripts/laptop/`. The simplest path
-is to clone the repo on the laptop and symlink the scripts into `~/bin/`,
-which lets `git pull` upgrade them in-place when the workstation side
-changes:
+The laptop-side launcher and SSHFS-mount helpers are owner-specific
+tooling: each one hardcodes the workstation's WireGuard tunnel IP, MAC
+address, and the remote username. They are not shipped in the public
+tree. The owner's working copies live under
+`private/owner-tooling/laptop/` (gitignored). Two reasonable paths
+forward for your own setup:
+
+**Option A — start from the owner's templates.** Ask the workstation
+admin for a copy of `private/owner-tooling/laptop/` and adapt:
 
 ```
-git clone https://github.com/JoshWrites/2gpu-local-ai-workstation.git ~/Documents/Repos/2gpu-local-ai-workstation
 mkdir -p ~/bin
-ln -sf ~/Documents/Repos/2gpu-local-ai-workstation/scripts/laptop/2gpu-remote-launch ~/bin/2gpu-remote-launch
-ln -sf ~/Documents/Repos/2gpu-local-ai-workstation/scripts/laptop/opencode-remote-session ~/bin/opencode-remote-session
-chmod +x ~/Documents/Repos/2gpu-local-ai-workstation/scripts/laptop/2gpu-remote-launch
-chmod +x ~/Documents/Repos/2gpu-local-ai-workstation/scripts/laptop/opencode-remote-session
+# After receiving 2gpu-remote-launch and opencode-remote-session:
+install -m 0755 2gpu-remote-launch ~/bin/2gpu-remote-launch
+install -m 0755 opencode-remote-session ~/bin/opencode-remote-session
+$EDITOR ~/bin/2gpu-remote-launch  # edit WORKSTATION_HOST, _USER, _MAC, _BROADCAST
+$EDITOR ~/bin/opencode-remote-session  # edit WORKSTATION_HOST, _USER, OPENCODE_SESSION
 ```
 
-Both scripts hardcode `WORKSTATION_HOST`, `WORKSTATION_USER`, and (for
-`2gpu-remote-launch`) `WORKSTATION_MAC` and `WORKSTATION_BROADCAST` near the
-top. Edit them for your machine before first use. These should eventually
-become env vars sourced from a per-user file -- see `docs/repo-issues.md`.
+**Option B — write your own.** The two scripts together are <300 lines.
+The launcher does WoL → SSH-poll → start-stack → open-Zed; the session
+script does SSHFS-mount → cwd-translate → SSH-run-opencode → unmount-on-exit.
+Either copy the structure from the owner's tooling or write your own
+against the contracts: edit predictions on `:11438/v1/completions`,
+opencode ACP via SSH on the workstation. A future revision of this stack
+will ship a templatized version of these scripts driven by a per-laptop
+env file -- see `docs/repo-issues.md`.
 
 ### B6. Run setup-laptop.sh
 
@@ -421,8 +430,11 @@ llama-primary.service`.**
 ## Known issues / repo work needed
 
 - Laptop-side scripts (`2gpu-remote-launch`, `opencode-remote-session`,
-  `setup-laptop.sh`) do not yet live in the umbrella repo. They should move
-  to `scripts/laptop/` and the workstation IP / user / MAC should be sourced
-  from a small env file the user populates rather than hardcoded.
+  `setup-laptop.sh`) currently live under `private/owner-tooling/laptop/`
+  in the owner's tree (gitignored) because every existing copy hardcodes
+  the owner's workstation IP, MAC, and tunnel addresses. A future revision
+  should ship a templatized version under `scripts/laptop/` driven by a
+  per-laptop env file the user populates rather than per-owner hardcoded
+  values.
 - See `docs/repo-issues.md` for: polkit hardcoded usernames, private Library
   submodule, optional-secrets-env, live-rule-divergence.
