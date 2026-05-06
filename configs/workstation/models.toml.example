@@ -1,0 +1,217 @@
+# 2GPU workstation -- model manifest.
+#
+# Install location: configs/workstation/models.toml (gitignored;
+# copy this file and edit).
+#
+# Source of truth for which model serves each role. Read by:
+#   - scripts/install-systemd-units.sh -- to render the three
+#     sidecar systemd unit files at install time
+#   - scripts/download-models.sh -- to pull GGUFs from HuggingFace
+#   - bench/regression.sh -- to verify expected files exist
+#
+# The manifest separates four roles. Each role has a small spec
+# (description, deployment, contracts, latency budget) and a
+# `user_choice` block that names the GGUF file and the llama-server
+# flags to launch it with. Keep the spec; edit user_choice freely.
+#
+# To swap a sidecar model:
+#   1. Edit the user_choice block for that role.
+#   2. Run scripts/download-models.sh (pulls the new GGUF if missing).
+#   3. Run scripts/install-systemd-units.sh (re-renders the unit file).
+#   4. sudo systemctl restart llama-<role>.service
+#
+# The primary pool is the one role NOT driven by this manifest end-to-
+# end; see the `[primary_pool]` section comments and
+# configs/workstation/llama-router.ini for why.
+
+# ── Role 1: SUMMARIZER (small card) ──────────────────────────────────────────
+
+[summarizer]
+description = """
+Compresses Library research output and other long context into ~325-450
+token summaries. Called per-tool from the chat agent, latency budget
+~5s. Also serves mnemory's fact-extraction pass.
+"""
+deployed_on = "secondary_gpu"          # informational
+expected_protocol = "openai-chat"      # /v1/chat/completions
+port = 11435                           # WS_PORT_SECONDARY
+hard_contract = """
+Must respond on /v1/chat/completions in OpenAI-compatible JSON shape.
+Must support an INSTRUCT or CHAT-tuned model (a base/completion model
+will produce uncontrolled output). Should be small enough to leave
+~6 GB free on the secondary card for the embeddings + coder sidecars.
+"""
+latency_budget_ms = 5000
+ram_budget_gb = 3.5
+
+[summarizer.user_choice]
+# Tested default. See docs/tested-models.md for alternatives.
+id = "qwen3-4b-instruct-2507"
+gguf_filename = "Qwen3-4B-Instruct-2507-Q4_K_M.gguf"
+huggingface_repo = "Qwen/Qwen3-4B-Instruct-2507-GGUF"
+huggingface_file = "Qwen3-4B-Instruct-2507-Q4_K_M.gguf"
+context = 32768
+# Per-model llama-server flags. Each flag goes on the ExecStart line.
+# WHY THESE FLAGS:
+#   -ngl 99               offload all layers to GPU (small model fits)
+#   --flash-attn on       enable FA on Vulkan (RDNA1 supports it)
+#   -ctk q8_0 -ctv q8_0   quantize KV cache to 8-bit, half the VRAM
+#                         of fp16 KV with negligible quality impact
+#   --jinja               use the model's chat template (Qwen3
+#                         requires this for tool-call shaping)
+flags = [
+  "-ngl", "99",
+  "--flash-attn", "on",
+  "-ctk", "q8_0",
+  "-ctv", "q8_0",
+  "--jinja",
+]
+
+# ── Role 2: EMBEDDINGS (small card) ──────────────────────────────────────────
+
+[embeddings]
+description = """
+Embeds text for Library retrieval and mnemory's fact-recall vector
+search. Called per-fact (mnemory) and per-research-chunk (Library).
+"""
+deployed_on = "secondary_gpu"
+expected_protocol = "openai-embeddings"  # /v1/embeddings
+port = 11437                              # WS_PORT_EMBED
+hard_contract = """
+Must respond on /v1/embeddings in OpenAI-compatible shape, returning
+a fixed-dimension vector. CRITICAL: the embedding dimension is baked
+into mnemory's qdrant collection schema at first run. Changing the
+embedding model after mnemory has stored memories REQUIRES dropping
+the qdrant collection at $HOME/.mnemory/qdrant/ -- otherwise mnemory
+silently rejects writes ("dimension mismatch"). Also update EMBED_DIMS
+in /etc/workstation/mnemory.env to match the new model's dim.
+"""
+latency_budget_ms = 200
+ram_budget_gb = 0.8
+
+[embeddings.user_choice]
+id = "multilingual-e5-large"
+gguf_filename = "multilingual-e5-large-Q8_0.gguf"
+huggingface_repo = "MahmoudFathy/multilingual-e5-large-Q8_0-GGUF"
+huggingface_file = "multilingual-e5-large-Q8_0.gguf"
+context = 512
+embedding_dim = 1024  # MUST match mnemory.env EMBED_DIMS
+# WHY THESE FLAGS:
+#   -ngl 99           full GPU offload
+#   --embedding       embeddings server mode (no completion endpoint)
+#   --pooling mean    e5-large is trained with mean pooling
+#   -c 512 -ub 512    e5-large's max sequence is 512; ub matches so
+#                     long inputs don't silently truncate
+flags = [
+  "-ngl", "99",
+  "--embedding",
+  "--pooling", "mean",
+]
+
+# ── Role 3: EDIT_PREDICTION (small card) ─────────────────────────────────────
+
+[edit_prediction]
+description = """
+Inline edit predictions for Zed (and any other OpenAI-compatible
+client). Called per-keystroke when Zed's edit-predictions feature is
+enabled. The single sub-100ms latency budget on this stack -- longer
+makes the editor feel laggy. Goes direct from Zed; does NOT route
+through Library.
+"""
+deployed_on = "secondary_gpu"
+expected_protocol = "openai-completion"  # /v1/completions (FIM)
+port = 11438                              # WS_PORT_CODER
+hard_contract = """
+Must respond on /v1/completions in OpenAI-compatible shape. Must be
+a CODE-tuned model (general models produce poor FIM completions and
+violate the latency budget at any useful quality). Q4 quants are
+strongly preferred over Q8 here -- 2x faster prompt eval offsets the
+small quality loss for the per-keystroke use case.
+"""
+latency_budget_ms = 100
+ram_budget_gb = 2.5
+
+[edit_prediction.user_choice]
+id = "qwen2.5-coder-3b-instruct"
+gguf_filename = "qwen2.5-coder-3b-instruct-q4_k_m.gguf"
+huggingface_repo = "Qwen/Qwen2.5-Coder-3B-Instruct-GGUF"
+huggingface_file = "qwen2.5-coder-3b-instruct-q4_k_m.gguf"
+context = 4096  # FIM only ever sees small windows
+# WHY THESE FLAGS:
+#   -ngl 99      full GPU offload (3B Q4 ~= 2 GB, fits easily)
+# No flash-attn, no KV quant: the latency win from -ctk/-ctv is small
+# at 4096 ctx and the simpler config is more robust to model swaps.
+flags = [
+  "-ngl", "99",
+]
+
+# ── Role 4: PRIMARY POOL (big card, conservative coupling) ───────────────────
+
+[primary_pool]
+description = """
+The chat models on the 24 GB GPU. Multiple pool members; one loaded
+at a time, swapped via /models slash command. The primary pool is
+NOT driven by this manifest end-to-end -- it's tuned through
+configs/workstation/llama-router.ini, which has per-model sections
+with carefully chosen llama-server flags (n-cpu-moe, jinja,
+reasoning-format, sampler values). The router.ini flags reflect
+real lessons -- get one wrong and you OOM, leak <think> tags into
+chat, or stall on unbounded deliberation. Manifest entries here
+exist for download-models.sh and the swap UX metadata in
+primary-pool.json; the actual launch flags live in router.ini.
+
+To add a primary-pool member:
+  1. Add a section in this manifest (id, gguf_filename, huggingface_*).
+  2. Run scripts/download-models.sh.
+  3. Add a corresponding [model.<id>] section in llama-router.ini
+     with the per-model flags. See the existing sections in router.ini
+     for the conventions.
+  4. Add the same id to primary-pool.json (or run a future render
+     step that generates it from this manifest).
+"""
+deployed_on = "primary_gpu"
+expected_protocol = "openai-chat"
+port = 11434  # WS_PORT_PRIMARY
+hard_contract = """
+Each member must be a CHAT or INSTRUCT-tuned model with tool-call
+support if it's expected to drive the agent loop. Members larger
+than 24 GB must be MoE-offload-friendly (Qwen3-Next-80B with
+n-cpu-moe is OK; a dense 70B is not). Context budget shared with KV
+cache; see router.ini comments.
+"""
+
+[[primary_pool.members]]
+id = "glm-4.7-flash"
+description = "Fast generalist, fully GPU-resident. Default cold-start model."
+gguf_filename = "GLM-4.7-Flash-UD-Q4_K_XL.gguf"
+huggingface_repo = "unsloth/GLM-4.7-Flash-GGUF"
+huggingface_file = "GLM-4.7-Flash-UD-Q4_K_XL.gguf"
+context = 65536
+recommended_for = ["default-fast", "agent-loops"]
+
+[[primary_pool.members]]
+id = "qwen3-coder-30b-a3b-instruct"
+description = "Coding specialist, fully GPU-resident."
+gguf_filename = "Qwen3-Coder-30B-A3B-Instruct-Q4_K_M.gguf"
+huggingface_repo = "unsloth/Qwen3-Coder-30B-A3B-Instruct-GGUF"
+huggingface_file = "Qwen3-Coder-30B-A3B-Instruct-Q4_K_M.gguf"
+context = 65536
+recommended_for = ["coding"]
+
+[[primary_pool.members]]
+id = "qwen3-next-80b-a3b-instruct"
+description = "Frontier non-thinking. MoE 80B/3B-active, MoE offload to DRAM."
+gguf_filename = "Qwen3-Next-80B-A3B-Instruct-UD-Q4_K_XL.gguf"
+huggingface_repo = "unsloth/Qwen3-Next-80B-A3B-Instruct-GGUF"
+huggingface_file = "Qwen3-Next-80B-A3B-Instruct-UD-Q4_K_XL.gguf"
+context = 98304
+recommended_for = ["agent-loops-hard"]
+
+[[primary_pool.members]]
+id = "qwen3-next-80b-a3b-thinking"
+description = "Frontier reasoning. Default for hard problems. 96K ctx."
+gguf_filename = "Qwen3-Next-80B-A3B-Thinking-UD-Q4_K_XL.gguf"
+huggingface_repo = "unsloth/Qwen3-Next-80B-A3B-Thinking-GGUF"
+huggingface_file = "Qwen3-Next-80B-A3B-Thinking-UD-Q4_K_XL.gguf"
+context = 98304
+recommended_for = ["reasoning", "compaction-agent"]

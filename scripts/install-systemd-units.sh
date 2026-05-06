@@ -46,12 +46,88 @@ if [[ ! -f /etc/workstation/system.env ]]; then
   exit 1
 fi
 
+# The three sidecar units (llama-secondary, llama-embed, llama-coder)
+# are templates with __WS_MODEL_DIR__/__WS_MODEL_GGUF__/__WS_MODEL_FLAGS__
+# placeholders. Render them from configs/workstation/models.toml before
+# installing. The primary router (llama-primary) is NOT templated this
+# way -- it reads its model pool from /etc/workstation/llama-router.ini
+# at runtime; see configs/workstation/llama-router.ini for that.
+
+MODELS_TOML="$REPO/configs/workstation/models.toml"
+MODELS_TOML_EXAMPLE="$REPO/configs/workstation/models.toml.example"
+if [[ ! -f "$MODELS_TOML" ]]; then
+  if [[ -f "$MODELS_TOML_EXAMPLE" ]]; then
+    echo "ERROR: $MODELS_TOML not found." >&2
+    echo "       Copy the example and edit if you want non-default models:" >&2
+    echo "       cp $MODELS_TOML_EXAMPLE $MODELS_TOML" >&2
+    exit 1
+  else
+    echo "ERROR: $MODELS_TOML and example template both missing" >&2
+    exit 1
+  fi
+fi
+
+# render_sidecar_unit <unit-name> <toml-role-key>
+# Reads the role from models.toml, substitutes placeholders in the
+# repo's <unit-name>.service template, prints the rendered text on
+# stdout. Aborts on any error.
+render_sidecar_unit() {
+  local unit="$1" role="$2"
+  python3 - "$MODELS_TOML" "$UNIT_SRC/${unit}.service" "$role" <<'PY'
+import re, shlex, sys, tomllib
+manifest_path, template_path, role = sys.argv[1], sys.argv[2], sys.argv[3]
+with open(manifest_path, "rb") as f:
+    manifest = tomllib.load(f)
+if role not in manifest:
+    sys.exit(f"role '{role}' missing in {manifest_path}")
+choice = manifest[role].get("user_choice")
+if not choice:
+    sys.exit(f"role '{role}' has no [user_choice] block in {manifest_path}")
+gguf = choice.get("gguf_filename")
+mid = choice.get("id")
+flags = choice.get("flags", [])
+if not gguf or not mid:
+    sys.exit(f"role '{role}' user_choice missing id or gguf_filename")
+flag_str = " ".join(shlex.quote(f) for f in flags)
+with open(template_path) as f:
+    text = f.read()
+text = (text
+    .replace("__WS_MODEL_DIR__", mid)
+    .replace("__WS_MODEL_GGUF__", gguf)
+    .replace("__WS_MODEL_FLAGS__", flag_str))
+if "__WS_" in text:
+    sys.exit(f"unrendered placeholder in {template_path}: " + ", ".join(re.findall(r"__WS_[A-Z_]+__", text)))
+sys.stdout.write(text)
+PY
+}
+
+# Map: unit name -> models.toml role key.
+declare -A SIDECAR_ROLES=(
+  [llama-secondary]=summarizer
+  [llama-embed]=embeddings
+  [llama-coder]=edit_prediction
+)
+
 for unit in "${LLAMA_UNITS[@]}"; do
   if [[ ! -f "$UNIT_SRC/${unit}.service" ]]; then
     echo "ERROR: $UNIT_SRC/${unit}.service missing from repo" >&2
     exit 1
   fi
-  sudo install -m 0644 "$UNIT_SRC/${unit}.service" "$SYSTEM_UNIT_DST/"
+
+  if [[ -n "${SIDECAR_ROLES[$unit]:-}" ]]; then
+    role="${SIDECAR_ROLES[$unit]}"
+    rendered=$(mktemp)
+    if ! render_sidecar_unit "$unit" "$role" > "$rendered"; then
+      rm -f "$rendered"
+      echo "ERROR: failed to render $unit from models.toml role '$role'" >&2
+      exit 1
+    fi
+    sudo install -m 0644 "$rendered" "$SYSTEM_UNIT_DST/${unit}.service"
+    rm -f "$rendered"
+  else
+    # Primary router -- install verbatim.
+    sudo install -m 0644 "$UNIT_SRC/${unit}.service" "$SYSTEM_UNIT_DST/"
+  fi
 done
 
 # ── mnemory unit ─────────────────────────────────────────────────────────

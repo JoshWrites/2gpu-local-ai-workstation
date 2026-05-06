@@ -103,14 +103,21 @@ under 6 GB, the sidecar set won't fit and you'll need to drop one
 ## What you get
 
 - **Local chat model on the big card via llama.cpp router mode** --
-  one llama-server hosting a four-model pool: Qwen3-Next-80B-Thinking
-  (frontier reasoning, 96K ctx, MoE-offload to DRAM), its non-thinking
-  Instruct sibling, Qwen3-Coder-30B-Instruct (coding specialist, 64K
-  ctx, fully GPU-resident), and GLM-4.7-Flash (fast generalist, 64K
-  ctx). One model loaded at a time, swap on demand from inside Zed.
+  one llama-server hosting a multi-model pool. One model loaded at a
+  time, swap on demand from inside Zed. The tested default pool has
+  a frontier-reasoning 80B MoE (96K ctx, MoE-offload to DRAM), its
+  non-thinking sibling, a 30B coding specialist, and a fast 12B
+  generalist. The pool is config-driven via
+  [`configs/workstation/llama-router.ini`](configs/workstation/llama-router.ini)
+  -- swap members or add your own.
 - **Three sidecars on the small card, all loaded at once:**
-  Qwen3-4B summarizer, multilingual-e5-large embeddings,
-  Qwen2.5-Coder-3B for edit-prediction. ~8.1 GB total VRAM.
+  a *summarizer* (compresses Library research output), an
+  *embeddings* server (drives Library retrieval and mnemory), and
+  an *edit-prediction* coder (Zed inline completions). Each role is
+  config-driven via [`configs/workstation/models.toml.example`](configs/workstation/models.toml.example);
+  the tested defaults total ~8.1 GB VRAM. See
+  [`docs/tested-models.md`](docs/tested-models.md) for the per-role
+  contracts and validated alternatives.
 - **A Library MCP server** that does retrieval (web research,
   code-aware file mining, on-demand skill injection) and returns
   summaries by default to protect chat-model context. Measured
@@ -198,10 +205,10 @@ take this on, and to find the right doc when you hit a step.
 - `yad`, `notify-send`, `jq`, `curl`, `ss`, `rocm-smi` (most are
   default-installed).
 
-**Disk:** ~120 GB free for the model catalog. The default set
-(GLM-4.7-Flash, Qwen3-Next-80B variants, Qwen3-Coder-30B,
-Qwen3-4B, e5-large, Qwen2.5-Coder-3B) is around 100 GB; the rest
-is breathing room.
+**Disk:** ~120 GB free for the model catalog if you use the tested
+defaults (around 100 GB; rest is breathing room). See
+[`docs/tested-models.md`](docs/tested-models.md) for the per-model
+sizes and validated alternatives if you want a smaller footprint.
 
 **Knowledge:** comfortable editing systemd unit files and applying
 patches to a source tree. Willing to read 5-10 markdown files of

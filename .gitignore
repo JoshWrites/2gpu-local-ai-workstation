@@ -40,10 +40,11 @@ logs/
 .observer/refs/    # deep store — large, regenerable
 !.observer/index.md
 
-# Secrets
+# Secrets and per-host config
 .env
 .env.*
 !.env.example
+configs/workstation/models.toml
 
 # Claude Code local state
 .claude/

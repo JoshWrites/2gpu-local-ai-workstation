@@ -1,25 +1,30 @@
 [Unit]
-Description=llama-server embed (multilingual-e5-large on 5700 XT / Vulkan1, port 11437)
+Description=llama-server embed (embeddings role, secondary GPU, port 11437)
 # Description is literal text; systemd does not interpolate env-file vars
-# here. If env values change, the labels above may drift.
+# here. The actual model name comes from the manifest at
+# configs/workstation/models.toml ([embeddings] role) and is rendered
+# into the ExecStart line below by scripts/install-systemd-units.sh.
+#
+# The repo-shipped service file contains placeholder tokens that are
+# NOT valid as-is. Install via scripts/install-systemd-units.sh which
+# reads models.toml and renders the unit before installing it under
+# /etc/systemd/system/.
 #
 # The llama-server binary path is hardcoded below; see llama-primary.service
 # for why. All other paths and values come from /etc/workstation/system.env.
 #
-# Runs concurrently with llama-secondary.service on the same card.
-# VRAM envelope check before trusting: aya-expanse-8b (~5 GB) +
-# multilingual-e5-large (~0.6 GB) + driver overhead (~0.3 GB) ~= 5.9 GB
-# in 8 GB envelope. See docs/ports-registry.md for canonical port.
+# Runs concurrently with llama-secondary.service and llama-coder.service on
+# the same card. Verify the VRAM envelope holds for whatever models you
+# have selected -- see docs/tested-models.md.
 
 [Service]
 Type=simple
 EnvironmentFile=/etc/workstation/system.env
 ExecStart=/usr/local/lib/llama.cpp/llama-server \
-  -m ${WS_MODELS_DIR}/multilingual-e5-large/multilingual-e5-large-Q8_0.gguf \
-  --device ${WS_GPU_SECONDARY_DEVICE} -ngl 99 \
-  --embedding \
-  --pooling mean \
+  -m ${WS_MODELS_DIR}/__WS_MODEL_DIR__/__WS_MODEL_GGUF__ \
+  --device ${WS_GPU_SECONDARY_DEVICE} \
   -c ${WS_EMBED_CONTEXT} -ub ${WS_EMBED_CONTEXT} \
+  __WS_MODEL_FLAGS__ \
   --host 127.0.0.1 --port ${WS_PORT_EMBED}
 Restart=on-failure
 RestartSec=5s
