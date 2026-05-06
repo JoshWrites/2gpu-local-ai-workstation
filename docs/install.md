@@ -130,20 +130,46 @@ The `--recurse-submodules` flag pulls the Library submodule along
 with the umbrella. If you forgot the flag, run `git submodule
 update --init` from the repo root.
 
+> **Heads-up: Library is currently a private GitHub repo.** Until a
+> separate portability review is done on the Library repo and it's
+> made public, `--recurse-submodules` will fail for users without
+> explicit GitHub access. If you hit auth errors on the submodule
+> step, ask the workstation admin for a tarball of the Library tree
+> and unpack it into the repo root at `Library/`. The umbrella's
+> install steps from here on treat `Library/` as a populated working
+> directory, regardless of whether it came from `git submodule` or a
+> hand-placed tarball. Tracking issue: see `docs/repo-issues.md`.
+
 **Verify:** `ls Library/` should show `pyproject.toml`, `library/`,
 `docs/`, `bench/`, etc. If `Library/` is empty, the submodule did
 not pull.
 
-### Step 2: Build llama.cpp with Vulkan
+### Step 2: Build llama.cpp twice — Vulkan and HIP
 
-llama.cpp is a separate project with its own build process. The
-procedure here is the minimum needed to get a Vulkan build at the
-path the systemd units expect.
+llama.cpp is a separate project with its own build process. The stack
+needs two separate builds, each tuned for one of the two GPUs:
+
+- **Vulkan build at `/usr/local/lib/llama.cpp/llama-server`** — drives
+  the three sidecar units on the secondary GPU (summarizer, embeddings,
+  coder). Vulkan is the more compatible path for older RDNA cards
+  (the 5700 XT is unofficially supported in ROCm; Vulkan side-steps
+  that).
+- **HIP build at `/usr/local/lib/llama.cpp-hip/llama-server`** — drives
+  the primary GPU's router-mode unit. HIP's fast-fused FA path is
+  what makes 96K context fit on 24 GB at acceptable speed; the Vulkan
+  path doesn't keep up at that context size.
+
+**Verify** at the end of this step that both binaries exist and that
+the systemd units can find them. The unit files hardcode these
+absolute paths; see `docs/llama-services-reference.md` for why they
+cannot be parameterized.
+
+#### 2a. Vulkan build (sidecars)
 
 ```
 mkdir -p ~/src && cd ~/src
-git clone https://github.com/ggml-org/llama.cpp.git
-cd llama.cpp
+git clone https://github.com/ggml-org/llama.cpp.git llama.cpp-vulkan
+cd llama.cpp-vulkan
 mkdir -p build && cd build
 cmake -DGGML_VULKAN=ON -DLLAMA_BUILD_SERVER=ON -DCMAKE_BUILD_TYPE=Release ..
 cmake --build . --config Release -j$(nproc) --target llama-server
@@ -156,13 +182,48 @@ sudo mkdir -p /usr/local/lib/llama.cpp
 sudo install -m 0755 build/bin/llama-server /usr/local/lib/llama.cpp/llama-server
 ```
 
-The unit files hardcode `/usr/local/lib/llama.cpp/llama-server` as
-the binary path; see `docs/llama-services-reference.md` for why
-that path cannot be parameterized.
-
 **Verify:** `/usr/local/lib/llama.cpp/llama-server --version` should
 print a version string. The binary should also report Vulkan support
 in `--help` output (search for `--device Vulkan`).
+
+#### 2b. HIP build (primary router)
+
+The HIP build needs ROCm's HIP toolchain. The exact CMake invocation
+varies slightly with ROCm version; the form below is the one validated
+on ROCm 7.2.
+
+```
+cd ~/src
+git clone https://github.com/ggml-org/llama.cpp.git llama.cpp-hip
+cd llama.cpp-hip
+mkdir -p build && cd build
+cmake -S .. -B . \
+  -DGGML_HIP=ON \
+  -DAMDGPU_TARGETS=gfx1100 \
+  -DLLAMA_BUILD_SERVER=ON \
+  -DCMAKE_BUILD_TYPE=Release \
+  -DCMAKE_C_COMPILER=$(which hipcc) \
+  -DCMAKE_CXX_COMPILER=$(which hipcc)
+cmake --build . --config Release -j$(nproc) --target llama-server
+```
+
+`AMDGPU_TARGETS=gfx1100` targets the 7900 XTX. If your primary GPU is
+a different RDNA3 part, look up its gfx ID with `rocminfo | grep gfx`
+and substitute. RDNA2 (gfx103x) and RDNA4 (gfx12xx) also work but are
+not the validated path here.
+
+Install:
+
+```
+sudo mkdir -p /usr/local/lib/llama.cpp-hip
+sudo install -m 0755 build/bin/llama-server /usr/local/lib/llama.cpp-hip/llama-server
+```
+
+**Verify:** `/usr/local/lib/llama.cpp-hip/llama-server --version` should
+print a version string. Run it briefly with `--help | grep -i hip` to
+confirm the binary built with HIP support. ROCm-related runtime errors
+(missing libraries, unsupported GPU) only show up when you actually
+launch the service in step 6, not at this build step.
 
 ### Step 3: Pull the model GGUFs
 
@@ -388,6 +449,65 @@ the Library MCP's help line. If it errors with `no such command`,
 the entry point is not registered correctly; check that
 `Library/pyproject.toml` lists `library = "library.server:main"`
 under `[project.scripts]`.
+
+### Step 8b: Install mnemory (optional, persistent memory)
+
+mnemory is a separate project that provides cross-session memory for
+the agent — it watches every chat turn, extracts facts, and recalls
+relevant ones at the start of the next session. The 2GPU stack
+integrates with it through an opencode plugin loaded by file:// path
+from `${WS_MNEMORY_ROOT}/integrations/opencode`. If you skip this
+step, the launcher detects the missing plugin path and renders the
+final `opencode.json` without it.
+
+Install:
+
+```
+cd ~/Documents/Repos
+git clone https://github.com/JoshWrites/mnemory.git
+# Make sure WS_MNEMORY_ROOT in ~/.config/workstation/user.env points
+# at this path (default is $HOME/Documents/Repos/mnemory).
+```
+
+mnemory uses uv. Generate per-user API keys:
+
+```
+mkdir -p ~/.config/mnemory
+for user in $WS_LLAMA_USERS; do
+  echo "KEY_${user}=$(openssl rand -hex 32)"
+done > ~/.config/mnemory/keys
+chmod 0600 ~/.config/mnemory/keys
+```
+
+Where `$WS_LLAMA_USERS` matches the value in
+`/etc/workstation/system.env`. Each listed user gets one entry of the
+form `KEY_<USERNAME>=<random-hex>`. The keys file is sourced by the
+install script in step 5; if you ran step 5 before this one, re-run
+it now (it's idempotent).
+
+Then render `/etc/workstation/mnemory.env` from the example template
+and the keys you just generated:
+
+```
+$UMBRELLA/scripts/install-mnemory-env.sh
+```
+
+Enable the service. The systemd unit was already installed in step 5
+(`install-systemd-units.sh` writes mnemory.service if it exists in
+the repo, with the User/Group/HOME placeholders rendered for the
+current user).
+
+```
+sudo systemctl daemon-reload
+sudo systemctl enable --now mnemory.service
+systemctl status mnemory.service
+```
+
+**Verify:** `curl -fsS -H "X-API-Key: <one of your keys>" \
+http://127.0.0.1:8050/healthz` should return a JSON status. If the
+endpoint returns 401, the key isn't in your MCP_API_KEYS map; if the
+service is `Activating` or repeatedly `failed`, the embedded Qdrant
+or the upstream embeddings/LLM endpoints are not reachable.
 
 ### Step 9: Set up Zed's isolated profile
 

@@ -22,12 +22,9 @@ The simpler approach: `install-systemd-units.sh` reads `WS_ALLOWED_USERS` from `
 
 The Library submodule is a private GitHub repo. Any new user cloning the umbrella repo cannot pull Library — neither SSH (no key) nor HTTPS (repo not found) works without explicit access. This breaks `install.md` step 1 for anyone without write access to JoshWrites/Library.
 
-**Workaround:** copy Library directly from the admin user's clone (`cp -r`).
+**Workaround:** copy Library directly from the admin user's clone (`cp -r`), or unpack a tarball the admin provides into the umbrella's `Library/` directory.
 
-**Long-term fix options:**
-1. Make Library public
-2. Bundle Library inside the umbrella repo instead of as a submodule
-3. Document that new users need to be added as GitHub collaborators on Library before cloning
+**Plan (decided 2026-05-06):** stay private through the portability-branch test deployment so the umbrella's portabilization can be validated in isolation. After the portability branch lands on `main`, do a parallel portability review on the Library repo (same shape: hardcoded paths, owner-specific tooling, license disclosure), then make Library public. Update the install.md heads-up note to remove the "private repo" warning at that point.
 
 ## Library submodule uses SSH URL (fixed)
 
