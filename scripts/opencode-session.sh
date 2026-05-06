@@ -149,7 +149,7 @@ render_opencode_config() {
   # Restrict to a named list so only our WS_* and HOME placeholders get
   # substituted; literal $names are left alone.
   local vars='${WS_PORT_PRIMARY} ${WS_PORT_SECONDARY} ${WS_PORT_EMBED} ${WS_PORT_CODER}'
-  vars+=' ${WS_LIBRARY_ROOT} ${WS_PROXMOX_USER} ${WS_PROXMOX_HOST} ${HOME}'
+  vars+=' ${WS_LIBRARY_ROOT} ${WS_MNEMORY_ROOT} ${WS_PROXMOX_USER} ${WS_PROXMOX_HOST} ${HOME}'
 
   if ! envsubst "$vars" < "$OPENCODE_TEMPLATE" > "$tmp" 2>/dev/null; then
     err "envsubst failed rendering $OPENCODE_TEMPLATE"
@@ -182,6 +182,35 @@ render_opencode_config() {
       else
         warn "could not inject WS_OPENCODE_SKILL_PATHS; using template defaults"
       fi
+    fi
+  fi
+
+  # Drop file:// plugin entries whose target dir does not exist. The
+  # template includes "file://${WS_MNEMORY_ROOT}/integrations/opencode";
+  # if WS_MNEMORY_ROOT is unset, envsubst leaves the literal string
+  # "file:///integrations/opencode" which opencode would fail to load.
+  # Same filter also handles "user has WS_MNEMORY_ROOT set but hasn't
+  # cloned mnemory yet."
+  if jq -e '.plugin' "$tmp" >/dev/null 2>&1; then
+    local kept='[]' entry path
+    while IFS= read -r entry; do
+      [[ -z "$entry" ]] && continue
+      if [[ "$entry" == file://* ]]; then
+        path="${entry#file://}"
+        if [[ -d "$path" ]]; then
+          kept=$(jq -c --arg e "$entry" '. + [$e]' <<< "$kept")
+        else
+          log "dropping plugin entry (path missing): $entry"
+        fi
+      else
+        kept=$(jq -c --arg e "$entry" '. + [$e]' <<< "$kept")
+      fi
+    done < <(jq -r '.plugin[]?' "$tmp")
+    local merged="${tmp}.plugins"
+    if jq --argjson p "$kept" '.plugin = $p' "$tmp" > "$merged" 2>/dev/null; then
+      mv "$merged" "$tmp"
+    else
+      warn "could not filter plugin entries; using template defaults"
     fi
   fi
 

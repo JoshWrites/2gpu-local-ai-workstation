@@ -61,11 +61,57 @@ done
 # llama-server processes). Mnemory has its own lifecycle: it's a long-
 # running HTTP server with embedded Qdrant, restartable independently.
 #
+# The repo-shipped systemd/mnemory.service is a template with
+# placeholders (__WS_USER__, __WS_USER_HOME__, __WS_USER_LOCAL_BIN__,
+# __WS_UVX__) that we render here from the invoking user's environment.
+# Same pattern as the polkit rule above. The rendered unit lands at
+# /etc/systemd/system/mnemory.service.
+#
 # Reads /etc/workstation/mnemory.env (separate from system.env because
 # it carries the per-user MCP_API_KEYS secret). Install that env file
 # first via scripts/install-mnemory-env.sh before enabling the unit.
 if [[ -f "$UNIT_SRC/mnemory.service" ]]; then
-  sudo install -m 0644 "$UNIT_SRC/mnemory.service" "$SYSTEM_UNIT_DST/"
+  WS_USER="${SUDO_USER:-$USER}"
+  WS_USER_HOME="$(getent passwd "$WS_USER" | cut -d: -f6)"
+  if [[ -z "$WS_USER_HOME" ]]; then
+    echo "ERROR: cannot resolve home directory for user $WS_USER" >&2
+    exit 1
+  fi
+  WS_USER_LOCAL_BIN="$WS_USER_HOME/.local/bin"
+
+  # Resolve uvx — try the user's PATH first, then known install spots.
+  WS_UVX=""
+  for candidate in \
+    "$WS_USER_LOCAL_BIN/uvx" \
+    "/usr/local/bin/uvx" \
+    "/usr/bin/uvx"; do
+    if [[ -x "$candidate" ]]; then
+      WS_UVX="$candidate"
+      break
+    fi
+  done
+  if [[ -z "$WS_UVX" ]]; then
+    echo "ERROR: uvx not found. Install uv first (https://docs.astral.sh/uv/)." >&2
+    echo "       Tried: $WS_USER_LOCAL_BIN/uvx, /usr/local/bin/uvx, /usr/bin/uvx" >&2
+    exit 1
+  fi
+
+  RENDERED_MNEMORY="$(mktemp)"
+  trap 'rm -f "$RENDERED_MNEMORY"' EXIT
+  sed \
+    -e "s|__WS_USER__|${WS_USER}|g" \
+    -e "s|__WS_USER_HOME__|${WS_USER_HOME}|g" \
+    -e "s|__WS_USER_LOCAL_BIN__|${WS_USER_LOCAL_BIN}|g" \
+    -e "s|__WS_UVX__|${WS_UVX}|g" \
+    "$UNIT_SRC/mnemory.service" > "$RENDERED_MNEMORY"
+
+  if grep -q "__WS_" "$RENDERED_MNEMORY"; then
+    echo "ERROR: mnemory.service template substitution failed (placeholder not replaced)" >&2
+    grep "__WS_" "$RENDERED_MNEMORY" >&2
+    exit 1
+  fi
+
+  sudo install -m 0644 "$RENDERED_MNEMORY" "$SYSTEM_UNIT_DST/mnemory.service"
 fi
 
 sudo systemctl daemon-reload

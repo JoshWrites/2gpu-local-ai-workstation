@@ -137,6 +137,6 @@
     }
   },
   "plugin": [
-    "file:///home/levine/Documents/Repos/mnemory/integrations/opencode"
+    "file://${WS_MNEMORY_ROOT}/integrations/opencode"
   ]
 }

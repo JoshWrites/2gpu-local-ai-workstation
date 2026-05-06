@@ -4,9 +4,11 @@ Description=mnemory persistent memory server (qwen3-4b for extraction, e5-large 
 # MCP_API_KEYS user-mapping). Data at $HOME/.mnemory/ (Qdrant collection,
 # SQLite session state, filesystem artifacts).
 #
-# Runs as user=${SUDO_USER:-levine} via templated install — the launcher
-# user owns the data dir; both opencode users (levine, anny) authenticate
-# via per-user API keys and mnemory namespaces memories by user_id.
+# Runs as the user who installed the stack. The User/Group/HOME/PATH/
+# ExecStart fields below contain placeholders rendered at install-time
+# by scripts/install-systemd-units.sh from the invoking $USER, $HOME,
+# and the resolved path to `uvx`. The unit shipped in the repo does
+# NOT work as-is; install via the script.
 #
 # A future revision may migrate to a dedicated 'mnemory' system user
 # for cleaner isolation; for now this is colocated with the launcher
@@ -14,14 +16,14 @@ Description=mnemory persistent memory server (qwen3-4b for extraction, e5-large 
 
 [Service]
 Type=simple
-User=levine
-Group=levine
+User=__WS_USER__
+Group=__WS_USER__
 EnvironmentFile=/etc/workstation/mnemory.env
-Environment="PATH=/home/levine/.local/bin:/usr/local/bin:/usr/bin:/bin"
-Environment="HOME=/home/levine"
-WorkingDirectory=/home/levine
+Environment="PATH=__WS_USER_LOCAL_BIN__:/usr/local/bin:/usr/bin:/bin"
+Environment="HOME=__WS_USER_HOME__"
+WorkingDirectory=__WS_USER_HOME__
 
-ExecStart=/home/levine/.local/bin/uvx mnemory
+ExecStart=__WS_UVX__ mnemory
 
 Restart=on-failure
 RestartSec=10s
