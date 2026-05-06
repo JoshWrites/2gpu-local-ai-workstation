@@ -29,10 +29,39 @@ SYSCTL_DST="/etc/sysctl.d/60-apparmor-namespace.conf"
 LLAMA_UNITS=(llama-primary llama-secondary llama-embed llama-coder)
 
 # ── User-scope units ───────────────────────────────────────────────────────
+#
+# searxng.service is a user-scope unit installed under
+# ~/.config/systemd/user/. When this script runs under `sudo`, $HOME
+# is /root and there is no user-scope dbus session there. Drop
+# privilege to $SUDO_USER for this block in that case; if we're
+# running as the invoking user already, just do it.
 
-mkdir -p "$USER_UNIT_DST"
-install -m 0644 "$UNIT_SRC/searxng.service" "$USER_UNIT_DST/"
-systemctl --user daemon-reload
+install_user_unit_as() {
+  local user="$1"
+  local user_home
+  user_home="$(getent passwd "$user" | cut -d: -f6)"
+  if [[ -z "$user_home" ]]; then
+    echo "WARN: cannot resolve home for user $user; skipping user-scope unit install" >&2
+    return 0
+  fi
+  local user_unit_dst="$user_home/.config/systemd/user"
+  if [[ "$(id -un)" == "$user" ]]; then
+    mkdir -p "$user_unit_dst"
+    install -m 0644 "$UNIT_SRC/searxng.service" "$user_unit_dst/"
+    systemctl --user daemon-reload
+  else
+    sudo -u "$user" mkdir -p "$user_unit_dst"
+    sudo -u "$user" install -m 0644 "$UNIT_SRC/searxng.service" "$user_unit_dst/"
+    sudo -u "$user" XDG_RUNTIME_DIR="/run/user/$(id -u "$user")" systemctl --user daemon-reload \
+      || echo "WARN: user-scope daemon-reload failed for $user (no active session?). Re-run later as $user if needed." >&2
+  fi
+}
+
+if [[ -n "${SUDO_USER:-}" && "$(id -u)" -eq 0 ]]; then
+  install_user_unit_as "$SUDO_USER"
+else
+  install_user_unit_as "$(id -un)"
+fi
 
 # ── System-scope llama units ──────────────────────────────────────────────
 
