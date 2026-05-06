@@ -67,24 +67,35 @@ the routing decision only.
   whole-file reproduction or editing.
 
   This applies to ALL file mining: text files, code files, HTML,
-  markdown, anything you'd otherwise have to read into context just
-  to answer a question about. Library reads it on the side and
-  returns only the relevant portion.
+  markdown, **and binary documents** (PDF, DOCX, PPTX, XLSX, EPUB,
+  images). Library handles binary conversion internally via the
+  docling-serve sidecar and returns the same summary/chunks shape
+  -- you do not call `library_convert` first. "Summarize this PDF"
+  is `library_read_file(path, query)`, not `library_convert`.
 
 - **`library_research(question)`** — for information not in context:
   docs, current events, error messages, third-party APIs. Prefer
   over `webfetch`, which floods context with raw HTML.
 
-- **`library_convert(src_path, ...)`** — for converting a binary
-  doc (PDF, DOCX, image, etc.) to text on disk. Returns metadata
-  only; the converted content does not enter context.
+- **`library_convert(src_path, ...)`** — for *saving* a binary doc
+  (PDF, DOCX, image, etc.) as text on disk when the user wants the
+  full converted file (e.g. "convert foo.docx to markdown," "give
+  me a markdown copy of this PDF"). Returns metadata only; the
+  converted content is written to disk and never enters context.
+  This is **not** the right tool for understanding a binary doc --
+  for that, use `library_read_file`.
 
-- **`library_export(src_path, ...)`** — inverse: markdown to DOCX,
-  PDF, EPUB, etc. on disk.
+- **`library_export(src_path, ...)`** — inverse of `library_convert`:
+  markdown to DOCX, PDF, EPUB, etc. on disk. Same metadata-only
+  contract.
 
-- **`library_context_usage()`** — programmatic check on how much
-  of your context window is in use. Useful when deciding whether to
-  proactively suggest a session split.
+- **`library_context_usage()`** — *currently disabled.* Zed's
+  ACP-beta context-window indicator (the ring + percentage next to
+  the model picker) shows live usage in the UI, so the tool isn't
+  needed at the model surface. The implementation is preserved in
+  the codebase as a fallback; if a user explicitly says the
+  indicator is missing or stuck, see the comment in
+  `Library/library/server.py` for how to re-enable.
 
 ### Decision rule for "summarize/analyze this file"
 
@@ -129,17 +140,67 @@ For each distinct topic:
 3. Round 3: further refined question.
 4. Fallback: `webfetch` directly.
 
+A summary counts as "thin" in any of these cases:
+
+- `confidence: "low"` AND the `notes` or `summary` field mentions
+  the secondary model, server, or offline (e.g. "secondary model
+  offline; request chunks for direct access," "llama-server error,"
+  "no parseable JSON from secondary model"). The summarizer
+  gracefully degrades when its sidecar is unreachable -- the
+  response shape is preserved but the answer isn't real. Re-call
+  with `return_chunks=True` to get the raw chunks the summarizer
+  would have used.
+- `confidence: "low"` with substantive `notes` ("chunks didn't
+  cover X," "only tangentially related"). Same fix: get chunks.
+- The summary doesn't actually answer the user's question, even at
+  `confidence: "high"`. Trust the user's framing over the
+  confidence field.
+
 A new topic in the same turn resets to round 1. The Library is
 stateless across calls; you carry the round count.
 
 The same protocol applies to `library_read_file` for distinct
 queries about the same file.
 
-## Force-refresh
+### Short-circuit on infrastructure errors
 
-Only set `force_refresh=True` on `library_research` when the user
-explicitly says "force refresh" or "the doc has changed." The
-user is a more reliable judge of staleness than you are.
+If a Library response has `"layer": "error"` AND `"can_escalate":
+false`, fall back to the built-in tool **immediately** (`webfetch`
+for research, `read` for files). Do not advance to round 2 or 3 --
+those rounds exist for "the summary wasn't useful enough," not for
+"the embed/summarize/docling sidecar is down." Retrying against
+broken infrastructure burns rounds without any chance of success.
+
+`can_escalate: false` appears in two places, and they mean different
+things:
+
+- On `"layer": "error"`: infrastructure broken, fall back now.
+- On `"layer": "chunks"`: you already escalated within this round
+  and got the raw chunks; there is nothing further Library can give
+  you. This is the normal terminal state of an in-round escalation,
+  not a failure -- proceed with the chunks you got.
+
+## Cache freshness
+
+Library caches both files and web pages, but the two are governed
+differently. Knowing which is which prevents two bug shapes: telling
+the user "I just re-read it" when you actually returned a cached
+version, and uselessly forcing refreshes on content that's already
+fresh.
+
+- **Files** (`library_read_file`) auto-invalidate on `mtime` change.
+  If the user just edited a file and asks about it, the next call
+  will see the new content -- no extra parameter, no extra step.
+  `library_read_file` has no `force_refresh` parameter; the cache
+  handles it for you.
+
+- **Web pages** (`library_research`) stay cached for the life of the
+  MCP subprocess. They never auto-refresh. If the user says "force
+  refresh," "the doc has changed," "I just updated that page," or
+  any equivalent, pass `force_refresh=True` to `library_research`.
+  Otherwise trust the cache; the user is a more reliable judge of
+  web-page staleness than you are, since you never see the raw
+  source.
 
 ## Loop self-detection
 
