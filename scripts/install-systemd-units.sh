@@ -221,6 +221,32 @@ fi
 
 sudo systemctl daemon-reload
 
+# ── llama.cpp-hip dynamic library path ────────────────────────────────────
+
+# The HIP build at /usr/local/lib/llama.cpp-hip/ ships its own copies of
+# libllama.so, libggml.so, libmtmd.so, etc. alongside the llama-server
+# binary. The binary's baked RUNPATH points at the original build
+# directory (typically /tmp/llama-hip-build/...), which is wiped on
+# reboot. Without an ldconfig entry the dynamic loader can't find the
+# libraries after that point and llama-server fails with:
+#   "error while loading shared libraries: libllama-common.so.0:
+#    cannot open shared object file: No such file or directory"
+#
+# This step idempotently installs an ld.so.conf.d entry pointing at the
+# install dir and re-runs ldconfig. Safe to run on machines without the
+# HIP build present -- the dir just won't exist, ldconfig ignores it.
+
+LLAMA_HIP_LIB_DIR="/usr/local/lib/llama.cpp-hip"
+LDCONF_DST="/etc/ld.so.conf.d/llama-hip.conf"
+
+if [[ -d "$LLAMA_HIP_LIB_DIR" ]]; then
+  if ! { [[ -f "$LDCONF_DST" ]] && grep -qx "$LLAMA_HIP_LIB_DIR" "$LDCONF_DST"; }; then
+    echo "writing $LDCONF_DST -> $LLAMA_HIP_LIB_DIR"
+    echo "$LLAMA_HIP_LIB_DIR" | sudo tee "$LDCONF_DST" >/dev/null
+    sudo ldconfig
+  fi
+fi
+
 # ── llama-shutdown helper script ──────────────────────────────────────────
 
 # llama-shutdown is the polite-shutdown coordinator for the llama units.
