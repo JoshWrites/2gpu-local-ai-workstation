@@ -127,7 +127,8 @@ under 6 GB, the sidecar set won't fit and you'll need to drop one
   approve it, makes file-write/edit cards informative, surfaces
   skill-load permission requests with name and token cost, and
   drives the router-mode swap UX through a `/models` slash command
-  in the chat panel.
+  in the chat panel, and adds a `/context` slash command that shows
+  context-window usage as a chat card.
 - **A launcher** (`scripts/2gpu-launch.sh`) that brings the whole
   stack up when you click a desktop icon, with a yad splash showing
   progress, and shuts services down politely when nothing is using
@@ -279,7 +280,7 @@ that:
 | `our-patch-bash.diff` | Renders working-directory and command text on the permission card via the ACP `_meta.terminal_info` convention, plus streams terminal output back to Zed during execution. |
 | `our-patch-tools.diff` | Adds a required `description` parameter to the `write` and `edit` tool schemas. With `--jinja` on, llama.cpp's grammar-constrained sampling forces the model to emit one on every call. |
 | `our-patch-skill-permission.diff` | Enriches the skill-load permission card with name, description, location, and an estimated token cost. The user sees what the skill is for and how much context it will eat before clicking Allow. |
-| `our-patch-router-swap-v3.diff` | Confirm-card UX for model swaps in router mode, collapsed onto a single `/models` slash command. Picker pick, typed `/models <id>`, and bare `/models` (list mode) all converge on one dispatch path that runs `model-swap.sh --preflight`, raises an ACP `swap` permission_request, and on Allow streams `--execute` output as a foldable terminal block. |
+| `our-patch-router-swap-v3.diff` | Confirm-card UX for model swaps in router mode, collapsed onto a single `/models` slash command. Picker pick, typed `/models <id>`, and bare `/models` (list mode) all converge on one dispatch path that runs `model-swap.sh --preflight`, raises an ACP `swap` permission_request, and on Allow streams `--execute` output as a foldable terminal block. Also adds a `/context` slash command that renders context-window usage (percent full, used vs window, token split, cost) as a chat card, since Zed only shows those numbers on hover over the usage ring. |
 
 The build:
 
