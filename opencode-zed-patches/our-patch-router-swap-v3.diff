@@ -178,7 +178,7 @@ index 8114004..e36a467 100644
  
      const entries = sortProvidersByName(providers)
      const availableVariants = modelVariantsFromProviders(entries, selection.model)
-@@ -1856,6 +1991,320 @@ export class Agent implements ACPAgent {
+@@ -1856,6 +1991,326 @@ export class Agent implements ACPAgent {
            { throwOnError: true },
          )
          break
@@ -226,12 +226,18 @@ index 8114004..e36a467 100644
 +            })
 +            break
 +          }
-+          const lines: string[] = ["Available models:"]
++          // Zed renders this as wrapped markdown prose, not monospace,
++          // so space-padded columns collapse. Emit one markdown list
++          // item per model: bold display name, id in backticks, status,
++          // and the description on an indented continuation line.
++          const lines: string[] = ["**Available models**", ""]
 +          for (const m of listJson.models) {
-+            const idCol = String(m.id ?? "?").padEnd(18)
-+            const statusBit = `(${m.status}${m.in_registry ? "" : " ⚠ not in registry"})`.padEnd(35)
-+            const desc = typeof m.description === "string" ? m.description : ""
-+            lines.push(`  ${idCol}${statusBit}${desc}`)
++            const name = String(m.display_name ?? m.id ?? "?")
++            const id = String(m.id ?? "?")
++            const status = m.in_registry ? String(m.status) : `${m.status} (not in registry)`
++            lines.push(`- **${name}** \`${id}\` - *${status}* `)
++            const desc = typeof m.description === "string" ? m.description.trim() : ""
++            if (desc) lines.push(`  ${desc}`)
 +          }
 +          lines.push("")
 +          lines.push("Type `/models <id>` to swap.")
