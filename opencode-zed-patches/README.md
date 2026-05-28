@@ -64,7 +64,16 @@ Five patches in this repo fix that:
   `--list` so the user can pick without leaving the chat. The v1
   and v2 patches (`our-patch-router-swap.diff`,
   `our-patch-router-swap-v2.diff`) are kept in the repo for
-  historical reference but are not applied.
+  historical reference but are not applied. The same patch also adds
+  a `/context` slash command (`case "context":` in the dispatch).
+  Zed's agent panel shows context-window usage only on hover over the
+  usage ring, with no way to pin it, so `/context` renders the same
+  numbers as a chat card. The handler reuses the data path of the
+  upstream `sendUsageUpdate`: it reads the token counts off the last
+  assistant message and resolves the model's context limit, then emits
+  a markdown card with percent full, used vs window size, and the
+  input / output / reasoning / cache split plus cumulative cost. Every
+  count comes from the provider; nothing is estimated.
 
 Apply the patches, rebuild opencode from source, install the resulting
 binary alongside the upstream one, and point Zed at the patched binary.
