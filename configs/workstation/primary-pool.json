@@ -10,6 +10,15 @@
       "expected_load_seconds": 35,
       "expected_gen_tok_per_sec": 72
     },
+    "gemma-4-12b": {
+      "display_name": "Gemma 4 12B 64K",
+      "description": "Dense 12B, fully GPU-resident, fast generalist",
+      "context_tokens": 65536,
+      "vram_required_mb": 8500,
+      "dram_required_mb": 0,
+      "expected_load_seconds": 20,
+      "expected_gen_tok_per_sec": 90
+    },
     "qwen3-coder-30b": {
       "display_name": "Qwen3-Coder-30B 64K",
       "description": "Coding-focused MoE: 30B / 3B active, fully GPU-resident, ~70 tok/s expected; SWE-Bench Verified ~50%",

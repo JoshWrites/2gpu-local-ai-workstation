@@ -210,6 +210,15 @@ context = 98304
 recommended_for = ["agent-loops-hard"]
 
 [[primary_pool.members]]
+id = "gemma-4-12b"
+description = "Dense 12B, fully GPU-resident. Fast generalist, 128K ctx cap at 65536."
+gguf_filename = "gemma-4-12b-it-Q4_K_M.gguf"
+huggingface_repo = "unsloth/gemma-4-12b-it-GGUF"
+huggingface_file = "gemma-4-12b-it-Q4_K_M.gguf"
+context = 65536
+recommended_for = ["default-fast", "quick-tasks"]
+
+[[primary_pool.members]]
 id = "qwen3-next-80b-a3b-thinking"
 description = "Frontier reasoning. Default for hard problems. 96K ctx."
 gguf_filename = "Qwen3-Next-80B-A3B-Thinking-UD-Q4_K_XL.gguf"
