@@ -61,3 +61,8 @@ private/*
 # Personal/working plans (use docs/ for public docs)
 docs/superpowers/
 docs/local-notes/
+
+# RustDesk/WireGuard remote-access artifacts. The .conf carries live private
+# credentials; both are per-deployment and sent to the remote user out-of-band.
+remote-user-wg.conf
+rustdesk-remote-user-setup.md
