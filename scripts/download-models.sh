@@ -5,11 +5,24 @@
 # Idempotent: skips files that already exist with non-zero size.
 # Aborts on any error.
 #
-# Requires: huggingface-cli (from `uv tool install huggingface_hub` or
-# `pip install huggingface_hub`). Public repos are anonymous; private
-# repos need `huggingface-cli login` first.
+# Requires: hf (the HuggingFace CLI, from `uv tool install huggingface_hub`
+# or `pip install huggingface_hub`; formerly named huggingface-cli). Public
+# repos are anonymous; private repos need `hf auth login` first.
+#
+# The model catalog (/var/lib/llama-models) is root-owned so every user on
+# the box can read it. Writes therefore need root. If invoked as a normal
+# user, this script re-execs itself under sudo, preserving the caller's
+# environment (-E) and PATH so the caller's `hf` shim and HuggingFace cache
+# are used rather than root's.
 
 set -euo pipefail
+
+# Re-exec under sudo if not already root, so writes into the root-owned
+# catalog succeed. Preserve the environment and an explicit PATH (sudo
+# resets PATH by default, which would hide a user-local `hf` shim).
+if [[ "${EUID:-$(id -u)}" -ne 0 ]]; then
+  exec sudo -E env "PATH=$PATH" bash "${BASH_SOURCE[0]}" "$@"
+fi
 
 REPO="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 MANIFEST="$REPO/configs/workstation/models.toml"
@@ -29,7 +42,7 @@ fi
 MODELS_DIR="${MODELS_DIR:-/var/lib/llama-models}"
 ok "models dir: $MODELS_DIR"
 
-command -v huggingface-cli >/dev/null 2>&1 || bad "huggingface-cli not found — install with: uv tool install huggingface_hub"
+command -v hf >/dev/null 2>&1 || bad "hf not found — install with: uv tool install huggingface_hub (and ensure it is on PATH; sudo -E preserves the caller's PATH)"
 
 # Extract the (id, gguf_filename, hf_repo, hf_file) tuples for every
 # model the manifest references. Sidecars live under <role>.user_choice;
@@ -52,14 +65,14 @@ PY
 
 [[ -n "$TUPLES" ]] || bad "manifest contained no models to download"
 
-# Make sure the catalog dir is writable. Create with sudo if needed.
+# Catalog stays root-owned (world-readable) so every user can read it.
+# We are root here (the script re-execs under sudo above), so just create
+# the dir if missing -- no chown, ownership stays root:root.
 if [[ ! -d "$MODELS_DIR" ]]; then
   hdr "Create $MODELS_DIR"
-  sudo mkdir -p "$MODELS_DIR"
-  sudo chown "$USER:$USER" "$MODELS_DIR"
-  ok "created $MODELS_DIR (owner $USER)"
+  mkdir -p "$MODELS_DIR"
+  ok "created $MODELS_DIR (owner root)"
 fi
-[[ -w "$MODELS_DIR" ]] || bad "$MODELS_DIR is not writable by $USER. Fix ownership and re-run."
 
 while IFS='|' read -r id gguf hf_repo hf_file; do
   [[ -z "$id" ]] && continue
@@ -72,10 +85,10 @@ while IFS='|' read -r id gguf hf_repo hf_file; do
   fi
   mkdir -p "$target_dir"
   echo "  downloading $hf_repo/$hf_file -> $target_file"
-  if ! huggingface-cli download "$hf_repo" "$hf_file" --local-dir "$target_dir"; then
-    bad "huggingface-cli download failed for $hf_repo/$hf_file"
+  if ! hf download "$hf_repo" "$hf_file" --local-dir "$target_dir"; then
+    bad "hf download failed for $hf_repo/$hf_file"
   fi
-  # huggingface-cli may write under a nested structure; normalize.
+  # hf may write under a nested structure; normalize.
   if [[ ! -f "$target_file" ]]; then
     found=$(find "$target_dir" -type f -name "$gguf" -print -quit)
     if [[ -n "$found" && "$found" != "$target_file" ]]; then
