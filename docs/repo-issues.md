@@ -101,3 +101,36 @@ coder as an inline-code generator only -- or drop it (see the pool report).
 **Status:** Prompt-level tool discipline (inline-by-default, call-don't-
 narrate) is fixed and verified in `prompts/qwen3-coder-30b.md`. The
 agentic tool-calling fix is BLOCKED on upstream llama.cpp support.
+
+## Hebrew OCR: GLM-OCR fails Hebrew; gemma reads words but mangles digits
+
+**Context:** evaluating a Hebrew OCR path for the medical-advocate workflow
+(bilingual He/En records). Tested 2026-06-05 on a synthetic Hebrew sign
+image (known content: "ספרייה ציבורית", "שעות פתיחה: 9:00-17:00",
+"טלפון: 03-1234567"), via standalone llama-server (Vulkan build 8799, which
+has glm4v projector support).
+
+Findings:
+- **GLM-OCR (zai-org, 0.9B, ggml-org GGUF):** loads fine on the 5700 XT
+  (~1.4GB, glm4v projector OK). EXCELLENT English OCR -- read a dense
+  invoice perfectly including every digit (better than gemma on digits).
+  But **completely fails Hebrew** -- returns repeated garbage
+  ("הפרוטקסט קריאי") unrelated to the image. Its "109 languages" claim
+  does not extend to usable Hebrew.
+- **gemma-4-12b (our pool vision model):** reads Hebrew WORDS accurately
+  (correct text + transliteration + translation) but **zeros out the
+  digits** -- rendered "9:00-17:00" as "00:00-00:00" and the phone number
+  as "00-0000000", even though its hidden reasoning channel had read
+  "09:00-17:00" correctly. Same digit weakness as on English, worse here.
+
+**Conclusion:** neither is a reliable Hebrew-OCR solution as-is. For
+MEDICAL documents this is disqualifying -- dates, dosages, and lab values
+are exactly the digits both models mangle. GLM-OCR is, however, a strong
+English OCR engine worth keeping in mind for the English half of a
+bilingual corpus.
+
+**Status:** Hebrew OCR unsolved. The medical-advocate TODO should treat
+Hebrew document OCR as an open research problem (try a Hebrew-specialized
+OCR, or a larger VLM, or a hybrid: gemma/larger-VLM for words + a
+digit-focused pass). GLM-OCR GGUFs kept on disk for now (English OCR
+value); revisit. Do not assume any current model handles Hebrew numbers.
