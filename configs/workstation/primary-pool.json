@@ -12,7 +12,7 @@
     },
     "gemma-4-12b": {
       "display_name": "Gemma 4 12B 64K",
-      "description": "Multilingual generalist (strong Hebrew + non-Latin scripts), thinking model that modulates effort to the task; ~50 tok/s, fully GPU-resident",
+      "description": "Multilingual generalist (strong Hebrew + non-Latin scripts) + VISION (reads images/screenshots; only image-capable model in the pool), thinking model that modulates effort to the task; ~50 tok/s, fully GPU-resident",
       "context_tokens": 65536,
       "vram_required_mb": 9000,
       "dram_required_mb": 0,

@@ -215,6 +215,20 @@ confirm the binary built with HIP support. ROCm-related runtime errors
 (missing libraries, unsupported GPU) only show up when you actually
 launch the service in step 6, not at this build step.
 
+**Build recency matters for newer model features.** Recent models ship
+support in newer llama.cpp commits, so a build that is months old will
+fail on them even though it runs older models fine. Two observed on this
+stack (2026-06-04): Gemma 4 vision needs the `gemma4uv` multimodal
+projector type (an older build errors `unknown projector type: gemma4uv`;
+build >= ~9496 has it). When you rebuild, the binary is dynamically
+linked against a set of `lib*.so` (llama, ggml-*, mtmd, llama-common,
+llama-server-impl) that must be installed alongside it in
+`/usr/local/lib/llama.cpp-hip/` — install the whole `build/bin` lib set,
+not just the `llama-server` file. Back up the working binary first
+(`cp -a llama-server llama-server.bak-<commit>-<date>`) so you can roll
+back if a new build regresses a model; run a full per-model regression
+after any build swap.
+
 ### Step 3: Pull the model GGUFs
 
 The default model set is documented in
