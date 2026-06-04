@@ -67,18 +67,37 @@ This was flagged as an untested risk in the Phase 12 writeup
 model battery surfaced it. NOT a regression -- the coder never had
 verified tool-calling.
 
-Adding `--chat-template-file` with the official Qwen template did NOT
-fix it (the embedded-template bug is upstream of template override on
-this build).
+**Investigation 2026-06-04 (after the llama.cpp rebuild) — narrowed, still unfixed:**
 
-**Fix options, cheapest first (to work through):**
-1. Try the other on-disk unsloth quant `Qwen3-Coder-30B-A3B-Instruct-Q4_K_M.gguf`.
-2. Download a different-source GGUF: issue #18852 reports mradermacher's
-   `Qwen3-Coder-30B-A3B-Instruct.i1-Q4_K_M.gguf` works on recent commits.
-3. Rebuild llama.cpp-hip to a version with the qwen3-coder autoparser
-   (the `pwilkin/llama.cpp:autoparser` work / PR #18675 Autoparser
-   refactor), per the Phase 12 note.
+1. **Rebuilt llama.cpp-hip 0929436 -> b9518 (7c158fb).** Did NOT fix it.
+   The current build still classifies the coder as chat format
+   `peg-native`, which does not parse the `<function=>` XML. (The rebuild
+   DID fix gemma vision -- so it was worth doing -- but not this.)
+2. **Official Qwen3-Coder `--chat-template-file`.** Did NOT fix it. The
+   template loads (log shows the ChatML `example_format`) but llama.cpp
+   still picks `peg-native` for tool parsing -- on this build the tool
+   parser is not selected from the template.
+3. **On-disk `Q4_K_M` unsloth quant** (vs the `UD-Q4_K_XL` we run): tested
+   standalone but the run stalled in warmup; inconclusive, not pursued
+   further given the next point.
+
+**Revised root cause:** upstream llama.cpp issue #15012 ("Qwen3-Coder Tool
+Call Parser") is still OPEN. Native parsing of Qwen3-Coder's custom XML
+tool format likely is NOT in mainline -- so this is not a config we are
+missing, and neither a rebuild nor a template selects a parser that does
+not exist. A GGUF swap (mradermacher / ggml-org official) MIGHT carry a
+template that coaxes a working path, but that is unverified and the payoff
+is uncertain.
+
+**Practical consequence + recommendation:** the coder cannot drive agentic
+file edits on this stack. Per the 2026-06-04 redundancy finding, GLM-4.7-
+Flash already covers functional agentic coding (its tool calls parse, code
+quality is good, SWE-bench ~59%). So the coder's headline strength is
+currently better served by GLM. Options going forward: (a) wait for
+upstream #15012 to merge, then retest; (b) try a different-source GGUF as
+a one-off experiment; (c) accept GLM as the coding agent and treat the
+coder as an inline-code generator only -- or drop it (see the pool report).
 
 **Status:** Prompt-level tool discipline (inline-by-default, call-don't-
 narrate) is fixed and verified in `prompts/qwen3-coder-30b.md`. The
-build-level parsing fix is parked pending the GGUF-swap experiments above.
+agentic tool-calling fix is BLOCKED on upstream llama.cpp support.
