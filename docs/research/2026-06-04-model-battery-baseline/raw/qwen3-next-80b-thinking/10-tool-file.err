@@ -1,0 +1,4 @@
+[0m
+> build · qwen3-next-80b-thinking
+[0m
+[0m⚙ [0mlibrary_read_file {"path":"configs/workstation/llama-router.ini","query":"What is the reasoning-format for the gemma-4-12b section?","return_chunks":false}

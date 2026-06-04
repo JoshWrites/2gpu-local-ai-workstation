@@ -1,0 +1,1 @@
+The `gemma-4-12b` section in `configs/workstation/llama-router.ini` uses the **`deepseek`** reasoning format.

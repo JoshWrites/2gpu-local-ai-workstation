@@ -1,0 +1,3 @@
+The capital of Australia is **Canberra**. 
+
+For quick factual questions like this, the `gemma-4-12b` model is much faster and better suited for such straightforward lookups. You can switch to it by running `/models gemma-4-12b`.

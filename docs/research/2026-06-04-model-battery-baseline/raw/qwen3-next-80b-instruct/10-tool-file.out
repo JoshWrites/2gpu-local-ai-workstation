@@ -1,0 +1,1 @@
+The `gemma-4-12b` section in `/home/levine/Documents/Repos/2gpu-local-ai-workstation/configs/workstation/llama-router.ini` uses `reasoning-format = deepseek`.

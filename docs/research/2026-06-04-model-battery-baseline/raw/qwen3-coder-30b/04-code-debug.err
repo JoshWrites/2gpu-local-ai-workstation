@@ -1,0 +1,5 @@
+[0m
+> build · qwen3-coder-30b
+[0m
+[0m✗ [0medit failed
+[91m[1mError: [0mFile /home/levine/Documents/Repos/2gpu-local-ai-workstation/test.py not found

@@ -1,0 +1,30 @@
+```python
+import time
+from functools import wraps
+from collections import defaultdict
+
+def rate_limit(max_calls, period_seconds):
+    def decorator(func):
+        calls = defaultdict(list)
+
+        @wraps(func)
+            def wrapper(*args, **kwargs):
+            now = time.time()
+            key = (func.__name__, args, tuple(sorted(kwargs.items())))
+            
+            # Clean up timestamps outside the current window
+            calls[key] = [t for t in calls[key] if now - t < period_seconds]
+            
+            if len(calls[key]) >= max_calls:
+                wait_time = period_seconds - (now - calls[key][0])
+                if wait_time > 0:
+                    time.sleep(wait_time)
+                # Re-calculate window after sleep
+                now = time.time()
+                calls[key] = [t for t in calls[key] if now - t < period_seconds]
+
+            calls[key].append(time.time())
+            return func(*args, **kwargs)
+        return wrapper
+    return decorator
+```

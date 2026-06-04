@@ -1,0 +1,14 @@
+=== BATTERY for glm-4.7-flash ===
+01-hebrew          rc=0 wall= 28.9s out=105B
+02-multiling       rc=0 wall=  4.9s out=228B
+03-code-gen        rc=0 wall=  7.6s out=905B
+04-code-debug      rc=0 wall=  4.9s out=71B
+05-math            rc=0 wall=  6.3s out=181B
+06-logic           rc=0 wall=  6.5s out=253B
+07-knowledge       rc=0 wall=  4.5s out=267B
+08-trivial         rc=0 wall=  4.3s out=42B
+09-tool-research   rc=0 wall= 53.0s out=332B
+10-tool-file       rc=0 wall= 15.6s out=525B
+11-format          rc=0 wall=  4.3s out=17B
+12-summarize       rc=0 wall=  6.1s out=200B
+=== DONE glm-4.7-flash ===

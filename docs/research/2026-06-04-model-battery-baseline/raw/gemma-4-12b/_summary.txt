@@ -1,0 +1,14 @@
+=== BATTERY for gemma-4-12b ===
+01-hebrew          rc=0 wall=  2.2s out=84B
+02-multiling       rc=0 wall=  3.3s out=280B
+03-code-gen        rc=0 wall=  7.2s out=1004B
+04-code-debug      rc=0 wall=  2.2s out=69B
+05-math            rc=0 wall=  2.5s out=153B
+06-logic           rc=0 wall=  3.8s out=372B
+07-knowledge       rc=0 wall=  8.3s out=183B
+08-trivial         rc=0 wall=  1.8s out=38B
+09-tool-research   rc=0 wall= 45.6s out=310B
+10-tool-file       rc=0 wall=  8.9s out=110B
+11-format          rc=0 wall=  2.1s out=17B
+12-summarize       rc=0 wall=  2.8s out=210B
+=== DONE gemma-4-12b ===

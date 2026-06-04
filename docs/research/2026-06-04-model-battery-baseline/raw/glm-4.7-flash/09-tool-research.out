@@ -1,0 +1,1 @@
+According to the llama.cpp MoE offload guide, the **--n-cpu-moe** flag enables CPU-based routing for MoE expert layers, allowing you to offload expert computations to system RAM instead of GPU VRAM. It works by assigning the top **N** layers (counting from the highest-numbered layer downward) to run on the CPU rather than on GPU.

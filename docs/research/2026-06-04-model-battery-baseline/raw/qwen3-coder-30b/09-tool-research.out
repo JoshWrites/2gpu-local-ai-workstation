@@ -1,0 +1,12 @@
+Let me search for more specific information about this flag.
+Let me check if there's any reference to a --n-cpu-moe flag directly:
+Based on my research, I found that the --n-cpu-moe flag in llama.cpp refers to --spec-draft-n-cpu-moe which specifies how many layers of Mixture of Experts (MoE) weights should be kept in CPU memory for the draft model during speculative decoding. This allows partial offloading of MoE weights to CPU to improve performance or compatibility when running large language models with expert layers.
+
+However, I notice there may be some confusion around the exact flag name as it's more specifically called --spec-draft-n-cpu-moe in the llama.cpp documentation, and this is used for optimizing draft model handling during speculative decoding rather than a general CPU usage flag. The flag helps optimize performance when running MoE-based models by selectively keeping certain layers on CPU memory.
+
+Let me also check if there's any other related information about --n-cpu-moe:
+Based on my research, I found that there appears to be some confusion around the exact flag name. The llama.cpp documentation specifically mentions `--spec-draft-n-cpu-moe` (or `-ncmoed`) which is used to specify how many layers of Mixture of Experts (MoE) weights should be kept in CPU memory for the draft model during speculative decoding.
+
+The flag helps optimize performance when running MoE-based models by selectively keeping certain expert layers on CPU memory, particularly for the draft model used in speculative decoding. This allows partial offloading of MoE weights to CPU to improve compatibility or performance characteristics with large language models that utilize expert layers.
+
+However, I couldn't find specific documentation for a flag simply named `--n-cpu-moe` - it appears this might be an incorrect or simplified name for the actual `--spec-draft-n-cpu-moe` flag.

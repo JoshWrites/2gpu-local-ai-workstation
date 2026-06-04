@@ -1,0 +1,25 @@
+```python
+import time
+from functools import wraps
+
+def rate_limit(max_calls, period_seconds):
+    def decorator(func):
+        calls = []
+        
+        @wraps(func)
+        def wrapper(*args, **kwargs):
+            now = time.time()
+            # Filter out calls outside the current period
+            calls[:] = [t for t in calls if now - t < period_seconds]
+            
+            # Check if we've exceeded the limit
+            if len(calls) >= max_calls:
+                raise Exception(f"Rate limit exceeded: {max_calls} calls per {period_seconds} seconds")
+            
+            # Record this call
+            calls.append(now)
+            return func(*args, **kwargs)
+        
+        return wrapper
+    return decorator
+```

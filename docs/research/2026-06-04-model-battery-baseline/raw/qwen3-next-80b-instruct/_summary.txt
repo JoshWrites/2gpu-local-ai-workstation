@@ -1,0 +1,14 @@
+=== BATTERY for qwen3-next-80b-instruct ===
+01-hebrew          rc=0 wall= 41.2s out=86B
+02-multiling       rc=0 wall=  4.9s out=130B
+03-code-gen        rc=0 wall=  8.8s out=741B
+04-code-debug      rc=0 wall=  4.5s out=69B
+05-math            rc=0 wall=  4.8s out=109B
+06-logic           rc=0 wall=  6.7s out=336B
+07-knowledge       rc=0 wall=  5.0s out=229B
+08-trivial         rc=0 wall=  3.6s out=9B
+09-tool-research   rc=0 wall= 31.3s out=417B
+10-tool-file       rc=0 wall= 13.3s out=159B
+11-format          rc=0 wall=  4.3s out=17B
+12-summarize       rc=0 wall=  5.9s out=211B
+=== DONE qwen3-next-80b-instruct ===

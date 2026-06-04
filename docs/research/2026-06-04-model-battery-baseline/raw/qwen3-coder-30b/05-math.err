@@ -1,0 +1,6 @@
+[0m
+> build · qwen3-coder-30b
+[0m
+[93m[1m! [0mpermission requested: bash (echo "3 minutes"); auto-rejecting
+[0m✗ [0mbash failed
+[91m[1mError: [0mThe user rejected permission to use this specific tool call.

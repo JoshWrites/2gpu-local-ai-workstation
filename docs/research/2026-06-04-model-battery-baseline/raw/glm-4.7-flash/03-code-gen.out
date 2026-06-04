@@ -1,0 +1,28 @@
+```python
+def rate_limit(max_calls, period_seconds):
+    """
+    Rate limiting decorator that allows at most max_calls calls within period_seconds.
+    """
+    def decorator(func):
+        calls = []
+        
+        def wrapper(*args, **kwargs):
+            now = time.time()
+            
+            # Remove calls outside the current period
+            calls[:] = [t for t in calls if now - t <= period_seconds]
+            
+            # Check if we can make another call
+            if len(calls) >= max_calls:
+                # Calculate time until next allowed call
+                oldest_call = calls[0]
+                sleep_time = oldest_call + period_seconds - now
+                time.sleep(sleep_time)
+                calls[:] = []  # Clear old calls
+            
+            calls.append(now)
+            return func(*args, **kwargs)
+        
+        return wrapper
+    return decorator
+```

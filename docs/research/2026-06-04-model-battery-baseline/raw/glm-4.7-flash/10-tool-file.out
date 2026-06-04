@@ -1,0 +1,10 @@
+The **gemma-4-12b** section in `configs/workstation/llama-router.ini` uses:
+
+**`reasoning-format = deepseek`**
+
+This format:
+- Extracts the model's thinking content into a separate field (`message.reasoning_content`)
+- Keeps the main response content clean
+- Leverages the model's native thinking channel, which emits `<|think|>` or `<|channel>thought` segments during reasoning
+- Enables structured, visible reasoning without disrupting the output flow
+- Ensures user visibility of the model's internal deliberation process

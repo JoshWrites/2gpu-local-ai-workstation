@@ -1,0 +1,1 @@
+The `--n-cpu-moe` flag does not exist in llama.cpp. Based on current documentation and codebase analysis, this specific parameter is unrecognized—llama.cpp uses flags like `--moe-tp` (for tensor parallelism) or `--moe-experts-per-token` for MoE-related configurations instead.

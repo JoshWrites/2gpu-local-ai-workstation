@@ -1,0 +1,1 @@
+The `--n-cpu-moe` flag in `llama.cpp` is used to specify the number of CPU cores dedicated to executing the components of Mixture of Experts (MoE) models. This flag is intended to optimize inference performance by ensuring efficient CPU utilization for these complex models, particularly on CPU-based systems.

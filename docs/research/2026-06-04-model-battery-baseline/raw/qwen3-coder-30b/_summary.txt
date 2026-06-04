@@ -1,0 +1,14 @@
+=== BATTERY for qwen3-coder-30b ===
+01-hebrew          rc=0 wall= 14.2s out=94B
+02-multiling       rc=0 wall=  2.4s out=205B
+03-code-gen        rc=0 wall=  5.1s out=0B
+04-code-debug      rc=0 wall=  3.5s out=72B
+05-math            rc=0 wall=  2.8s out=134B
+06-logic           rc=0 wall= 65.3s out=1582B
+07-knowledge       rc=0 wall=  2.9s out=397B
+08-trivial         rc=0 wall=  1.7s out=38B
+09-tool-research   rc=0 wall= 55.4s out=1895B
+10-tool-file       rc=0 wall=  8.4s out=639B
+11-format          rc=0 wall=  1.9s out=17B
+12-summarize       rc=0 wall=  2.6s out=259B
+=== DONE qwen3-coder-30b ===

@@ -1,0 +1,14 @@
+=== BATTERY for qwen3-next-80b-thinking ===
+01-hebrew          rc=0 wall=174.5s out=98B
+02-multiling       rc=0 wall= 41.0s out=91B
+03-code-gen        rc=0 wall= 45.9s out=548B
+04-code-debug      rc=0 wall= 22.8s out=142B
+05-math            rc=0 wall= 17.9s out=144B
+06-logic           rc=0 wall= 52.3s out=524B
+07-knowledge       rc=0 wall= 47.0s out=412B
+08-trivial         rc=0 wall= 23.2s out=229B
+09-tool-research   rc=0 wall= 80.6s out=279B
+10-tool-file       rc=0 wall= 66.4s out=590B
+11-format          rc=0 wall= 42.7s out=14B
+12-summarize       rc=0 wall= 15.0s out=220B
+=== DONE qwen3-next-80b-thinking ===

@@ -1,0 +1,14 @@
+I'll help you find the reasoning format used by the gemma-4-12b section in the llama-router.ini configuration file.
+
+First, I need to read this configuration file.
+Based on the configuration file, I can see that the gemma-4-12b section uses `reasoning-format = deepseek`.
+
+Looking at lines 62 in the configuration file:
+
+```ini
+[gemma-4-12b]
+...
+reasoning-format = deepseek
+```
+
+This is further explained in the comments above it (lines 44-47), which state that this format extracts thinking into `message.reasoning_content` and keeps `message.content` clean, which is the opposite of what's used for non-thinking models like Qwen3-Coder.

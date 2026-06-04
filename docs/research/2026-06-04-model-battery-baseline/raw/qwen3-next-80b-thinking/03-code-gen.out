@@ -1,0 +1,18 @@
+```python
+from collections import deque
+import time
+
+def rate_limit(max_calls, period_seconds):
+    def decorator(func):
+        calls = deque()
+        def wrapper(*args, **kwargs):
+            current_time = time.time()
+            while calls and calls[0] <= current_time - period_seconds:
+                calls.popleft()
+            if len(calls) >= max_calls:
+                raise Exception("Rate limit exceeded")
+            calls.append(current_time)
+            return func(*args, **kwargs)
+        return wrapper
+    return decorator
+```

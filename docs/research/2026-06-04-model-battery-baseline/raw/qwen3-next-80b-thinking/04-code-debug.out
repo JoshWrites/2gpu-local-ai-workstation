@@ -1,0 +1,6 @@
+```python
+def avg(xs):
+    if len(xs) == 0:
+        raise ValueError("Cannot compute average of empty list")
+    return sum(xs) / len(xs)
+```
