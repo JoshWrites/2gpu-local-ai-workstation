@@ -134,3 +134,67 @@ Hebrew document OCR as an open research problem (try a Hebrew-specialized
 OCR, or a larger VLM, or a hybrid: gemma/larger-VLM for words + a
 digit-focused pass). GLM-OCR GGUFs kept on disk for now (English OCR
 value); revisit. Do not assume any current model handles Hebrew numbers.
+
+### Hebrew OCR — research outcome (2026-06-05): use docling + Tesseract(heb)
+
+Background research agent (sources in DECISIONS_JOURNAL / agent transcript)
+resolved the path forward, starting from our existing docling pipeline as
+suggested:
+
+- **First choice: docling + Tesseract** with the `tesseract-ocr-heb`
+  language pack. CPU-only (zero VRAM), proven Hebrew text AND digit
+  transcription (Tesseract transcribes pixels; it does NOT exhibit the
+  VLM digit-zeroing failure mode). ~92-96% on clean Hebrew print. Config:
+  `TesseractCliOcrOptions(lang=["heb","eng"], psm=6)`, `force_full_page_ocr`
+  for scans, `TESSDATA_PREFIX=/usr/share/tesseract-ocr/5/tessdata`.
+- **Upgrade path: Surya 2** via `docling-surya` plugin (650M VLM, 90.9%
+  benchmarked Hebrew, best RTL + digit handling). vLLM backend runs on the
+  7900 XTX (gfx1100) via ROCm; can also reduce batch to fit the 5700 XT.
+- **docling-serve gotcha (#567):** the HTTP `/v1/convert/file` path SILENTLY
+  IGNORES `ocr_engine`/`ocr_lang` and always runs RapidOCR (which has an
+  RTL-order bug -> wrong Hebrew). Fix: call docling's Python library
+  directly in a sidecar, OR set `DOCLING_SERVE_DEFAULT_OCR_ENGINE=tesseract_cli`
+  + ensure `tesseract-ocr-heb` is in the container.
+- **Medical safety:** add a digit-validation regex pass after OCR (dates,
+  dosages `\d+\.?\d*\s*mg`, lab values) to flag any truncated/zeroed
+  numeric sequence before it reaches the reasoner.
+- **Ruled out:** EasyOCR (no Hebrew), PaddleOCR/RapidOCR (RTL order bug),
+  general VLMs incl. gemma/GLM-OCR (digit-zeroing / Hebrew fail).
+
+**Status:** path chosen, not yet implemented. Implementation = wire
+Tesseract(heb) into the Library/docling OCR path + add the digit-validation
+layer. Part of the medical-advocate workflow (memory TODO).
+
+### Coder candidates trial (2026-06-05): both new Qwen coders fail on our build
+
+Trialed two current-gen coders for the long-context agentic-coding workflow.
+Both FAIL on our llama.cpp HIP build (b9518, gfx1100):
+
+- **Qwen3.6-27B dense (Q4_K_M, ~17GB, GPU-only):** loads, but **crashes on
+  first inference** -- hard HIP kernel fault, no error flushed (log dies at
+  "initializing slots"). The dense Qwen3.6 arch appears unsupported on this
+  build. (Also learned: standalone llama-server here must pin `--device
+  ROCm1`; default multi-GPU split tries the unsupported gfx1010 5700 XT and
+  silently dies.)
+- **Qwen3-Coder-Next (80B MoE / 3B active, UD-Q4_K_XL, ~49GB):** loads fine
+  via the router (80s, same n-cpu-moe path as our working qwen3-next-80b),
+  chat format peg-native -- but **generates ZERO tokens** on any prompt
+  (tool or plain, streaming or not). Loads but cannot generate on this build.
+
+Common thread: very recent (Apr 2026) Qwen models hit build-level
+incompatibilities on our HIP llama.cpp, even though the older Qwen3-Next-80B
+(same MoE family as Coder-Next) runs fine. This is the THIRD recent-model-
+vs-build wall this cycle (gemma4uv vision needed the rebuild; Qwen3-Coder-30B
+XML tools unparsed; now these two).
+
+**Conclusion:** neither new coder is usable here right now. **GLM-4.7-Flash
+remains the working coder** (tools parse, fits GPU-only, ~59% SWE-bench);
+its only weakness for the long-context use case is degradation past ~30K
+context. Options for the long-context coding goal: (a) try a NEWER
+llama.cpp build (these are fast-moving; a later commit may fix the Qwen3.6/
+Coder-Next kernels) -- but weigh against re-validating the whole pool again;
+(b) try a different quant/source of these models; (c) accept GLM for now and
+revisit. GGUFs kept on disk pending a build bump.
+
+**Status:** long-context coder unresolved; GLM-4.7-Flash is the coder.
+Both candidate GGUFs on disk (qwen3.6-27b, qwen3-coder-next), not wired.
