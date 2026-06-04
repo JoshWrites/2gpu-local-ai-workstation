@@ -147,6 +147,19 @@ else
   ok "AGENTS.md symlink already exists"
 fi
 
+# Per-model system prompts + shared-environment.md. opencode reads these
+# via {file:} refs in opencode.json (.agent.build.prompt and
+# .instructions), re-pointed per model load by scripts/model-swap.sh.
+# Symlink the whole dir so adding a model's prompt to the repo is enough.
+PROMPTS_LINK="${OPENCODE_CONFIG}/prompts"
+PROMPTS_TARGET="${TARGET_REPO}/configs/opencode/prompts"
+if [[ ! -L "$PROMPTS_LINK" ]]; then
+  sudo -u "$TARGET_USER" ln -sf "$PROMPTS_TARGET" "$PROMPTS_LINK"
+  ok "prompts/ symlinked"
+else
+  ok "prompts/ symlink already exists"
+fi
+
 # ── Step 5: uv + Library venv ─────────────────────────────────────────────────
 
 UV_BIN="${TARGET_HOME}/.local/bin/uv"

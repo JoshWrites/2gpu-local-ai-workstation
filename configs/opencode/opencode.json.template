@@ -80,7 +80,14 @@
   "disabled_providers": [
     "opencode"
   ],
+  "instructions": [
+    "{file:${HOME}/.config/opencode/prompts/shared-environment.md}"
+  ],
   "agent": {
+    "build": {
+      "_comment": "Per-model system prompt. NOT a static choice -- this is a follower field, like .model below. The agent's `prompt` REPLACES the default opencode system prompt (verified against opencode v1.14.x docs + an empirical opencode-run probe), so it must always match the loaded model. scripts/model-swap.sh re-points .agent.build.prompt to prompts/<model-id>.md on every successful --execute, and scripts/opencode-session.sh sets it at launch after router discovery. The shared-environment.md rules still layer in via the additive `instructions` field above (also verified by probe). The template default points at the cold-boot model below.",
+      "prompt": "{file:${HOME}/.config/opencode/prompts/qwen3-next-80b-thinking.md}"
+    },
     "compaction": {
       "_comment": "NOT a pin -- this is a follower field. opencode reads .agent.compaction.model at compaction time, so the JSON entry has to exist; but its value is overwritten by external scripts to track the currently-loaded primary on llama-primary-router. Writers: scripts/opencode-session.sh (at launch, after router discovery) and scripts/model-swap.sh (on every successful --execute load). The template default below is only the cold-boot value before the first writer runs. To remove this field entirely we'd need to patch opencode source so compaction reads the loaded model from the router directly; deferred.",
       "model": "llama-primary/qwen3-next-80b-thinking"

@@ -475,23 +475,45 @@ patch_compaction_target() {
     return 0
   fi
 
-  local current_primary current_compact
+  # Per-model system prompt. The build agent's `prompt` REPLACES the
+  # default system prompt, so it must follow the loaded model. Point it
+  # at prompts/<model-id>.md if that file exists; if it doesn't, leave
+  # the prompt field untouched (a missing-file {file:} ref would break
+  # the session, so a model without a tuned prompt keeps whatever was
+  # there). The prompt ref uses the bare model id, not the llama-primary/
+  # target. The shared-environment rules still layer in via .instructions.
+  local prompt_dir="${HOME}/.config/opencode/prompts"
+  local prompt_file="${prompt_dir}/${model}.md"
+  local prompt_ref=""
+  if [[ -f "$prompt_file" ]]; then
+    prompt_ref="{file:${prompt_file}}"
+  fi
+
+  local current_primary current_compact current_prompt
   current_primary=$(jq -r '.model // ""' "$OPENCODE_CONFIG" 2>/dev/null)
   current_compact=$(jq -r '.agent.compaction.model // ""' "$OPENCODE_CONFIG" 2>/dev/null)
-  if [[ "$current_primary" == "$target" && "$current_compact" == "$target" ]]; then
+  current_prompt=$(jq -r '.agent.build.prompt // ""' "$OPENCODE_CONFIG" 2>/dev/null)
+  if [[ "$current_primary" == "$target" && "$current_compact" == "$target" \
+        && ( -z "$prompt_ref" || "$current_prompt" == "$prompt_ref" ) ]]; then
     return 0
   fi
 
   local tmp="${OPENCODE_CONFIG}.swap.$$"
-  if jq --arg m "$target" '
+  if jq --arg m "$target" --arg p "$prompt_ref" '
         .model = $m
         | .agent = (.agent // {})
         | .agent.compaction = (.agent.compaction // {})
         | .agent.compaction.model = $m
+        | .agent.build = (.agent.build // {})
+        | (if $p != "" then .agent.build.prompt = $p else . end)
       ' "$OPENCODE_CONFIG" > "$tmp" 2>/dev/null \
      && jq empty "$tmp" >/dev/null 2>&1; then
     mv -f "$tmp" "$OPENCODE_CONFIG"
-    echo "[swap] opencode.json re-targeted: model + compaction -> $target"
+    if [[ -n "$prompt_ref" ]]; then
+      echo "[swap] opencode.json re-targeted: model + compaction + prompt -> $target"
+    else
+      echo "[swap] opencode.json re-targeted: model + compaction -> $target (no per-model prompt file; prompt left as-is)"
+    fi
   else
     rm -f "$tmp"
     echo "[swap] WARN: could not re-target opencode.json (continuing anyway)"
@@ -504,6 +526,17 @@ execute_load() {
   local start_ts now elapsed status poll_count
 
   echo "[swap] Loading $TARGET..."
+
+  # If the target is already the loaded model, there is nothing to load --
+  # but opencode.json may still be out of sync (e.g. a prior swap to a
+  # model with no prompt file, or an interrupted run). Sync the config and
+  # return success rather than POSTing a redundant /models/load (which the
+  # router rejects, and which would otherwise skip the sync below).
+  if [[ "$(model_status "$TARGET" 2>/dev/null || echo unknown)" == "loaded" ]]; then
+    echo "[swap] $TARGET already loaded; syncing opencode.json"
+    patch_compaction_target "$TARGET"
+    return 0
+  fi
 
   # POST /models/load
   if ! curl -fsS -m 10 -X POST "$ROUTER_BASE/models/load" \

@@ -470,24 +470,44 @@ patch_opencode_model() {
     return 1
   fi
 
-  local current_primary current_compact
+  # Per-model system prompt follows the loaded model (the build agent's
+  # prompt REPLACES the default system prompt, so it must match). Point at
+  # prompts/<model-id>.md if present; if absent, leave the prompt as-is
+  # (a {file:} ref to a missing file would break the session). Shared
+  # environment rules layer in separately via .instructions. Mirrors the
+  # same logic in scripts/model-swap.sh.
+  local prompt_file="${HOME}/.config/opencode/prompts/${model}.md"
+  local prompt_ref=""
+  if [[ -f "$prompt_file" ]]; then
+    prompt_ref="{file:${prompt_file}}"
+  fi
+
+  local current_primary current_compact current_prompt
   current_primary=$(jq -r '.model // ""' "$OPENCODE_CONFIG" 2>/dev/null)
   current_compact=$(jq -r '.agent.compaction.model // ""' "$OPENCODE_CONFIG" 2>/dev/null)
-  if [[ "$current_primary" == "$target" && "$current_compact" == "$target" ]]; then
-    log "opencode.json already targets $target (primary + compaction); no patch needed"
+  current_prompt=$(jq -r '.agent.build.prompt // ""' "$OPENCODE_CONFIG" 2>/dev/null)
+  if [[ "$current_primary" == "$target" && "$current_compact" == "$target" \
+        && ( -z "$prompt_ref" || "$current_prompt" == "$prompt_ref" ) ]]; then
+    log "opencode.json already targets $target (primary + compaction + prompt); no patch needed"
     return 0
   fi
 
   local tmp="${OPENCODE_CONFIG}.fix9.$$"
-  if jq --arg m "$target" '
+  if jq --arg m "$target" --arg p "$prompt_ref" '
         .model = $m
         | .agent = (.agent // {})
         | .agent.compaction = (.agent.compaction // {})
         | .agent.compaction.model = $m
+        | .agent.build = (.agent.build // {})
+        | (if $p != "" then .agent.build.prompt = $p else . end)
       ' "$OPENCODE_CONFIG" > "$tmp" 2>/dev/null \
      && jq empty "$tmp" >/dev/null 2>&1; then
     mv -f "$tmp" "$OPENCODE_CONFIG"
-    log "patched opencode.json: model + compaction -> $target"
+    if [[ -n "$prompt_ref" ]]; then
+      log "patched opencode.json: model + compaction + prompt -> $target"
+    else
+      log "patched opencode.json: model + compaction -> $target (no per-model prompt file; prompt left as-is)"
+    fi
     return 0
   else
     warn "could not patch opencode.json; leaving as-is"

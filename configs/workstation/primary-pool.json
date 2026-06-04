@@ -12,12 +12,12 @@
     },
     "gemma-4-12b": {
       "display_name": "Gemma 4 12B 64K",
-      "description": "Dense 12B, fully GPU-resident, fast generalist",
+      "description": "Multilingual generalist (strong Hebrew + non-Latin scripts), thinking model that modulates effort to the task; ~50 tok/s, fully GPU-resident",
       "context_tokens": 65536,
-      "vram_required_mb": 8500,
+      "vram_required_mb": 9000,
       "dram_required_mb": 0,
-      "expected_load_seconds": 20,
-      "expected_gen_tok_per_sec": 90
+      "expected_load_seconds": 8,
+      "expected_gen_tok_per_sec": 50
     },
     "qwen3-coder-30b": {
       "display_name": "Qwen3-Coder-30B 64K",
