@@ -81,9 +81,17 @@ OOM, leak `<think>` tags, or stall on unbounded deliberation).
 | Model | Quant | ctx | VRAM | DRAM (MoE offload) | Tok/s (gen) | Source | License |
 |---|---|---:|---:|---:|---:|---|---|
 | GLM-4.7-Flash | UD-Q4_K_XL | 64K | ~10 GB | -- | ~70 | [unsloth/GLM-4.7-Flash-GGUF](https://huggingface.co/unsloth/GLM-4.7-Flash-GGUF) | Apache 2.0 |
-| Qwen3-Coder-30B-A3B-Instruct | Q4_K_M | 64K | ~17 GB | -- | ~90 | [unsloth/Qwen3-Coder-30B-A3B-Instruct-GGUF](https://huggingface.co/unsloth/Qwen3-Coder-30B-A3B-Instruct-GGUF) | Apache 2.0 |
+| Gemma 4 12B-IT *(+ vision)* | Q4_K_M | 64K | ~9 GB | -- | ~50 | [unsloth/gemma-4-12b-it-GGUF](https://huggingface.co/unsloth/gemma-4-12b-it-GGUF) | Gemma |
 | Qwen3-Next-80B-A3B-Instruct | UD-Q4_K_XL | 96K | ~19 GB | ~25 GB | ~30 | [unsloth/Qwen3-Next-80B-A3B-Instruct-GGUF](https://huggingface.co/unsloth/Qwen3-Next-80B-A3B-Instruct-GGUF) | Apache 2.0 |
 | Qwen3-Next-80B-A3B-Thinking *(default for hard)* | UD-Q4_K_XL | 96K | ~19 GB | ~25 GB | ~30 | [unsloth/Qwen3-Next-80B-A3B-Thinking-GGUF](https://huggingface.co/unsloth/Qwen3-Next-80B-A3B-Thinking-GGUF) | Apache 2.0 |
+
+> **Removed 2026-06-04: Qwen3-Coder-30B-A3B-Instruct.** Its native
+> `<function=>` XML tool calls are not parsed by llama.cpp on this stack
+> (upstream issue #15012), so it could not drive agentic file edits -- its
+> whole purpose. GLM-4.7-Flash covers functional agentic coding (tool calls
+> parse; SWE-bench ~59%). GGUFs deleted. See `docs/repo-issues.md`. Re-add
+> if #15012 lands. (Gemma 4 12B was added the same day and is now in the
+> pool, with vision.)
 
 ### Validated alternatives (kept for restoration)
 

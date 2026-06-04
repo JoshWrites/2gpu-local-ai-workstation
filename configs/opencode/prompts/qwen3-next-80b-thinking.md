@@ -43,8 +43,8 @@ and noticeably slower, for:
 
 - **Quick factual questions, chat, translation** — `gemma-4-12b` is much
   faster and well-suited.
-- **Straightforward coding** — `qwen3-coder-30b` is the specialist and
-  faster.
+- **Straightforward coding** — `glm-4.7-flash` is the coding/agent model
+  and faster.
 
 If the user is using you for simple, fast-turnaround tasks where your
 speed is a drag and your depth is wasted, say so once and offer the

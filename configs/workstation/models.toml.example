@@ -191,14 +191,9 @@ huggingface_file = "GLM-4.7-Flash-UD-Q4_K_XL.gguf"
 context = 65536
 recommended_for = ["default-fast", "agent-loops"]
 
-[[primary_pool.members]]
-id = "qwen3-coder-30b-a3b-instruct"
-description = "Coding specialist, fully GPU-resident."
-gguf_filename = "Qwen3-Coder-30B-A3B-Instruct-Q4_K_M.gguf"
-huggingface_repo = "unsloth/Qwen3-Coder-30B-A3B-Instruct-GGUF"
-huggingface_file = "Qwen3-Coder-30B-A3B-Instruct-Q4_K_M.gguf"
-context = 65536
-recommended_for = ["coding"]
+# qwen3-coder-30b-a3b-instruct REMOVED 2026-06-04: its <function=> XML tool
+# calls aren't parsed by llama.cpp here (upstream #15012), so it couldn't do
+# agentic edits; glm-4.7-flash covers coding instead. See docs/repo-issues.md.
 
 [[primary_pool.members]]
 id = "qwen3-next-80b-a3b-instruct"

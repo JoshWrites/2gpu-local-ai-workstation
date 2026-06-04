@@ -19,15 +19,6 @@
       "expected_load_seconds": 8,
       "expected_gen_tok_per_sec": 50
     },
-    "qwen3-coder-30b": {
-      "display_name": "Qwen3-Coder-30B 64K",
-      "description": "Coding-focused MoE: 30B / 3B active, fully GPU-resident, ~70 tok/s expected; SWE-Bench Verified ~50%",
-      "context_tokens": 65536,
-      "vram_required_mb": 19000,
-      "dram_required_mb": 0,
-      "expected_load_seconds": 35,
-      "expected_gen_tok_per_sec": 70
-    },
     "qwen3-next-80b-thinking": {
       "display_name": "Qwen3-Next-80B Thinking 96K",
       "description": "Frontier reasoning: 80B MoE / 3B active, hybrid Gated DeltaNet, replaces gpt-oss-120b for hard tasks; ~25-35 tok/s expected",

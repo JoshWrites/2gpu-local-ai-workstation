@@ -411,7 +411,7 @@ OLLAMA_HOST=127.0.0.1:11435 ollama pull phi4-mini
 
 **Qwen3.5-27B (Dense) -- The recommended single model.** 27B dense parameters, ~16GB at Q4_K_M, ~20GB at Q5_K_M. In real-world agentic testing, it produced the most correct and cleanest code -- right API usage, type hints, docstrings, pathlib. Got complex multi-step tasks right on the first try where MoE models needed retries. Speed is ~20 t/s native, ~30-35 with speculative decoding. 130K native context. Thinking mode toggles between fast and deep reasoning. Broken in Ollama (mmproj issue) but works in llama-server. Apache 2.0.
 
-**Qwen3-Coder-30B-A3B (MoE)** -- The previous recommendation. 30B total, 3.3B active. Much faster (~70 t/s) but less reliable on complex tasks. Valid if you prioritize raw speed over first-try reliability.
+**Qwen3-Coder-30B-A3B (MoE)** -- The previous recommendation. 30B total, 3.3B active. Much faster (~70 t/s) but less reliable on complex tasks. Valid if you prioritize raw speed over first-try reliability. **Caveat (2026-06-04): its native `<function=>` XML tool-call format is not parsed by current llama.cpp (upstream issue #15012), so it cannot drive agentic tool/file edits via llama-server -- only inline code. We removed it from our pool for this reason; GLM-4.7-Flash, which uses a tool format llama.cpp parses, covers agentic coding instead. If you need this model for agentic work, verify tool-call parsing on your build first.**
 
 **Gemma 4 26B-A4B (MoE)** -- Best native function-calling reliability. Rock-solid compilation rates. But weakest code quality in head-to-head testing. Best as a fallback if tool calling proves unreliable with Qwen3.5-27B.
 
