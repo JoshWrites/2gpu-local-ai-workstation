@@ -198,3 +198,58 @@ revisit. GGUFs kept on disk pending a build bump.
 
 **Status:** long-context coder unresolved; GLM-4.7-Flash is the coder.
 Both candidate GGUFs on disk (qwen3.6-27b, qwen3-coder-next), not wired.
+
+### Hebrew OCR: docling + Tesseract(heb) VERIFIED working (2026-06-05)
+
+Implemented + tested the research recommendation. Installed `tesseract-ocr`
+5.3.4 + `tesseract-ocr-heb`/`-eng` (apt) and `tesserocr` 2.10.0 into the
+docling venv. Tested docling's Python pipeline (TesseractOcrOptions
+lang=[heb,eng], force_full_page_ocr) on a Hebrew document image:
+
+- Hebrew text: CORRECT ("טלפון:", "שעות פתיחה:").
+- Digits: CORRECT ("03-1234567" exact; "9:00-17:00" read, with one minor
+  doubled-digit glitch "99:00"). This is the key win -- digits, which
+  gemma zeroed and GLM-OCR couldn't reach, now transcribe correctly.
+- Minor: the title line dropped and one digit doubled -- likely synthetic-
+  image artifacts (tight margins / display font), expected to be cleaner on
+  real scans. Validate on a real (non-sensitive) Hebrew doc before relying
+  on it for medical numbers; keep the digit-validation regex layer.
+
+KEY CONFIG FACTS (for wiring docling-serve):
+- `tesserocr` default datapath is './' and finds NO languages; MUST set
+  `TESSDATA_PREFIX=/usr/share/tesseract-ocr/5/tessdata` (verified: surfaces
+  heb+eng). This env var is mandatory in the docling-serve systemd unit.
+- docling-serve 1.17.0 / docling 2.91.0. OCR kinds registered:
+  easyocr, ocrmac, rapidocr, tesserocr, tesseract (NOT tesseract_cli).
+- docling-serve HTTP `/v1/convert/file` IGNORES per-request `ocr_engine`/
+  `ocr_lang` (confirmed: accepts a nonexistent engine without error and
+  runs the default). Server-side default is the only lever: settings
+  `default_ocr_kind` + `default_ocr_preset` (env prefix DOCLING_SERVE_),
+  language via a custom OCR preset.
+
+**Status:** capability VERIFIED. Remaining: wire docling-serve to default to
+Tesseract+heb (TESSDATA_PREFIX + DEFAULT_OCR_KIND=tesseract + a custom
+hebrew preset with lang=[heb,eng]) in its systemd unit, then re-test via the
+Library HTTP path. Unit is not yet tracked in the repo -- capture it when wired.
+
+### Hebrew OCR validated on a REAL medical record (2026-06-05)
+
+Ran docling + Tesseract(heb,eng) on a real scanned Maccabi neurology
+consult letter (dense Hebrew + embedded English + many numbers + barcodes
++ handwriting). Result: strong, workflow-viable.
+
+- Dates ALL exact (DOB 23/06/1984; 4 visit dates; exam date). Phones, fax,
+  mobile, postal code exact. Dosage "אלטרול 25 מ\"ג" exact. Embedded
+  English (MIGRAINE, FIBROMYALGIA, MRI, EMG, SSRI, NSAID, GI) correct.
+  Document structure (headers, numbered list, diagnosis bullets, "דף 1 מ 2")
+  reconstructed well; barcodes skipped; handwriting dropped (expected).
+- Hebrew body text largely accurate + readable; meaning preserved
+  throughout with some word-level errors.
+- ONE critical miss: patient ID 336540257 garbled to "/33694025". This is
+  exactly the failure the digit-validation / human-confirm layer must catch
+  -- a single wrong ID in an otherwise-excellent transcription.
+
+**Conclusion:** docling+Tesseract is a viable Hebrew medical-OCR engine
+(vastly better than gemma's digit-zeroing or GLM-OCR's Hebrew failure). It
+is NOT perfect on every number -> the workflow MUST keep a digit-validation
+pass + human/clinician confirmation; never blind-trust an OCR'd number.
