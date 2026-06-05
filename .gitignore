@@ -66,3 +66,13 @@ docs/local-notes/
 # credentials; both are per-deployment and sent to the remote user out-of-band.
 remote-user-wg.conf
 rustdesk-remote-user-setup.md
+
+# Real medical records used as local OCR/medical-workflow test fixtures.
+# These are personal PHI -- NEVER commit (this is a public repo). The
+# ground-truth CSV references real patient data too.
+tests/Medical records/
+tests/medical_records_GROUND_TRUTH.csv
+tests/**/*.jpg
+tests/**/*.jpeg
+tests/**/*.png
+tests/**/*.pdf
