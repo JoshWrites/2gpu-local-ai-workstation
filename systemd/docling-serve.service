@@ -1,0 +1,32 @@
+[Unit]
+Description=Docling Serve — local document conversion API (CPU-only)
+After=network.target
+Documentation=https://github.com/docling-project/docling-serve
+
+[Service]
+Type=simple
+User=docling
+Group=docling
+WorkingDirectory=/opt/docling
+Environment=DOCLING_SERVE_ARTIFACTS_PATH=/opt/docling/.cache/docling/models
+Environment=HF_HOME=/opt/docling/.cache/huggingface
+Environment=OMP_NUM_THREADS=4
+Environment=MKL_NUM_THREADS=4
+ExecStart=/opt/docling/venv/bin/docling-serve run --host 127.0.0.1 --port 5001
+Restart=on-failure
+RestartSec=10
+
+# Resource limits — CPU-only, ~2 GB resident after model load
+MemoryHigh=4G
+MemoryMax=6G
+CPUWeight=50
+
+# Hardening — read-only system, writable only to its own dir
+NoNewPrivileges=yes
+ProtectSystem=strict
+ProtectHome=yes
+ReadWritePaths=/opt/docling
+PrivateTmp=yes
+
+[Install]
+WantedBy=multi-user.target

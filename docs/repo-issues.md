@@ -253,3 +253,32 @@ consult letter (dense Hebrew + embedded English + many numbers + barcodes
 (vastly better than gemma's digit-zeroing or GLM-OCR's Hebrew failure). It
 is NOT perfect on every number -> the workflow MUST keep a digit-validation
 pass + human/clinician confirmation; never blind-trust an OCR'd number.
+
+### Hebrew OCR: SOLVED via the tesseract CLI (not docling-serve) — 2026-06-05
+
+Final outcome. The usable answer is the **tesseract CLI run directly by the
+agent**, NOT the docling-serve HTTP path.
+
+- An agent (GLM/Gemma) runs, via its normal bash tool (no sudo):
+  `tesseract "<image>" stdout -l heb+eng --psm 3`
+  (PDFs: `pdftoppm -png -r 300 doc.pdf /tmp/p && tesseract /tmp/p-1.png stdout -l heb+eng --psm 3`)
+  Verified on the real Maccabi record: clean Hebrew + EXACT id/dob/dates/
+  dosage -- better than both docling-serve (mojibake) and docling's own
+  Python pipeline (which garbled the ID).
+- Wired for use: the recipe is in `prompts/shared-environment.md` (all
+  models) + `tesseract *` / `pdftoppm *` are on the opencode bash allowlist
+  so the agent runs them without a prompt.
+- **docling-serve HTTP OCR is NOT used and was reverted.** On docling-serve
+  1.17.0 the HTTP /v1/convert/file path does not apply the Hebrew language:
+  per-request ocr_engine/ocr_lang are ignored (#567 family) and a server-
+  side custom_ocr_presets entry parses in settings but never reaches the
+  request-validation registry (custom preset "hebrew" reported "not allowed";
+  registry only ever held the auto-registered kinds). Multiple lang formats
+  all produced mojibake. Reverted the unit to its original (no OCR default).
+  Revisit only if a newer docling-serve fixes HTTP OCR language handling AND
+  structured (markdown/table) OCR output is actually needed; for plain text
+  feeding a reasoner, the CLI is sufficient and reliable.
+
+**Medical-safety reminder (unchanged):** OCR'd numbers (IDs, dates, dosages,
+labs) are not perfect -- surface them as unverified for human/clinician
+confirmation against the source image; never assert an OCR'd number.

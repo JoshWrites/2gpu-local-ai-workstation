@@ -107,6 +107,8 @@
     "bash": {
       "*": "ask",
       "ls *": "allow",
+      "tesseract *": "allow",
+      "pdftoppm *": "allow",
       "cat /etc/*": "allow",
       "cat /var/log/*": "allow",
       "grep *": "allow",

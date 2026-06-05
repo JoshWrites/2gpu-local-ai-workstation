@@ -187,6 +187,32 @@ embed/summarize/docling sidecar is down."
   This is the normal terminal state of an in-round escalation, not a
   failure -- proceed with the chunks you got.
 
+## Hebrew (and bilingual) OCR — use the tesseract CLI directly
+
+For scanned/image documents in **Hebrew or mixed Hebrew/English** (e.g.
+Israeli medical records, forms), do NOT rely on the Library/docling OCR
+path or on a vision model -- both mangle Hebrew or its digits. Tesseract
+with the Hebrew language pack is installed and reads Hebrew text AND
+numbers accurately. Run it directly via bash (no sudo needed):
+
+- Image (png/jpg/tiff):
+  `tesseract "/path/to/scan.jpg" stdout -l heb+eng --psm 3`
+- PDF (convert pages first, poppler is installed):
+  `pdftoppm -png -r 300 "/path/to/doc.pdf" /tmp/ocrpage && \
+   tesseract /tmp/ocrpage-1.png stdout -l heb+eng --psm 3`
+
+`-l heb+eng` handles bilingual pages; `--psm 3` (auto layout) works well on
+real documents. Verified 2026-06-05 on a real Maccabi medical record:
+clean Hebrew + exact ID/dates/dosage.
+
+**Critical for medical/legal use:** OCR is not perfect on every digit.
+After OCR, treat extracted numbers (IDs, dates, dosages, lab values) as
+*unverified* -- surface them for the user to confirm against the image,
+never assert an OCR'd number as certain. (Why docling-serve isn't used for
+this: its HTTP path does not apply the Hebrew language setting on this
+version -- a known bug; the direct CLI is the reliable path. See
+docs/repo-issues.md.)
+
 ## Cache freshness
 
 Library caches both files and web pages, but governs them differently:
